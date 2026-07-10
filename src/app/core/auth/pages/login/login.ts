@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UiButton } from '../../../../shared/ui/button';
 import { Brand } from '../../../../shared/ui/brand';
+import { OtpInput } from '../../../../shared/ui/otp-input';
 import { AuthBackdrop } from '../auth-backdrop';
 import { TwoFactorSetupCard } from '../../../../shared/components/two-factor-setup-card';
 import { AuthService } from '../../auth.service';
@@ -22,7 +23,7 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
  */
 @Component({
   selector: 'app-login-page',
-  imports: [FormsModule, RouterLink, UiButton, Brand, AuthBackdrop, TwoFactorSetupCard],
+  imports: [FormsModule, RouterLink, UiButton, Brand, OtpInput, AuthBackdrop, TwoFactorSetupCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-auth-backdrop>
@@ -113,21 +114,27 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
           @case ('code') {
             <form (ngSubmit)="verifyCode()">
               <h1 class="text-xl font-semibold text-foreground">Two-factor code</h1>
-              <p class="mb-5 text-sm text-muted-foreground">
-                Enter the code from your authenticator app, or a recovery code.
-              </p>
+              @if (useRecovery()) {
+                <p class="mb-5 text-sm text-muted-foreground">Enter one of your recovery codes.</p>
 
-              <label class="mb-1.5 block text-sm font-medium text-foreground">Code</label>
-              <input
-                [(ngModel)]="code"
-                name="code"
-                type="text"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                placeholder="123456"
-                class="mb-4 h-9 w-full rounded-md border border-input bg-background px-3 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+                <label class="mb-1.5 block text-sm font-medium text-foreground">Recovery code</label>
+                <input
+                  [(ngModel)]="recoveryCode"
+                  name="recoveryCode"
+                  type="text"
+                  placeholder="12345-67890"
+                  autocomplete="off"
+                  spellcheck="false"
+                  class="mb-4 h-9 w-full rounded-md border border-input bg-background px-3 text-center
+                         font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              } @else {
+                <p class="mb-5 text-sm text-muted-foreground">
+                  Enter the 6-digit code from your authenticator app.
+                </p>
+
+                <app-otp-input class="mb-4 block" [(value)]="code" [disabled]="loading()" (completed)="verifyCode()" />
+              }
 
               @if (error(); as message) {
                 <p class="mb-4 text-sm text-destructive">{{ message }}</p>
@@ -139,6 +146,13 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
               <button
                 type="button"
                 class="mt-3 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+                (click)="toggleRecovery()"
+              >
+                {{ useRecovery() ? 'Use an authenticator code' : 'Use a recovery code instead' }}
+              </button>
+              <button
+                type="button"
+                class="mt-2 w-full text-center text-sm text-muted-foreground hover:text-foreground"
                 (click)="backToCredentials()"
               >
                 Back to sign in
@@ -166,7 +180,8 @@ export class LoginPage {
 
   login = '';
   password = '';
-  code = '';
+  recoveryCode = '';
+  readonly code = signal('');
 
   readonly step = signal<Step>('credentials');
   readonly loading = signal(false);
@@ -175,6 +190,10 @@ export class LoginPage {
   readonly notice = signal<string | null>(null);
   /** Companies the credentials matched, when the login is ambiguous. */
   readonly workspaces = signal<TenantChoice[]>([]);
+  /** Recovery codes are not 6 digits — this swaps the boxes for a text input. */
+  readonly useRecovery = signal(false);
+
+  private readonly otp = viewChild(OtpInput);
 
   signIn(): void {
     if (this.loading()) return;
@@ -204,7 +223,7 @@ export class LoginPage {
           this.workspaces.set(result.tenants);
           this.step.set('workspace');
         } else if (result.status === 'two_factor_required') {
-          this.code = '';
+          this.code.set('');
           this.step.set('code');
         } else {
           // The company mandates 2FA and this account has none yet.
@@ -220,26 +239,35 @@ export class LoginPage {
 
   verifyCode(): void {
     if (this.loading()) return;
-    if (!this.code.trim()) {
+    const code = (this.useRecovery() ? this.recoveryCode : this.code()).trim();
+    if (!code) {
       this.error.set('Enter your two-factor code.');
       return;
     }
 
     this.loading.set(true);
     this.error.set(null);
-    this.auth.loginTwoFactor(this.code.trim()).subscribe({
+    this.auth.loginTwoFactor(code).subscribe({
       next: () => {
         this.loading.set(false);
         void this.router.navigateByUrl(this.auth.landingUrl());
       },
       error: (err: unknown) => {
         this.loading.set(false);
+        this.otp()?.clear();
         const info = apiErrorInfo(err);
         this.error.set(
           info.status === 401 ? 'That code is not valid — try the current one.' : this.messageFor(err),
         );
       },
     });
+  }
+
+  toggleRecovery(): void {
+    this.useRecovery.update((v) => !v);
+    this.error.set(null);
+    this.code.set('');
+    this.recoveryCode = '';
   }
 
   /** Enrollment done; the bridge token is spent, so sign in again. */
@@ -252,7 +280,9 @@ export class LoginPage {
     this.step.set('credentials');
     this.error.set(null);
     this.password = '';
-    this.code = '';
+    this.recoveryCode = '';
+    this.code.set('');
+    this.useRecovery.set(false);
     this.workspaces.set([]);
   }
 

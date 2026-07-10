@@ -1,9 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import * as QRCode from 'qrcode';
 import { AuthServiceProxy, TwoFactorSetup } from '../service-proxies/service-proxies';
 import { apiErrorInfo } from '../api/api-error';
 import { UiButton } from '../ui/button';
+import { OtpInput } from '../ui/otp-input';
 
 /**
  * Self-contained authenticator enrollment: fetches a fresh TOTP secret from
@@ -15,7 +22,7 @@ import { UiButton } from '../ui/button';
  */
 @Component({
   selector: 'app-two-factor-setup-card',
-  imports: [FormsModule, UiButton],
+  imports: [UiButton, OtpInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (recoveryCodes(); as codes) {
@@ -52,17 +59,8 @@ import { UiButton } from '../ui/button';
         </p>
       }
 
-      <label class="mb-1.5 block text-sm font-medium text-foreground">Verification code</label>
-      <input
-        [(ngModel)]="code"
-        name="totp-code"
-        type="text"
-        inputmode="numeric"
-        autocomplete="one-time-code"
-        placeholder="123456"
-        class="mb-4 h-9 w-full rounded-md border border-input bg-background px-3 text-sm
-               focus:outline-none focus:ring-2 focus:ring-ring"
-      />
+      <label class="mb-2 block text-center text-sm font-medium text-foreground">Verification code</label>
+      <app-otp-input class="mb-4 block" [(value)]="code" [disabled]="busy()" (completed)="confirm()" />
 
       @if (error(); as message) {
         <p class="mb-4 text-sm text-destructive">{{ message }}</p>
@@ -86,7 +84,8 @@ export class TwoFactorSetupCard {
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
 
-  code = '';
+  readonly code = signal('');
+  private readonly otp = viewChild(OtpInput);
 
   constructor() {
     this.proxy.two_factor_setup().subscribe({
@@ -122,7 +121,7 @@ export class TwoFactorSetupCard {
 
   confirm(): void {
     if (this.busy()) return;
-    const code = this.code.trim();
+    const code = this.code().trim();
     if (!code) {
       this.error.set('Enter the code from your authenticator app.');
       return;
@@ -136,6 +135,7 @@ export class TwoFactorSetupCard {
       },
       error: (err: unknown) => {
         this.busy.set(false);
+        this.otp()?.clear();
         const info = apiErrorInfo(err);
         this.error.set(info.status === 401 || info.status === 422 ? 'That code is not valid — try the current one.' : (info.message ?? 'Verification failed.'));
       },
