@@ -42,6 +42,8 @@ export class ProfilePage {
   readonly enrolling = signal(false);
   readonly disabling = signal(false);
   readonly twoFactorBusy = signal(false);
+  /** Company-wide 2FA mandate: opting out is not offered while it is on. */
+  readonly mandated = signal(false);
 
   readonly memberSince = computed(
     () => this.profile()?.created_at?.toFormat('yyyy-LL-dd') ?? '—',
@@ -60,6 +62,12 @@ export class ProfilePage {
 
   constructor() {
     this.load();
+    this.proxy.tenant_two_factor_get().subscribe({
+      next: (res) => this.mandated.set(res.require_two_factor),
+      error: () => {
+        /* single-tenant mode has no mandate; keep the opt-out available */
+      },
+    });
   }
 
   private load(): void {

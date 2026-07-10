@@ -119,7 +119,11 @@
             </p>
 
             @if (p.two_factor_enabled) {
-              @if (disabling()) {
+              @if (mandated()) {
+                <p class="text-sm text-muted-foreground">
+                  Your company requires two-factor authentication — it cannot be disabled.
+                </p>
+              } @else if (disabling()) {
                 <form (ngSubmit)="disableTwoFactor()" class="max-w-sm">
                   <label class="mb-1.5 block text-sm font-medium">Confirm with your password</label>
                   <input

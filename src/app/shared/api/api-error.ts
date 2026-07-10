@@ -89,6 +89,8 @@ function build(
 }
 
 function asProblem(body: unknown): ProblemDetails | undefined {
+  // A Blob body means the response was not read yet — nothing usable here.
+  if (body instanceof Blob) return undefined;
   if (body && typeof body === 'object') return body as ProblemDetails;
   return undefined;
 }

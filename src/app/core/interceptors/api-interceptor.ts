@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, from, map, of, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ApiError, toApiError } from '../../shared/api/api-error';
 
@@ -35,6 +35,33 @@ function isTwoFactorEndpoint(req: HttpRequest<unknown>): boolean {
  * `ApiError` is not an `HttpResponseBase`, so NSwag proxies rethrow it
  * unchanged and components receive it as-is.
  */
+/**
+ * NSwag proxies request `responseType: blob`, so a failed call's
+ * problem+json body arrives as a Blob — unreadable synchronously, which
+ * would reduce every toast to the bare status text. Read and parse it
+ * first, then hand a body-bearing error to the normaliser.
+ */
+function withParsedBody(err: unknown): Observable<unknown> {
+  if (!(err instanceof HttpErrorResponse) || !(err.error instanceof Blob)) return of(err);
+  return from(err.error.text()).pipe(
+    map((text) => {
+      let body: unknown = text;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        /* not JSON — keep the raw text */
+      }
+      return new HttpErrorResponse({
+        error: body,
+        headers: err.headers,
+        status: err.status,
+        statusText: err.statusText,
+        url: err.url ?? undefined,
+      });
+    }),
+  );
+}
+
 function report(err: unknown, req: HttpRequest<unknown>): ApiError {
   const apiError = toApiError(err, { method: req.method, url: req.url });
   console.error(
@@ -68,6 +95,10 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     return headers === r.headers ? r : r.clone({ headers });
   };
 
+  /** Parse the error body, normalise, log, and rethrow as {@link ApiError}. */
+  const fail = (err: unknown): Observable<never> =>
+    withParsedBody(err).pipe(switchMap((parsed) => throwError(() => report(parsed, req))));
+
   return next(withAuth(req)).pipe(
     catchError((err: unknown) => {
       const is401 = err instanceof HttpErrorResponse && err.status === 401;
@@ -75,12 +106,10 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       // Try a one-shot refresh for authenticated, non-auth requests.
       if (is401 && !isAuthEndpoint(req) && auth.refreshToken()) {
         return auth.refreshSession().pipe(
-          switchMap(() =>
-            next(withAuth(req)).pipe(catchError((retryErr: unknown) => throwError(() => report(retryErr, req)))),
-          ),
+          switchMap(() => next(withAuth(req)).pipe(catchError((retryErr: unknown) => fail(retryErr)))),
           catchError((refreshErr: unknown) => {
             void router.navigateByUrl('/login');
-            return throwError(() => report(refreshErr, req));
+            return fail(refreshErr);
           }),
         );
       }
@@ -91,7 +120,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
         void router.navigateByUrl('/login');
       }
 
-      return throwError(() => report(err, req));
+      return fail(err);
     }),
   );
 };
