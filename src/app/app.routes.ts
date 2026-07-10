@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/auth/pages/login/login').then((m) => m.LoginPage),
   },
   {
+    path: 'register',
+    loadComponent: () => import('./core/auth/pages/register/register').then((m) => m.RegisterPage),
+  },
+  {
     path: '',
     component: AppShell,
     canActivate: [authGuard],
