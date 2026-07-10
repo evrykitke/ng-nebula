@@ -42,10 +42,10 @@
       <input
         [(ngModel)]="userId"
         name="userId"
-        type="number"
+        placeholder="user uuid"
         (keydown.enter)="applyFilters()"
         (blur)="applyFilters()"
-        class="h-9 w-24 rounded-md border border-input bg-background px-3 text-sm"
+        class="h-9 w-56 rounded-md border border-input bg-background px-3 font-mono text-xs"
       />
     </div>
     <button

@@ -29,7 +29,7 @@ export function auditLogsTable(): TableConfig<AuditLog> {
       col.text<AuditLog>('method', 'Method').sortable(false).width('90px'),
       col.text<AuditLog>('path', 'Path').sortable(false),
       col.number<AuditLog>('status_code', 'Status').sortable(false).width('80px'),
-      col.number<AuditLog>('user_id', 'User').sortable(false).width('80px').hidden(),
+      col.text<AuditLog>('user_id', 'User').sortable(false).hidden(),
       col.number<AuditLog>('duration_ms', 'ms').sortable(false).width('80px').hidden(),
       col.text<AuditLog>('ip_address', 'IP').sortable(false).hidden(),
     ],

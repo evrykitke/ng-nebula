@@ -50,7 +50,7 @@ export class UserPermissionsPage {
 
   /** Route parameter (component input binding). */
   readonly id = input.required<string>();
-  private readonly userId = computed(() => Number(this.id()));
+  private readonly userId = computed(() => this.id());
 
   readonly user = signal<Profile | null>(null);
   readonly allRoles = signal<RoleResponse[]>([]);
@@ -60,7 +60,7 @@ export class UserPermissionsPage {
   readonly savingOverrides = signal(false);
 
   /** Ids of the roles currently assigned (edited by the checkboxes). */
-  readonly assignedRoles = signal<Set<number>>(new Set());
+  readonly assignedRoles = signal<Set<string>>(new Set());
   /** Per-permission overrides being edited. */
   private readonly grants = signal<Set<string>>(new Set());
   private readonly denies = signal<Set<string>>(new Set());
@@ -101,11 +101,11 @@ export class UserPermissionsPage {
     // The route id is an input signal; (re)load whenever it resolves.
     effect(() => {
       const id = this.userId();
-      if (Number.isFinite(id)) this.load(id);
+      if (id) this.load(id);
     });
   }
 
-  private load(id: number): void {
+  private load(id: string): void {
     this.loading.set(true);
     this.proxy.user_permissions(id).subscribe({
       next: (res) => {

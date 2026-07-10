@@ -29,7 +29,7 @@ export class AuditServiceProxy {
         this.baseUrl = baseUrl ?? "";
     }
 
-    list_logs(limit?: number | undefined, offset?: number | undefined, action?: string | undefined, entity_type?: string | undefined, user_id?: number | undefined): Observable<AuditLog[]> {
+    list_logs(limit?: number | undefined, offset?: number | undefined, action?: string | undefined, entity_type?: string | undefined, user_id?: string | undefined): Observable<AuditLog[]> {
         let url_ = this.baseUrl + "/audit/logs?";
         if (limit === null)
             throw new globalThis.Error("The parameter 'limit' cannot be null.");
@@ -832,7 +832,7 @@ export class AuthServiceProxy {
     /**
      * @param id Role id
      */
-    update_role(id: number, body: UpdateRoleRequest): Observable<RoleResponse> {
+    update_role(id: string, body: UpdateRoleRequest): Observable<RoleResponse> {
         let url_ = this.baseUrl + "/auth/roles/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -889,7 +889,7 @@ export class AuthServiceProxy {
     /**
      * @param id Role id
      */
-    delete_role(id: number): Observable<StatusResponse> {
+    delete_role(id: string): Observable<StatusResponse> {
         let url_ = this.baseUrl + "/auth/roles/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1409,7 +1409,7 @@ export class AuthServiceProxy {
     tenant can never lose its last admin by accident.
      * @param id User id
      */
-    set_user_admin(id: number, body: SetAdminRequest): Observable<Profile> {
+    set_user_admin(id: string, body: SetAdminRequest): Observable<Profile> {
         let url_ = this.baseUrl + "/auth/users/{id}/admin";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1466,7 +1466,7 @@ export class AuthServiceProxy {
     /**
      * @param id User id
      */
-    user_permissions(id: number): Observable<UserPermissionsResponse> {
+    user_permissions(id: string): Observable<UserPermissionsResponse> {
         let url_ = this.baseUrl + "/auth/users/{id}/permissions";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1520,7 +1520,7 @@ export class AuthServiceProxy {
      * Replace a user's per-user overrides. Like roles, never on yourself.
      * @param id User id
      */
-    set_user_permissions(id: number, body: SetUserPermissionsRequest): Observable<UserPermissionsResponse> {
+    set_user_permissions(id: string, body: SetUserPermissionsRequest): Observable<UserPermissionsResponse> {
         let url_ = this.baseUrl + "/auth/users/{id}/permissions";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1579,7 +1579,7 @@ export class AuthServiceProxy {
     admin locking themselves out is never one call away.
      * @param id User id
      */
-    set_user_roles(id: number, body: SetUserRolesRequest): Observable<RoleResponse[]> {
+    set_user_roles(id: string, body: SetUserRolesRequest): Observable<RoleResponse[]> {
         let url_ = this.baseUrl + "/auth/users/{id}/roles";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1761,6 +1761,8 @@ the schema type is spelled out. */
     duration_ms?: number | undefined;
     entity_id?: string | undefined;
     entity_type?: string | undefined;
+    /** Row id: the trail is an append-only sequence, so this stays a
+bigserial — audit rows are log lines, not domain entities. */
     id: number;
     ip_address?: string | undefined;
     /** Human-readable line for `event` rows ("boss logged in"). */
@@ -1772,9 +1774,9 @@ the schema type is spelled out. */
     /** The `x-request-id` of the request, linking audit rows to traces. */
     request_id?: string | undefined;
     status_code?: number | undefined;
-    tenant_id?: number | undefined;
+    tenant_id?: string | undefined;
     user_agent?: string | undefined;
-    user_id?: number | undefined;
+    user_id?: string | undefined;
 
     [key: string]: any;
 }
@@ -1885,7 +1887,7 @@ export interface Profile {
     email: string;
     email_confirmed: boolean;
     first_name: string;
-    id: number;
+    id: string;
     is_active: boolean;
     is_tenant_admin: boolean;
     language?: string | undefined;
@@ -1893,7 +1895,7 @@ export interface Profile {
     last_name: string;
     phone_number?: string | undefined;
     phone_number_confirmed: boolean;
-    tenant_id?: number | undefined;
+    tenant_id?: string | undefined;
     time_zone?: string | undefined;
     two_factor_enabled: boolean;
     user_name: string;
@@ -1937,7 +1939,7 @@ Ignored in single-tenant mode. */
 }
 
 export interface RegisterResponse {
-    tenant_id?: number | undefined;
+    tenant_id?: string | undefined;
     user: Profile;
 
     [key: string]: any;
@@ -1963,7 +1965,7 @@ export interface RetentionResponse {
 
 export interface RoleResponse {
     display_name: string;
-    id: number;
+    id: string;
     is_static: boolean;
     name: string;
     /** Explicit grants; static roles implicitly hold every permission. */
@@ -1988,7 +1990,7 @@ export interface SetUserPermissionsRequest {
 }
 
 export interface SetUserRolesRequest {
-    role_ids: number[];
+    role_ids: string[];
 
     [key: string]: any;
 }

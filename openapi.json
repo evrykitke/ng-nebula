@@ -62,8 +62,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -481,8 +481,8 @@
             "description": "Role id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -521,8 +521,8 @@
             "description": "Role id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -788,8 +788,8 @@
             "description": "User id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -830,8 +830,8 @@
             "description": "User id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -861,8 +861,8 @@
             "description": "User id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -904,8 +904,8 @@
             "description": "User id",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1022,7 +1022,8 @@
           },
           "id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Row id: the trail is an append-only sequence, so this stays a\nbigserial — audit rows are log lines, not domain entities."
           },
           "ip_address": {
             "type": [
@@ -1081,10 +1082,10 @@
           },
           "tenant_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32"
+            "format": "uuid"
           },
           "user_agent": {
             "type": [
@@ -1094,10 +1095,10 @@
           },
           "user_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32"
+            "format": "uuid"
           }
         }
       },
@@ -1472,8 +1473,8 @@
             "type": "string"
           },
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "uuid"
           },
           "is_active": {
             "type": "boolean"
@@ -1508,10 +1509,10 @@
           },
           "tenant_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32"
+            "format": "uuid"
           },
           "time_zone": {
             "type": [
@@ -1614,10 +1615,10 @@
         "properties": {
           "tenant_id": {
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "format": "int32"
+            "format": "uuid"
           },
           "user": {
             "$ref": "#/components/schemas/Profile"
@@ -1684,8 +1685,8 @@
             "type": "string"
           },
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "uuid"
           },
           "is_static": {
             "type": "boolean"
@@ -1741,8 +1742,8 @@
           "role_ids": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid"
             }
           }
         }

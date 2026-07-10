@@ -34,7 +34,7 @@ export class AuditLogsPage {
   // Externally-owned filters (projected into the table toolbar).
   action = '';
   entityType = '';
-  userId: number | null = null;
+  userId = '';
 
   /** Data source: the table query supplies paging; the local filters the rest. */
   readonly dataSource: TableDataSource<AuditLog> = (q) =>
@@ -44,7 +44,7 @@ export class AuditLogsPage {
         q.page * q.size,
         this.action || undefined,
         this.entityType.trim() || undefined,
-        this.userId ?? undefined,
+        this.userId.trim() || undefined,
       )
       .pipe(
         map((rows) => {
@@ -63,7 +63,7 @@ export class AuditLogsPage {
   clearFilters(): void {
     this.action = '';
     this.entityType = '';
-    this.userId = null;
+    this.userId = '';
     this.applyFilters();
   }
 
