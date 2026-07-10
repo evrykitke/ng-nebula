@@ -1,0 +1,307 @@
+<!-- Toolbar (items-end: search, labelled filters, and buttons share a baseline) -->
+<div class="mb-3 flex flex-wrap items-end gap-2">
+  @if (config().search) {
+    <div class="relative min-w-0 flex-1 sm:flex-none">
+      <input
+        [ngModel]="search()"
+        (ngModelChange)="onSearch($event)"
+        [placeholder]="config().searchPlaceholder ?? 'Search…'"
+        class="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm
+               focus:outline-none focus:ring-2 focus:ring-ring sm:w-56"
+      />
+      <span class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">⌕</span>
+    </div>
+  }
+
+  <!-- Projected custom filters -->
+  <ng-content select="[toolbar]" />
+
+  <div class="ml-auto flex items-center gap-2">
+    <!-- Projected toolbar actions (e.g. New button) -->
+    <ng-content select="[actions]" />
+
+    @if (hasTools()) {
+      <button
+        type="button"
+        [cdkMenuTriggerFor]="toolsMenu"
+        class="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label="Table tools"
+      >
+        <ng-icon name="lucideEllipsisVertical" size="18" />
+      </button>
+    }
+  </div>
+</div>
+
+<!-- Tools menu (columns / export / import) -->
+<ng-template #toolsMenu>
+  <div
+    cdkMenu
+    class="min-w-44 rounded-md border border-border bg-popover p-1 text-sm shadow-lg"
+  >
+    @if (config().columnToggle) {
+      <button cdkMenuItem class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent" (click)="showColumns.set(true)">
+        <ng-icon name="lucideColumns3" size="16" /> Columns
+      </button>
+    }
+    @if (config().exportCsv) {
+      <button cdkMenuItem class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent" (click)="exportCsv.emit()">
+        <ng-icon name="lucideDownload" size="16" /> Export CSV
+      </button>
+    }
+    @if (config().importCsv) {
+      <button cdkMenuItem class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent" (click)="importCsv.emit()">
+        <ng-icon name="lucideUpload" size="16" /> Import CSV
+      </button>
+      <button cdkMenuItem class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent" (click)="downloadTemplate.emit()">
+        <ng-icon name="lucideFileDown" size="16" /> Download template
+      </button>
+    }
+  </div>
+</ng-template>
+
+<!-- Bulk selection bar -->
+@if (config().multiSelect && selected().size > 0) {
+  <div class="mb-2 flex items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+    <span class="font-medium">{{ selected().size }} selected</span>
+    <ng-content select="[bulk]" />
+    <button type="button" class="ml-auto text-muted-foreground hover:underline" (click)="clearSelection()">
+      Clear
+    </button>
+  </div>
+}
+
+<!-- Table -->
+<div class="overflow-hidden rounded-xl border border-border bg-card">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+          @if (rowDetail()) {
+            <th class="w-8 px-2 py-2.5"></th>
+          }
+          @if (config().multiSelect) {
+            <th class="w-8 px-3 py-2.5">
+              <input type="checkbox" [checked]="allSelected()" (change)="toggleAll()" />
+            </th>
+          }
+          @for (c of visibleColumns(); track c.field) {
+            <th
+              class="px-4 py-2.5 font-medium"
+              [style.width]="c.width"
+              [class.text-right]="c.align === 'right'"
+              [class.text-center]="c.align === 'center'"
+              [class.cursor-pointer]="c.sortable"
+              [class.select-none]="c.sortable"
+              (click)="toggleSort(c)"
+            >
+              <span class="group inline-flex items-center gap-1">
+                {{ c.label }}
+                @if (c.sortable && isSorted(c)) {
+                  <span class="text-sm font-bold text-primary">{{ sortDir() === 'asc' ? '↑' : '↓' }}</span>
+                } @else if (c.sortable) {
+                  <span class="text-sm text-muted-foreground/70 transition-colors group-hover:text-foreground">↕</span>
+                }
+              </span>
+            </th>
+          }
+          @if (config().actions?.length) {
+            <th class="px-4 py-2.5 text-right font-medium">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody
+        class="transition-opacity duration-150"
+        [class.opacity-50]="refreshing()"
+        [class.pointer-events-none]="refreshing()"
+      >
+        @if (loading() && rows().length === 0) {
+          @for (s of skeletonRows; track $index) {
+            <tr class="border-b border-border last:border-0">
+              @if (rowDetail()) {
+                <td class="px-2 py-3"></td>
+              }
+              @if (config().multiSelect) {
+                <td class="px-3 py-3"></td>
+              }
+              @for (c of visibleColumns(); track c.field) {
+                <td class="px-4 py-3">
+                  <div class="h-4 animate-pulse rounded bg-muted" [style.width.%]="55"></div>
+                </td>
+              }
+              @if (config().actions?.length) {
+                <td class="px-4 py-3">
+                  <div class="ml-auto h-4 w-16 animate-pulse rounded bg-muted"></div>
+                </td>
+              }
+            </tr>
+          }
+        } @else if (rows().length === 0) {
+          <tr>
+            <td [attr.colspan]="colspan()" class="px-4 py-10 text-center text-muted-foreground">
+              {{ config().emptyText ?? 'No records found.' }}
+            </td>
+          </tr>
+        } @else {
+          @for (row of rows(); track config().rowKey(row)) {
+            <tr
+              class="dt-row-in border-b border-border last:border-0 align-middle hover:bg-muted/30"
+              (click)="onRowClick(row)"
+            >
+              @if (rowDetail()) {
+                <td class="px-2 py-2.5">
+                  <button
+                    type="button"
+                    class="text-muted-foreground hover:text-foreground"
+                    (click)="toggleExpand(row); $event.stopPropagation()"
+                  >
+                    {{ isExpanded(row) ? '▾' : '▸' }}
+                  </button>
+                </td>
+              }
+              @if (config().multiSelect) {
+                <td class="px-3 py-2.5">
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(row)"
+                    (change)="toggleRow(row)"
+                    (click)="$event.stopPropagation()"
+                  />
+                </td>
+              }
+              @for (c of visibleColumns(); track c.field) {
+                <td
+                  class="px-4 py-2.5"
+                  [class.text-right]="c.align === 'right'"
+                  [class.text-center]="c.align === 'center'"
+                >
+                  @switch (c.type) {
+                    @case ('badge') {
+                      <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium" [class]="toneClass(row, c)">
+                        {{ cellText(row, c) }}
+                      </span>
+                    }
+                    @case ('boolean') {
+                      <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium" [class]="toneClass(row, c)">
+                        {{ cellText(row, c) }}
+                      </span>
+                    }
+                    @case ('email') {
+                      <a class="text-primary hover:underline" [href]="'mailto:' + cellText(row, c)" (click)="$event.stopPropagation()">
+                        {{ cellText(row, c) }}
+                      </a>
+                    }
+                    @case ('image') {
+                      @if (imageSrc(row, c); as src) {
+                        <img
+                          [src]="src"
+                          alt=""
+                          class="h-9 w-9 rounded-md border border-border object-cover"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span class="block h-9 w-9 rounded-md border border-dashed border-border"></span>
+                      }
+                    }
+                    @default {
+                      <span [class.font-mono]="c.type === 'number' || c.type === 'currency'">{{ cellText(row, c) }}</span>
+                    }
+                  }
+                </td>
+              }
+              @if (config().actions?.length) {
+                <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                  @for (a of visibleActions(row); track a.key) {
+                    <button
+                      type="button"
+                      class="rounded px-2 py-1 text-xs font-medium hover:bg-accent"
+                      [class.text-destructive]="a.tone === 'danger'"
+                      (click)="onAction(a.key, row, $event)"
+                    >
+                      {{ a.label }}
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+            @if (rowDetail() && isExpanded(row)) {
+              <tr class="border-b border-border last:border-0 bg-muted/20">
+                <td [attr.colspan]="colspan()" class="px-4 py-3">
+                  <ng-container [ngTemplateOutlet]="rowDetail()!" [ngTemplateOutletContext]="{ $implicit: row }" />
+                </td>
+              </tr>
+            }
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm">
+    <div class="flex items-center gap-2 text-muted-foreground">
+      <span>{{ total() }} records</span>
+      @if (config().pageSizeOptions?.length) {
+        <select
+          [ngModel]="size()"
+          (ngModelChange)="changeSize($event)"
+          class="h-8 pl-2 pr-7 text-xs"
+        >
+          @for (opt of config().pageSizeOptions; track opt) {
+            <option [value]="opt">{{ opt }} / page</option>
+          }
+        </select>
+      }
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-3 py-1.5 font-medium hover:bg-accent disabled:opacity-50"
+        (click)="prev()"
+        [disabled]="page() === 0 || loading()"
+      >
+        <span class="hidden sm:inline">Previous</span><span class="sm:hidden">‹</span>
+      </button>
+      <span class="whitespace-nowrap text-muted-foreground">
+        <span class="hidden sm:inline">Page </span>{{ page() + 1 }} / {{ totalPages() }}
+      </span>
+      <button
+        type="button"
+        class="rounded-md border border-input px-3 py-1.5 font-medium hover:bg-accent disabled:opacity-50"
+        (click)="next()"
+        [disabled]="page() + 1 >= totalPages() || loading()"
+      >
+        <span class="hidden sm:inline">Next</span><span class="sm:hidden">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Column-visibility modal -->
+@if (showColumns()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    (click)="showColumns.set(false)"
+  >
+    <div class="w-full max-w-xs rounded-xl border border-border bg-card p-5 shadow-lg" (click)="$event.stopPropagation()">
+      <h3 class="mb-3 text-sm font-semibold text-foreground">Toggle columns</h3>
+      <div class="flex flex-col gap-2">
+        @for (c of toggleableColumns(); track c.field) {
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" [checked]="!isHidden(c.field)" (change)="toggleColumn(c.field)" />
+            {{ c.label }}
+          </label>
+        }
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button
+          type="button"
+          class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          (click)="showColumns.set(false)"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+}
