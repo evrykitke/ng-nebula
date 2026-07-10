@@ -1,0 +1,127 @@
+<!-- Input-like trigger -->
+<button
+  type="button"
+  cdkOverlayOrigin
+  #origin="cdkOverlayOrigin"
+  [disabled]="disabled()"
+  (click)="toggle()"
+  class="flex h-9 w-full items-center gap-2 rounded-md border border-input bg-background px-3
+         text-left text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+>
+  @if (display()) {
+    <span class="flex-1 truncate">{{ display() }}</span>
+    <span
+      class="shrink-0 text-muted-foreground hover:text-foreground"
+      role="button"
+      aria-label="Clear"
+      (click)="clear($event)"
+    >
+      <ng-icon name="lucideX" size="14" />
+    </span>
+  } @else {
+    <span class="flex-1 truncate text-muted-foreground">
+      {{ config().placeholder ?? 'Select…' }}
+    </span>
+  }
+  <ng-icon
+    name="lucideChevronDown"
+    size="14"
+    class="shrink-0 text-muted-foreground transition-transform"
+    [class.rotate-180]="open()"
+  />
+</button>
+
+<!-- Panel, hosted in the CDK overlay container (body level — never clipped) -->
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="open()"
+  [cdkConnectedOverlayPositions]="positions"
+  [cdkConnectedOverlayMinWidth]="triggerWidth()"
+  [cdkConnectedOverlayPush]="true"
+  [cdkConnectedOverlayHasBackdrop]="true"
+  cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+  (backdropClick)="open.set(false)"
+  (detach)="open.set(false)"
+  (overlayKeydown)="onKeydown($event)"
+>
+  <div
+    class="w-96 max-w-[90vw] overflow-hidden rounded-md border border-border bg-popover shadow-lg"
+    [style.min-width.px]="triggerWidth()"
+  >
+    <!-- Search -->
+    <div class="border-b border-border p-2">
+      <input
+        #searchBox
+        [ngModel]="search"
+        (ngModelChange)="onSearch($event)"
+        [placeholder]="config().searchPlaceholder ?? 'Search…'"
+        class="h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm
+               focus:outline-none focus:ring-2 focus:ring-ring"
+      />
+    </div>
+
+    <!-- Results table -->
+    <div class="max-h-64 overflow-y-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            @for (c of config().columns; track c.label) {
+              <th class="px-3 py-1.5 font-medium" [style.width]="c.width ?? null">
+                {{ c.label }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            <tr>
+              <td [attr.colspan]="config().columns.length" class="px-3 py-6 text-center text-muted-foreground">
+                Loading…
+              </td>
+            </tr>
+          } @else {
+            @for (row of rows(); track config().key(row)) {
+              <tr
+                class="cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent"
+                [class.bg-accent]="value() === config().key(row)"
+                (click)="select(row)"
+              >
+                @for (c of config().columns; track c.label) {
+                  <td class="truncate px-3 py-1.5">{{ c.value(row) }}</td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="config().columns.length" class="px-3 py-6 text-center text-muted-foreground">
+                  {{ config().emptyText ?? 'No matches.' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    @if (config().quickAdd || total() > rows().length) {
+      <div class="flex items-center border-t border-border px-2 py-1.5">
+        @if (config().quickAdd) {
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-accent"
+            (click)="onQuickAdd()"
+          >
+            <ng-icon name="lucidePlus" size="12" />
+            {{ config().quickAddLabel ?? 'Add new' }}
+          </button>
+        }
+        @if (total() > rows().length) {
+          <span class="ml-auto text-xs text-muted-foreground">
+            {{ rows().length }} of {{ total() }} — refine your search
+          </span>
+        }
+      </div>
+    }
+  </div>
+</ng-template>
