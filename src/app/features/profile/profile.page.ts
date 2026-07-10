@@ -8,6 +8,7 @@ import { TwoFactorSetupCard } from '../../shared/components/two-factor-setup-car
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { apiErrorInfo } from '../../shared/api/api-error';
+import { formatTimestamp } from '../../shared/util/dates';
 import { AuthServiceProxy, Profile } from '../../shared/service-proxies/service-proxies';
 
 /**
@@ -45,11 +46,9 @@ export class ProfilePage {
   /** Company-wide 2FA mandate: opting out is not offered while it is on. */
   readonly mandated = signal(false);
 
-  readonly memberSince = computed(
-    () => this.profile()?.created_at?.toFormat('yyyy-LL-dd') ?? '—',
-  );
-  readonly lastLogin = computed(
-    () => this.profile()?.last_login_at?.toFormat('yyyy-LL-dd HH:mm') ?? '—',
+  readonly memberSince = computed(() => formatTimestamp(this.profile()?.created_at, 'yyyy-LL-dd'));
+  readonly lastLogin = computed(() =>
+    formatTimestamp(this.profile()?.last_login_at, 'yyyy-LL-dd HH:mm'),
   );
 
   // Password fields.

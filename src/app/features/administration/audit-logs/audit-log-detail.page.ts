@@ -11,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
+import { formatTimestamp } from '../../../shared/util/dates';
 import { emptyChangesText } from './audit-log-detail-panel';
 import {
   AuditLog,
@@ -46,10 +47,7 @@ export class AuditLogDetailPage {
   readonly isDiff = computed(() => this.entry()?.action === 'update');
   readonly emptyText = computed(() => emptyChangesText(this.entry()?.action ?? ''));
 
-  readonly when = computed(() => {
-    const at = this.entry()?.created_at;
-    return at ? at.toFormat('yyyy-LL-dd HH:mm:ss') : '';
-  });
+  readonly when = computed(() => formatTimestamp(this.entry()?.created_at, 'yyyy-LL-dd HH:mm:ss'));
 
   constructor() {
     effect(() => {
