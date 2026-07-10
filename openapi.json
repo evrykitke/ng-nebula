@@ -566,7 +566,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "The current company-wide 2FA policy; requires the tenant-settings\npermission.",
+        "summary": "The current company-wide 2FA policy. Readable by any authenticated\nuser of the tenant — the mandate is what they experience at sign-in,\nand the profile page needs it to know whether opting out is possible.",
         "operationId": "tenant_two_factor_get",
         "responses": {
           "200": {

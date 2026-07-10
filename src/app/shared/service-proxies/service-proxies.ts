@@ -22,7 +22,7 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 export class AuditServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
@@ -307,7 +307,7 @@ export class AuditServiceProxy {
 export class AuthServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
@@ -992,8 +992,9 @@ export class AuthServiceProxy {
     }
 
     /**
-     * The current company-wide 2FA policy; requires the tenant-settings
-    permission.
+     * The current company-wide 2FA policy. Readable by any authenticated
+    user of the tenant — the mandate is what they experience at sign-in,
+    and the profile page needs it to know whether opting out is possible.
      */
     tenant_two_factor_get(): Observable<TenantTwoFactorResponse> {
         let url_ = this.baseUrl + "/auth/tenant/two-factor";
@@ -1639,7 +1640,7 @@ export class AuthServiceProxy {
 export class HealthServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
@@ -2101,4 +2102,9 @@ function blobToText(blob: any): Observable<string> {
             reader.readAsText(blob);
         }
     });
+}
+const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/;
+/** Revive ISO timestamps into luxon DateTime so DTO date fields match their declared types. */
+function luxonDateReviver(_key: string, value: any): any {
+    return typeof value === "string" && ISO_DATE_TIME.test(value) ? DateTime.fromISO(value) : value;
 }
