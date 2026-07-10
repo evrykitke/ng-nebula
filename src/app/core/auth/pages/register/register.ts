@@ -20,7 +20,7 @@ import { apiErrorInfo } from '../../../../shared/api/api-error';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-auth-backdrop>
-      <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div class="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
         <div class="mb-5 flex items-center gap-2.5">
           <span class="text-lg font-semibold text-foreground">Pylon</span>
         </div>
