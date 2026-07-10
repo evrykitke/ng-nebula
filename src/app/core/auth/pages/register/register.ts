@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { switchMap } from 'rxjs';
 import { UiButton } from '../../../../shared/ui/button';
+import { Brand } from '../../../../shared/ui/brand';
 import { AuthBackdrop } from '../auth-backdrop';
 import { AuthServiceProxy, RegisterRequest } from '../../../../shared/service-proxies/service-proxies';
 import { AuthService } from '../../auth.service';
@@ -16,14 +17,12 @@ import { apiErrorInfo } from '../../../../shared/api/api-error';
  */
 @Component({
   selector: 'app-register-page',
-  imports: [FormsModule, RouterLink, UiButton, AuthBackdrop],
+  imports: [FormsModule, RouterLink, UiButton, Brand, AuthBackdrop],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-auth-backdrop>
       <div class="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div class="mb-5 flex items-center gap-2.5">
-          <span class="text-lg font-semibold text-foreground">Pylon</span>
-        </div>
+        <app-brand class="mb-5 block" />
 
         <form (ngSubmit)="submit()">
           <h1 class="text-xl font-semibold text-foreground">Create your company</h1>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UiButton } from '../../../../shared/ui/button';
+import { Brand } from '../../../../shared/ui/brand';
 import { AuthBackdrop } from '../auth-backdrop';
 import { TwoFactorSetupCard } from '../../../../shared/components/two-factor-setup-card';
 import { AuthService } from '../../auth.service';
@@ -21,14 +22,12 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
  */
 @Component({
   selector: 'app-login-page',
-  imports: [FormsModule, RouterLink, UiButton, AuthBackdrop, TwoFactorSetupCard],
+  imports: [FormsModule, RouterLink, UiButton, Brand, AuthBackdrop, TwoFactorSetupCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-auth-backdrop>
       <div class="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div class="mb-5 flex items-center gap-2.5">
-          <span class="text-lg font-semibold text-foreground">Pylon</span>
-        </div>
+        <app-brand class="mb-5 block" />
 
         @switch (step()) {
           @case ('credentials') {
