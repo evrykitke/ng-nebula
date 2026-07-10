@@ -1,41 +1,230 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
+import {
+  AuthServiceProxy,
+  LoginRequest,
+  Profile,
+  RefreshRequest,
+  TwoFactorLoginRequest,
+} from '../../shared/service-proxies/service-proxies';
+import { AuthUser, LoginResult, Session, asLoginResult } from './auth.model';
 
-/** The signed-in user as the layout consumes it (topbar, menus). */
-export interface AuthUser {
-  display_name: string;
-  email: string;
-  avatar_url?: string | null;
+const SESSION_KEY = 'pylon.session';
+const TENANT_KEY = 'pylon.tenant';
+
+/**
+ * Load a persisted session. The access token may be expired (a refresh will
+ * renew it), so the session is kept as long as it parses; the interceptor's
+ * 401-refresh-retry sorts out staleness on the first authenticated request.
+ */
+function loadSession(): Session | null {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const stored = JSON.parse(raw) as Session;
+    if (!stored.accessToken || !stored.refreshToken || !stored.user) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return stored;
+  } catch {
+    localStorage.removeItem(SESSION_KEY);
+    return null;
+  }
 }
 
 /**
- * Authentication state. INTERIM: a stub that presents a signed-in demo user
- * and grants every permission, so the shell renders fully while the real
- * wiring to the backend (`POST /auth/login` with the tenant header, refresh
- * token rotation, `GET /auth/me` + `/auth/me/permissions`) lands in the next
- * milestone. The public surface already matches what that wiring needs.
+ * Authentication state. Holds the active session (tokens, user, permissions)
+ * in a signal, persists it to `localStorage`, and re-derives it on startup.
+ * Permissions come from `GET /auth/me/permissions` — nebula JWTs do not carry
+ * them — and drive the app's permission guards and menu.
+ *
+ * Two-factor sign-in is a two-step exchange: `login` may answer with a
+ * short-lived bridge token (`two_factor_required` when a code is expected,
+ * `two_factor_setup_required` when the company mandates 2FA and the account
+ * has none). The bridge token is held here and attached by the interceptor to
+ * the two-factor endpoints until the exchange completes.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly _user = signal<AuthUser | null>({
-    display_name: 'Demo User',
-    email: 'demo@example.com',
-  });
-  private readonly _permissions = signal<Set<string> | null>(null);
+  private readonly proxy = inject(AuthServiceProxy);
 
-  readonly currentUser = this._user.asReadonly();
+  private readonly _session = signal<Session | null>(loadSession());
+  private readonly _tenant = signal<string | null>(
+    localStorage.getItem(TENANT_KEY) ?? this._session()?.tenant ?? null,
+  );
+  private readonly _twoFactorToken = signal<string | null>(null);
+
+  /** In-flight refresh, shared so concurrent 401s trigger a single refresh. */
+  private refreshInFlight?: Observable<Session>;
+
+  readonly session = this._session.asReadonly();
+  readonly profile = computed<Profile | null>(() => this._session()?.user ?? null);
+  readonly permissions = computed<ReadonlySet<string>>(
+    () => new Set(this._session()?.permissions ?? []),
+  );
+  readonly token = computed<string | null>(() => this._session()?.accessToken ?? null);
+  readonly refreshToken = computed<string | null>(() => this._session()?.refreshToken ?? null);
+  readonly tenant = this._tenant.asReadonly();
+  /** The pending two-factor bridge token, while a 2FA exchange is under way. */
+  readonly twoFactorToken = this._twoFactorToken.asReadonly();
+
+  /** The signed-in user as the layout consumes it. */
+  readonly currentUser = computed<AuthUser | null>(() => {
+    const user = this._session()?.user;
+    if (!user) return null;
+    return {
+      display_name: `${user.first_name} ${user.last_name}`.trim() || user.user_name,
+      email: user.email,
+    };
+  });
 
   isAuthenticated(): boolean {
-    return this._user() !== null;
+    return this._session() !== null;
   }
 
-  /** True when the user holds any of the given permissions. `null` = all (stub). */
-  hasAnyPermission(names: string[]): boolean {
-    const granted = this._permissions();
-    if (granted === null) return true;
-    return names.some((n) => granted.has(n));
+  /** Where to send a user after authenticating. */
+  landingUrl(): string {
+    return '/dashboard';
+  }
+
+  /** Persist the tenant name used for the `X-Tenant` header. */
+  setTenant(tenant: string | null): void {
+    this._tenant.set(tenant);
+    if (tenant) localStorage.setItem(TENANT_KEY, tenant);
+    else localStorage.removeItem(TENANT_KEY);
+  }
+
+  /**
+   * Authenticate against a tenant (empty tenant = host context). The tenant is
+   * stored first so the outgoing request carries the `X-Tenant` header. The
+   * result's `status` tells the login page whether the session is live or a
+   * two-factor step is pending.
+   */
+  login(tenant: string, login: string, password: string): Observable<LoginResult['status']> {
+    this.setTenant(tenant.trim() || null);
+    const body: LoginRequest = { login, password };
+    return this.proxy.login(body).pipe(switchMap((res) => this.settle(asLoginResult(res))));
+  }
+
+  /** Finish a two-factor sign-in with an authenticator (or recovery) code. */
+  loginTwoFactor(code: string): Observable<LoginResult['status']> {
+    const body: TwoFactorLoginRequest = { code };
+    return this.proxy.login_two_factor(body).pipe(switchMap((res) => this.settle(asLoginResult(res))));
+  }
+
+  /** Route a login result: establish the session or hold the bridge token. */
+  private settle(result: LoginResult): Observable<LoginResult['status']> {
+    if (result.status !== 'success') {
+      this._twoFactorToken.set(result.two_factor_token);
+      return of(result.status);
+    }
+    this._twoFactorToken.set(null);
+    this.establish(result.access_token, result.refresh_token, result.user, []);
+    // Permissions live server-side; fetch them with the fresh access token.
+    return this.proxy.my_permissions().pipe(
+      tap((permissions) => this.setPermissions(permissions)),
+      map(() => 'success' as const),
+    );
+  }
+
+  /** Establish and persist a session. */
+  private establish(
+    accessToken: string,
+    refreshToken: string,
+    user: Profile,
+    permissions: string[],
+  ): Session {
+    const session: Session = {
+      accessToken,
+      refreshToken,
+      tenant: this._tenant(),
+      user,
+      permissions,
+    };
+    this._session.set(session);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return session;
+  }
+
+  private setPermissions(permissions: string[]): void {
+    const current = this._session();
+    if (!current) return;
+    const session = { ...current, permissions };
+    this._session.set(session);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  /** Update the current user in the active session (e.g. after a profile edit). */
+  setUser(user: Profile): void {
+    const current = this._session();
+    if (!current) return;
+    const session = { ...current, user };
+    this._session.set(session);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  /**
+   * Exchange the stored refresh token for a fresh pair (rotation: the old one
+   * is spent). Concurrent callers share a single in-flight request; failure
+   * clears the session. Cached permissions are kept — they are refreshed on
+   * full logins, not on token rotation.
+   */
+  refreshSession(): Observable<Session> {
+    if (this.refreshInFlight) return this.refreshInFlight;
+
+    const refreshToken = this.refreshToken();
+    const permissions = this._session()?.permissions ?? [];
+    if (!refreshToken) {
+      return throwError(() => new Error('no refresh token available'));
+    }
+
+    const body: RefreshRequest = { refresh_token: refreshToken };
+    this.refreshInFlight = this.proxy.refresh(body).pipe(
+      map((res) => {
+        const result = asLoginResult(res);
+        if (result.status !== 'success') throw new Error('refresh did not yield a session');
+        return this.establish(result.access_token, result.refresh_token, result.user, permissions);
+      }),
+      tap({
+        next: () => (this.refreshInFlight = undefined),
+        error: () => {
+          this.refreshInFlight = undefined;
+          this.clear();
+        },
+      }),
+      shareReplay(1),
+    );
+    return this.refreshInFlight;
   }
 
   logout(): void {
-    this._user.set(null);
+    // Best-effort server-side sign-out: revoke the refresh token and record
+    // the audit event. Fire-and-forget — local session is cleared regardless.
+    const refreshToken = this.refreshToken();
+    if (refreshToken) {
+      this.proxy.logout({ refresh_token: refreshToken }).subscribe({
+        next: () => {},
+        error: () => {},
+      });
+    }
+    this.clear();
+  }
+
+  /** Drop all local authentication state (tenant choice is kept). */
+  private clear(): void {
+    this._session.set(null);
+    this._twoFactorToken.set(null);
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  hasPermission(name: string): boolean {
+    return this.permissions().has(name);
+  }
+
+  hasAnyPermission(names: readonly string[]): boolean {
+    if (names.length === 0) return true;
+    const granted = this.permissions();
+    return names.some((n) => granted.has(n));
   }
 }

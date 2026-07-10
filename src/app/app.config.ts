@@ -4,10 +4,11 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
 
 import { routes } from './app.routes';
+import { apiInterceptor } from './core/interceptors/api-interceptor';
 import { appIcons } from './shared/ui/icons';
 import { environment } from '../environments/environment';
 import { API_BASE_URL } from './shared/service-proxies/service-proxies';
@@ -17,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([apiInterceptor])),
     provideIcons(appIcons),
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
   ],
