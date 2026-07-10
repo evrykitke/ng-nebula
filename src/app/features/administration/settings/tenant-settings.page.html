@@ -1,0 +1,85 @@
+<app-page-header
+  title="Tenant Settings"
+  subtitle="Workspace-wide policies"
+  [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Tenant Settings' }]"
+/>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <!-- Two-factor mandate -->
+  <div class="rounded-xl border border-border bg-card p-5">
+    <h2 class="text-sm font-semibold text-foreground">Two-factor authentication</h2>
+    <p class="mt-1 mb-4 text-sm text-muted-foreground">
+      When mandated, users without an authenticator must enroll before they can sign in.
+    </p>
+    @if (twoFactorLoading()) {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    } @else {
+      <div class="flex items-center justify-between gap-4">
+        <span
+          class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
+          [class]="requireTwoFactor() ? 'bg-success/10 text-success' : 'bg-secondary text-secondary-foreground'"
+        >
+          {{ requireTwoFactor() ? 'Mandatory for everyone' : 'Optional (per user)' }}
+        </span>
+        <button uiBtn [variant]="requireTwoFactor() ? 'outline' : 'default'" (click)="toggleTwoFactor()" [disabled]="twoFactorSaving()">
+          {{ twoFactorSaving() ? 'Saving…' : requireTwoFactor() ? 'Make optional' : 'Mandate 2FA' }}
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Audit retention -->
+  <div class="rounded-xl border border-border bg-card p-5">
+    <h2 class="text-sm font-semibold text-foreground">Audit log retention</h2>
+    <p class="mt-1 mb-4 text-sm text-muted-foreground">
+      How long the audit trail is kept before the pruner removes old rows.
+    </p>
+    @if (retention(); as r) {
+      <div class="mb-4 flex items-end gap-2">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Retention (days)</label>
+          <input
+            [(ngModel)]="retentionDays"
+            name="retentionDays"
+            type="number"
+            [min]="1"
+            [max]="r.max_days"
+            [placeholder]="'default: ' + r.system_default_days"
+            class="h-9 w-40 rounded-md border border-input bg-background px-3 text-sm"
+          />
+        </div>
+        <button uiBtn (click)="saveRetention()" [disabled]="retentionSaving()">
+          {{ retentionSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+      <dl class="grid grid-cols-3 gap-2 text-sm">
+        <div class="rounded-md bg-muted/40 p-2 text-center">
+          <dt class="text-xs text-muted-foreground">System default</dt>
+          <dd class="font-medium">{{ r.system_default_days }} d</dd>
+        </div>
+        <div class="rounded-md bg-muted/40 p-2 text-center">
+          <dt class="text-xs text-muted-foreground">Maximum</dt>
+          <dd class="font-medium">{{ r.max_days }} d</dd>
+        </div>
+        <div class="rounded-md bg-muted/40 p-2 text-center">
+          <dt class="text-xs text-muted-foreground">Effective</dt>
+          <dd class="font-medium">{{ r.effective_days }} d</dd>
+        </div>
+      </dl>
+    } @else {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    }
+  </div>
+
+  <!-- Tenant migration -->
+  <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+    <h2 class="text-sm font-semibold text-foreground">Database migration</h2>
+    <p class="mt-1 mb-4 text-sm text-muted-foreground">
+      Queue a background migration of this workspace's database to pick up newly deployed
+      features immediately, instead of waiting for the next server restart.
+    </p>
+    <button uiBtn variant="outline" (click)="migrate()" [disabled]="migrating()">
+      {{ migrating() ? 'Queueing…' : 'Run migrations now' }}
+    </button>
+  </div>
+</div>

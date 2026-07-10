@@ -76,7 +76,7 @@ import { ThemeModal } from '../../theme/theme-modal';
             <p class="truncate text-xs text-muted-foreground">{{ user()?.email }}</p>
           </div>
           <div class="my-1 h-px bg-border"></div>
-          <button cdkMenuItem routerLink="/settings/profile" class="menu-item">
+          <button cdkMenuItem routerLink="/profile" class="menu-item">
             <ng-icon name="lucideUser" size="16" /> Profile
           </button>
           <div class="my-1 h-px bg-border"></div>

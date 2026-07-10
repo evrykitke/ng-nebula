@@ -1,0 +1,58 @@
+<app-page-header
+  title="Audit Logs"
+  subtitle="Every mutating request, entity change and security event"
+  [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Audit Logs' }]"
+/>
+
+<app-data-table
+  [config]="config"
+  [dataSource]="dataSource"
+  (action)="onAction($event)"
+  (rowClick)="open($event)"
+>
+  <div toolbar class="flex flex-wrap items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">Action</label>
+      <select
+        [(ngModel)]="action"
+        name="action"
+        (ngModelChange)="applyFilters()"
+        class="h-9 rounded-md border border-input bg-background pl-2 pr-7 text-sm"
+      >
+        <option value="">All</option>
+        @for (a of actions; track a) {
+          <option [value]="a">{{ a }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">Entity type</label>
+      <input
+        [(ngModel)]="entityType"
+        name="entityType"
+        placeholder="user, role, tenant…"
+        (keydown.enter)="applyFilters()"
+        (blur)="applyFilters()"
+        class="h-9 w-36 rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs text-muted-foreground">User id</label>
+      <input
+        [(ngModel)]="userId"
+        name="userId"
+        type="number"
+        (keydown.enter)="applyFilters()"
+        (blur)="applyFilters()"
+        class="h-9 w-24 rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <button
+      type="button"
+      class="h-9 rounded-md border border-input px-3 text-sm text-muted-foreground hover:bg-accent"
+      (click)="clearFilters()"
+    >
+      Clear
+    </button>
+  </div>
+</app-data-table>

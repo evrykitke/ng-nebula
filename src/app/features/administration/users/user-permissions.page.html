@@ -1,0 +1,163 @@
+<app-page-header
+  [title]="displayName()"
+  subtitle="Roles and per-permission overrides for this user"
+  [breadcrumbs]="[
+    { label: 'Administration', route: '/administration' },
+    { label: 'Users', route: '/administration/users' },
+    { label: 'Access' },
+  ]"
+/>
+
+<a routerLink="/administration/users" class="mb-4 inline-block text-sm text-primary hover:underline">
+  ← Back to users
+</a>
+
+@if (loading()) {
+  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">Loading…</div>
+} @else {
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">
+    <!-- Roles -->
+    <div class="self-start rounded-xl border border-border bg-card p-5">
+      <h2 class="text-sm font-semibold text-foreground">Roles</h2>
+      <p class="mt-0.5 mb-3 text-xs text-muted-foreground">
+        The user's base permissions are the union of these roles.
+      </p>
+      @if (user()?.is_tenant_admin) {
+        <p class="mb-3 rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">
+          Tenant admin — implicitly holds every permission regardless of roles.
+        </p>
+      }
+      <div class="flex flex-col gap-2">
+        @for (r of allRoles(); track r.id) {
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" [checked]="hasRole(r)" (change)="toggleRole(r)" />
+            <span class="min-w-0 truncate">{{ r.display_name }}</span>
+            @if (r.is_static) {
+              <span class="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">built-in</span>
+            }
+          </label>
+        } @empty {
+          <p class="py-3 text-center text-sm text-muted-foreground">No roles defined yet.</p>
+        }
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button uiBtn (click)="saveRoles()" [disabled]="savingRoles()">
+          {{ savingRoles() ? 'Saving…' : 'Save roles' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Permission overrides -->
+    <div class="rounded-xl border border-border bg-card p-5">
+      <div class="mb-1 flex items-center justify-between gap-3">
+        <h2 class="text-sm font-semibold text-foreground">Permission overrides</h2>
+        <span class="text-xs text-muted-foreground">
+          {{ effectiveCount() }} of {{ totalLeaves() }} effective
+        </span>
+      </div>
+      <p class="mb-3 text-xs text-muted-foreground">
+        Grant adds a permission beyond the roles; deny always wins — even over a role grant.
+        The dot marks what is currently effective.
+      </p>
+
+      <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div class="relative min-w-56 flex-1">
+          <ng-icon
+            name="lucideSearch"
+            size="15"
+            class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="search"
+            [ngModel]="query()"
+            (ngModelChange)="query.set($event)"
+            name="permissionSearch"
+            placeholder="Search permissions…"
+            class="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <button type="button" class="text-primary hover:underline" (click)="expandAll()">Expand all</button>
+          <button type="button" class="text-primary hover:underline" (click)="collapseAll()">Collapse all</button>
+        </div>
+      </div>
+
+      <div class="max-h-[52vh] overflow-y-auto rounded-md border border-border">
+        @for (node of visible(); track node.name) {
+          <div
+            class="flex items-center gap-1.5 border-b border-border px-3 py-2 text-sm last:border-0 hover:bg-accent/50"
+            [style.padding-left.px]="12 + node.depth * 20"
+          >
+            @if (node.children.length) {
+              <button
+                type="button"
+                class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent"
+                (click)="toggleExpand(node.name)"
+                [attr.aria-expanded]="isExpanded(node.name)"
+                [attr.aria-label]="isExpanded(node.name) ? 'Collapse' : 'Expand'"
+              >
+                <ng-icon
+                  name="lucideChevronRight"
+                  size="14"
+                  class="transition-transform"
+                  [class.rotate-90]="isExpanded(node.name)"
+                />
+              </button>
+            } @else {
+              <span class="w-5 shrink-0"></span>
+            }
+
+            <span
+              class="h-1.5 w-1.5 shrink-0 rounded-full"
+              [class]="isEffective(node.name) ? 'bg-success' : 'bg-border'"
+              [attr.title]="isEffective(node.name) ? 'Effective' : 'Not effective'"
+            ></span>
+
+            <span [class.font-medium]="node.children.length > 0" class="min-w-0 flex-1 truncate text-foreground">
+              {{ node.label }}
+            </span>
+
+            @if (!node.children.length) {
+              <div class="flex shrink-0 overflow-hidden rounded-md border border-input text-[11px]">
+                <button
+                  type="button"
+                  class="px-2 py-1"
+                  [class]="overrideOf(node.name) === 'inherit' ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-accent'"
+                  (click)="setOverride(node.name, 'inherit')"
+                >
+                  Inherit
+                </button>
+                <button
+                  type="button"
+                  class="border-l border-input px-2 py-1"
+                  [class]="overrideOf(node.name) === 'grant' ? 'bg-success/15 font-medium text-success' : 'text-muted-foreground hover:bg-accent'"
+                  (click)="setOverride(node.name, 'grant')"
+                >
+                  Grant
+                </button>
+                <button
+                  type="button"
+                  class="border-l border-input px-2 py-1"
+                  [class]="overrideOf(node.name) === 'deny' ? 'bg-destructive/15 font-medium text-destructive' : 'text-muted-foreground hover:bg-accent'"
+                  (click)="setOverride(node.name, 'deny')"
+                >
+                  Deny
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="px-3 py-6 text-center text-sm text-muted-foreground">
+            No permissions match “{{ query() }}”.
+          </p>
+        }
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <button uiBtn (click)="saveOverrides()" [disabled]="savingOverrides()">
+          {{ savingOverrides() ? 'Saving…' : 'Save overrides' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

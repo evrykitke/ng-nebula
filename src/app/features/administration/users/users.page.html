@@ -1,0 +1,81 @@
+<app-page-header
+  title="Users"
+  subtitle="Manage the people in your workspace"
+  [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Users' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="openCreate()">
+      <ng-icon name="lucidePlus" size="16" /> New user
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />
+
+<!-- Create dialog -->
+<app-modal [open]="creating()" size="md" title="New user" (closed)="creating.set(false)">
+  <form (ngSubmit)="create()">
+    <div class="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">First name</label>
+        <input
+          [(ngModel)]="form.first_name"
+          name="first_name"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Last name</label>
+        <input
+          [(ngModel)]="form.last_name"
+          name="last_name"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+    <label class="mb-1.5 block text-sm font-medium">Username</label>
+    <input
+      [(ngModel)]="form.user_name"
+      name="user_name"
+      autocomplete="off"
+      class="mb-3 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+    <label class="mb-1.5 block text-sm font-medium">Email</label>
+    <input
+      [(ngModel)]="form.email"
+      name="email"
+      type="email"
+      autocomplete="off"
+      class="mb-3 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+    <label class="mb-1.5 block text-sm font-medium">Password</label>
+    <input
+      [(ngModel)]="form.password"
+      name="password"
+      type="password"
+      autocomplete="new-password"
+      class="mb-3 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+    <label class="mb-4 flex items-center gap-2 text-sm">
+      <input type="checkbox" [(ngModel)]="form.is_tenant_admin" name="is_tenant_admin" />
+      Tenant admin (implicitly holds every permission)
+    </label>
+
+    @if (formError()) {
+      <p class="mb-3 text-sm text-destructive">{{ formError() }}</p>
+    }
+
+    <div class="flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+        (click)="creating.set(false)"
+      >
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="saving()">
+        {{ saving() ? 'Creating…' : 'Create' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

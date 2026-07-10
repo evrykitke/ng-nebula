@@ -561,6 +561,25 @@
       }
     },
     "/auth/tenant/two-factor": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "The current company-wide 2FA policy; requires the tenant-settings\npermission.",
+        "operationId": "tenant_two_factor_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantTwoFactorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "auth"

@@ -1,0 +1,88 @@
+<app-page-header
+  title="Audit entry"
+  subtitle="What changed, when, and by whom"
+  [breadcrumbs]="[
+    { label: 'Administration', route: '/administration' },
+    { label: 'Audit Logs', route: '/administration/audit-logs' },
+    { label: 'Entry' },
+  ]"
+/>
+
+<a routerLink="/administration/audit-logs" class="mb-4 inline-block text-sm text-primary hover:underline">
+  ← Back to audit logs
+</a>
+
+@if (loading()) {
+  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">Loading…</div>
+} @else if (entry(); as e) {
+  <!-- Event header -->
+  <div class="mb-5 rounded-xl border border-border bg-card p-5">
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      <span class="rounded bg-muted px-2 py-1 font-mono text-sm">{{ e.action }}</span>
+      @if (e.entity_type) {
+        <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          {{ e.entity_type }}{{ e.entity_id ? ' #' + e.entity_id : '' }}
+        </span>
+      }
+      @if (e.message) {
+        <span class="text-sm text-muted-foreground">{{ e.message }}</span>
+      }
+    </div>
+    <dl class="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">When</dt><dd class="font-medium">{{ when() }}</dd>
+      </div>
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">User id</dt><dd class="font-mono text-xs">{{ e.user_id ?? 'system' }}</dd>
+      </div>
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">Request</dt>
+        <dd class="font-mono text-xs">{{ e.method }} {{ e.path }}</dd>
+      </div>
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">Status</dt>
+        <dd class="font-medium">{{ e.status_code ?? '—' }}<span class="text-muted-foreground"> · {{ e.duration_ms ?? '—' }} ms</span></dd>
+      </div>
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">IP address</dt><dd class="font-mono text-xs">{{ e.ip_address || '—' }}</dd>
+      </div>
+      <div class="flex justify-between gap-4 border-b border-border/50 py-1">
+        <dt class="text-muted-foreground">Request id</dt><dd class="truncate font-mono text-xs">{{ e.request_id || '—' }}</dd>
+      </div>
+      <div class="flex justify-between gap-4 py-1 sm:col-span-2">
+        <dt class="text-muted-foreground">User agent</dt><dd class="truncate text-xs">{{ e.user_agent || '—' }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- What changed -->
+  <div class="rounded-xl border border-border bg-card p-5">
+    <h2 class="mb-4 text-sm font-semibold text-foreground">
+      {{ isDiff() ? 'Before → After' : 'Snapshot' }}
+    </h2>
+
+    @if (changes().length === 0) {
+      <p class="text-sm text-muted-foreground">No field-level changes were recorded for this entry.</p>
+    } @else {
+      <ol class="relative ml-3 border-l border-border">
+        @for (c of changes(); track c.field) {
+          <li class="mb-4 ml-5">
+            <span class="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-background bg-primary"></span>
+            <p class="mb-1 text-sm font-medium text-foreground">{{ c.field }}</p>
+            @if (isDiff()) {
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <code class="flex-1 rounded-md bg-destructive/10 px-2 py-1 text-xs text-destructive line-through break-all">{{ before(c) }}</code>
+                <span class="text-muted-foreground">→</span>
+                <code class="flex-1 rounded-md bg-green-500/10 px-2 py-1 text-xs text-green-700 dark:text-green-300 break-all">{{ after(c) }}</code>
+              </div>
+            } @else {
+              <code class="block rounded-md bg-muted px-2 py-1 text-xs break-all">{{ snapshot(c) }}</code>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </div>
+} @else {
+  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">Audit entry not found.</div>
+}
