@@ -540,6 +540,37 @@
         }
       }
     },
+    "/auth/tenant/logo": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Stores the logo at `{files.root}/{tenant-id}/logo.{ext}`; it is then\nserved from the `logo_url` in the profile response.",
+        "operationId": "tenant_logo_upload",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/tenant/migrate": {
       "post": {
         "tags": [
@@ -554,6 +585,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueuedJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/tenant/profile": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Readable by any authenticated user of the tenant — the company name,\nlogo and currency are what its own screens display.",
+        "operationId": "tenant_profile_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "tenant_profile_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileResponse"
                 }
               }
             }
@@ -936,6 +1016,91 @@
         }
       }
     },
+    "/currencies": {
+      "get": {
+        "tags": [
+          "currency"
+        ],
+        "summary": "Anonymous on purpose: the onboarding form needs the list before a\ntenant or user exists.",
+        "operationId": "list_currencies",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Currency"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "currency"
+        ],
+        "summary": "Deployment-wide: the currency joins every tenant's picker.",
+        "operationId": "create_currency",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCurrencyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Currency"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/currencies/{id}": {
+      "delete": {
+        "tags": [
+          "currency"
+        ],
+        "operationId": "delete_currency",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Currency id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Currency"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1117,6 +1282,49 @@
           }
         }
       },
+      "CompanyProfileResponse": {
+        "type": "object",
+        "description": "The tenant's company profile as shown to its users and edited in\ntenant settings.",
+        "required": [
+          "tenant",
+          "display_name"
+        ],
+        "properties": {
+          "default_currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A code from `GET /currencies`."
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the uploaded company logo is served from, when one exists."
+          },
+          "tax_pin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tax registration PIN (e.g. a KRA PIN)."
+          },
+          "tenant": {
+            "type": "string"
+          },
+          "vat_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "ConfirmTwoFactorRequest": {
         "type": "object",
         "required": [
@@ -1140,6 +1348,28 @@
               "type": "string"
             },
             "description": "Shown exactly once — store them somewhere safe."
+          }
+        }
+      },
+      "CreateCurrencyRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "minor_units"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Three uppercase ASCII letters (ISO 4217 or an app-defined unit)."
+          },
+          "minor_units": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Decimal places of the minor unit, 0-6."
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -1208,6 +1438,43 @@
             ]
           },
           "user_name": {
+            "type": "string"
+          }
+        }
+      },
+      "Currency": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "minor_units",
+          "is_system",
+          "created_at"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "ISO 4217 code (or an app-defined unit), three uppercase letters."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_system": {
+            "type": "boolean",
+            "description": "Seeded rows are system currencies and cannot be deleted."
+          },
+          "minor_units": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Decimal places of the minor unit (KES/USD 2, JPY 0, BHD 3)."
+          },
+          "name": {
             "type": "string"
           }
         }
@@ -1420,6 +1687,20 @@
           }
         ]
       },
+      "LogoUpload": {
+        "type": "object",
+        "description": "Multipart body of the logo upload.",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "The image file: png, jpg, svg or webp, at most 1 MiB."
+          }
+        }
+      },
       "PermissionDef": {
         "type": "object",
         "required": [
@@ -1585,6 +1866,13 @@
               "string",
               "null"
             ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The company's currency, a code from `GET /currencies`.\nIgnored in single-tenant mode."
           },
           "email": {
             "type": "string"
@@ -1827,6 +2115,36 @@
           },
           "secret": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateCompanyProfileRequest": {
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "properties": {
+          "default_currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A code from `GET /currencies`; null clears the default."
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "tax_pin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vat_number": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

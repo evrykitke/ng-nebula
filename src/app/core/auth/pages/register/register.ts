@@ -5,7 +5,13 @@ import { switchMap } from 'rxjs';
 import { UiButton } from '../../../../shared/ui/button';
 import { Brand } from '../../../../shared/ui/brand';
 import { AuthBackdrop } from '../auth-backdrop';
-import { AuthServiceProxy, RegisterRequest } from '../../../../shared/service-proxies/service-proxies';
+import { Lookup } from '../../../../shared/lookup/lookup';
+import { currencyLookup } from '../../../../shared/lookup/entity-lookups';
+import {
+  AuthServiceProxy,
+  CurrencyServiceProxy,
+  RegisterRequest,
+} from '../../../../shared/service-proxies/service-proxies';
 import { AuthService } from '../../auth.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
 
@@ -17,7 +23,7 @@ import { apiErrorInfo } from '../../../../shared/api/api-error';
  */
 @Component({
   selector: 'app-register-page',
-  imports: [FormsModule, RouterLink, UiButton, Brand, AuthBackdrop],
+  imports: [FormsModule, RouterLink, UiButton, Brand, AuthBackdrop, Lookup],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-auth-backdrop>
@@ -56,6 +62,12 @@ import { apiErrorInfo } from '../../../../shared/api/api-error';
           <p class="mb-4 text-xs text-muted-foreground">
             Lowercase letters, digits and dashes. Your team never has to remember it — signing in
             only needs an email and password.
+          </p>
+
+          <label class="mb-1.5 block text-sm font-medium text-foreground">Currency</label>
+          <app-lookup [config]="currencies" [(value)]="currency" class="mb-1 block" />
+          <p class="mb-4 text-xs text-muted-foreground">
+            The currency your company operates in. Optional — you can set it later in settings.
           </p>
 
           <div class="mb-4 grid grid-cols-2 gap-3">
@@ -140,6 +152,9 @@ export class RegisterPage {
   /** Stop deriving the identifier once the user edits it themselves. */
   private workspaceTouched = false;
 
+  readonly currencies = currencyLookup(inject(CurrencyServiceProxy));
+  currency: string | null = null;
+
   firstName = '';
   lastName = '';
   email = '';
@@ -170,6 +185,7 @@ export class RegisterPage {
     const body: RegisterRequest = {
       tenant_name: this.workspace(),
       company_display_name: this.companyName().trim(),
+      currency: this.currency ?? undefined,
       email: this.email.trim(),
       password: this.password,
       first_name: this.firstName.trim(),

@@ -5,6 +5,97 @@
 />
 
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <!-- Company information -->
+  <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+    <h2 class="text-sm font-semibold text-foreground">Company information</h2>
+    <p class="mt-1 mb-4 text-sm text-muted-foreground">
+      The name, logo and identifiers your workspace presents — and the currency it operates in.
+    </p>
+    @if (profile(); as p) {
+      <div class="flex flex-col gap-6 md:flex-row">
+        <!-- Logo -->
+        <div class="flex shrink-0 flex-col items-center gap-3">
+          @if (logoSrc(p); as src) {
+            <img
+              [src]="src"
+              alt="Company logo"
+              class="size-28 rounded-lg border border-border bg-background object-contain p-2"
+            />
+          } @else {
+            <div
+              class="flex size-28 items-center justify-center rounded-lg border border-dashed
+                     border-border text-muted-foreground"
+            >
+              <ng-icon name="lucideBuilding2" size="36" />
+            </div>
+          }
+          <button
+            uiBtn
+            variant="outline"
+            size="sm"
+            type="button"
+            [disabled]="logoUploading()"
+            (click)="logoInput.click()"
+          >
+            <ng-icon name="lucideUpload" size="14" />
+            {{ logoUploading() ? 'Uploading…' : 'Upload logo' }}
+          </button>
+          <input
+            #logoInput
+            type="file"
+            accept=".png,.jpg,.jpeg,.svg,.webp"
+            class="hidden"
+            (change)="onLogoSelected($event)"
+          />
+          <p class="text-center text-xs text-muted-foreground">png, jpg, svg or webp<br />up to 1 MiB</p>
+        </div>
+
+        <!-- Details -->
+        <form class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2" (ngSubmit)="saveProfile()">
+          <div class="md:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Company name</label>
+            <input
+              [(ngModel)]="displayName"
+              name="displayName"
+              type="text"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Tax PIN</label>
+            <input
+              [(ngModel)]="taxPin"
+              name="taxPin"
+              type="text"
+              placeholder="e.g. KRA PIN"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">VAT number</label>
+            <input
+              [(ngModel)]="vatNumber"
+              name="vatNumber"
+              type="text"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Default currency</label>
+            <app-lookup [config]="currencies" [(value)]="currency" [(display)]="currencyDisplay" />
+          </div>
+          <div class="flex items-end justify-end md:col-span-2">
+            <button uiBtn type="submit" [disabled]="profileSaving()">
+              {{ profileSaving() ? 'Saving…' : 'Save company information' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    } @else {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    }
+  </div>
+
   <!-- Two-factor mandate -->
   <div class="rounded-xl border border-border bg-card p-5">
     <h2 class="text-sm font-semibold text-foreground">Two-factor authentication</h2>

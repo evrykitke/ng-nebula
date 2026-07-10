@@ -940,6 +940,65 @@ export class AuthServiceProxy {
     }
 
     /**
+     * Stores the logo at `{files.root}/{tenant-id}/logo.{ext}`; it is then
+    served from the `logo_url` in the profile response.
+     * @param file (optional) The image file: png, jpg, svg or webp, at most 1 MiB.
+     */
+    tenant_logo_upload(file?: FileParameter | undefined): Observable<CompanyProfileResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/logo";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file === null || file === undefined)
+            throw new globalThis.Error("The parameter 'file' cannot be null.");
+        else
+            content_.append("file", file.data, file.fileName ? file.fileName : "file");
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTenant_logo_upload(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTenant_logo_upload(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CompanyProfileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CompanyProfileResponse>;
+        }));
+    }
+
+    protected processTenant_logo_upload(response: HttpResponseBase): Observable<CompanyProfileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompanyProfileResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * Queue a background migration of the caller's tenant database — how a
     tenant picks up newly deployed features without waiting for the next
     restart. Needs `jobs.enabled`.
@@ -981,6 +1040,108 @@ export class AuthServiceProxy {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as QueuedJobResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Readable by any authenticated user of the tenant — the company name,
+    logo and currency are what its own screens display.
+     */
+    tenant_profile_get(): Observable<CompanyProfileResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/profile";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTenant_profile_get(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTenant_profile_get(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CompanyProfileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CompanyProfileResponse>;
+        }));
+    }
+
+    protected processTenant_profile_get(response: HttpResponseBase): Observable<CompanyProfileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompanyProfileResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    tenant_profile_update(body: UpdateCompanyProfileRequest): Observable<CompanyProfileResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/profile";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTenant_profile_update(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTenant_profile_update(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CompanyProfileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CompanyProfileResponse>;
+        }));
+    }
+
+    protected processTenant_profile_update(response: HttpResponseBase): Observable<CompanyProfileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CompanyProfileResponse;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1637,6 +1798,178 @@ export class AuthServiceProxy {
 @Injectable({
     providedIn: 'root'
 })
+export class CurrencyServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * Anonymous on purpose: the onboarding form needs the list before a
+    tenant or user exists.
+     */
+    list_currencies(): Observable<Currency[]> {
+        let url_ = this.baseUrl + "/currencies";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_currencies(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_currencies(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Currency[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Currency[]>;
+        }));
+    }
+
+    protected processList_currencies(response: HttpResponseBase): Observable<Currency[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Currency[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Deployment-wide: the currency joins every tenant's picker.
+     */
+    create_currency(body: CreateCurrencyRequest): Observable<Currency> {
+        let url_ = this.baseUrl + "/currencies";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_currency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_currency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Currency>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Currency>;
+        }));
+    }
+
+    protected processCreate_currency(response: HttpResponseBase): Observable<Currency> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Currency;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Currency id
+     */
+    delete_currency(id: string): Observable<Currency> {
+        let url_ = this.baseUrl + "/currencies/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete_currency(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete_currency(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Currency>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Currency>;
+        }));
+    }
+
+    protected processDelete_currency(response: HttpResponseBase): Observable<Currency> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Currency;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
 export class HealthServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
@@ -1788,6 +2121,21 @@ export interface ChangePasswordRequest {
     [key: string]: any;
 }
 
+/** The tenant's company profile as shown to its users and edited in tenant settings. */
+export interface CompanyProfileResponse {
+    /** A code from `GET /currencies`. */
+    default_currency?: string | undefined;
+    display_name: string;
+    /** Where the uploaded company logo is served from, when one exists. */
+    logo_url?: string | undefined;
+    /** Tax registration PIN (e.g. a KRA PIN). */
+    tax_pin?: string | undefined;
+    tenant: string;
+    vat_number?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface ConfirmTwoFactorRequest {
     code: string;
 
@@ -1797,6 +2145,16 @@ export interface ConfirmTwoFactorRequest {
 export interface ConfirmTwoFactorResponse {
     /** Shown exactly once — store them somewhere safe. */
     recovery_codes: string[];
+
+    [key: string]: any;
+}
+
+export interface CreateCurrencyRequest {
+    /** Three uppercase ASCII letters (ISO 4217 or an app-defined unit). */
+    code: string;
+    /** Decimal places of the minor unit, 0-6. */
+    minor_units: number;
+    name: string;
 
     [key: string]: any;
 }
@@ -1819,6 +2177,20 @@ export interface CreateUserRequest {
     phone_number?: string | undefined;
     time_zone?: string | undefined;
     user_name: string;
+
+    [key: string]: any;
+}
+
+export interface Currency {
+    /** ISO 4217 code (or an app-defined unit), three uppercase letters. */
+    code: string;
+    created_at: DateTime;
+    id: string;
+    /** Seeded rows are system currencies and cannot be deleted. */
+    is_system: boolean;
+    /** Decimal places of the minor unit (KES/USD 2, JPY 0, BHD 3). */
+    minor_units: number;
+    name: string;
 
     [key: string]: any;
 }
@@ -1868,6 +2240,14 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+
+    [key: string]: any;
+}
+
+/** Multipart body of the logo upload. */
+export interface LogoUpload {
+    /** The image file: png, jpg, svg or webp, at most 1 MiB. */
+    file: string;
 
     [key: string]: any;
 }
@@ -1927,6 +2307,9 @@ export interface RefreshRequest {
 
 export interface RegisterRequest {
     company_display_name?: string | undefined;
+    /** The company's currency, a code from `GET /currencies`.
+Ignored in single-tenant mode. */
+    currency?: string | undefined;
     email: string;
     first_name: string;
     last_name: string;
@@ -2038,6 +2421,16 @@ export interface TwoFactorSetup {
     [key: string]: any;
 }
 
+export interface UpdateCompanyProfileRequest {
+    /** A code from `GET /currencies`; null clears the default. */
+    default_currency?: string | undefined;
+    display_name: string;
+    tax_pin?: string | undefined;
+    vat_number?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface UpdateRoleRequest {
     display_name?: string | undefined;
     permissions?: string[] | undefined;
@@ -2109,4 +2502,10 @@ const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d
 /** Revive ISO timestamps into luxon DateTime so DTO date fields match their declared types. */
 function luxonDateReviver(_key: string, value: any): any {
     return typeof value === "string" && ISO_DATE_TIME.test(value) ? DateTime.fromISO(value) : value;
+}
+
+/** Multipart file parameter (declaration omitted by NSwag for interface-style DTOs). */
+export interface FileParameter {
+    data: any;
+    fileName: string;
 }
