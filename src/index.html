@@ -2,10 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>PylonClient</title>
+  <title>Pylon</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Prevent FOUC - apply persisted theme + light/dark before first paint.
+    (function () {
+      var root = document.documentElement;
+      var theme = localStorage.getItem('app-theme') || 'professional';
+      var mode = localStorage.getItem('app-mode') || 'system';
+      var dark = mode === 'dark' ||
+        (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.setAttribute('data-theme', theme);
+      root.classList.toggle('dark', dark);
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

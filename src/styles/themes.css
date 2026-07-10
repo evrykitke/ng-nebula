@@ -1,0 +1,428 @@
+/* ============================================
+   THEME SYSTEM — shadcn/Spartan token palettes
+   Three personalities × light + dark.
+
+   Each theme sets not just colors but also its own
+   --radius and --font-sans, so the themes feel
+   genuinely different rather than re-accented:
+
+     corporate    crisp, dense, neutral slate, small radius
+     professional soft, airy, teal, medium radius, modern sans
+     rusty        warm, rounded, editorial serif, large radius
+
+   Axes:
+     [data-theme=x]        → palette + personality (light)
+     .dark[data-theme=x]   → dark override of that palette
+   ============================================ */
+
+@layer base {
+  /* =========================================================
+     CORPORATE — Classic Enterprise
+     ========================================================= */
+  :root,
+  [data-theme='corporate'] {
+    --radius: 0.375rem;
+    --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #e2e8f0;
+    --accent-foreground: #0f172a;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #cbd5e1;
+    --ring: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --sidebar: #0f172a;
+    --sidebar-foreground: #94a3b8;
+    --sidebar-primary: #2563eb;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1e293b;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #2563eb;
+  }
+
+  .dark[data-theme='corporate'] {
+    --background: #0b1120;
+    --foreground: #e2e8f0;
+    --card: #111a2e;
+    --card-foreground: #e2e8f0;
+    --popover: #111a2e;
+    --popover-foreground: #e2e8f0;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #1e293b;
+    --secondary-foreground: #e2e8f0;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #1e293b;
+    --accent-foreground: #f1f5f9;
+    --destructive: #f87171;
+    --destructive-foreground: #0b1120;
+    --border: #1e293b;
+    --input: #334155;
+    --ring: #3b82f6;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --info: #22d3ee;
+    --sidebar: #080e1a;
+    --sidebar-foreground: #94a3b8;
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #16203a;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #3b82f6;
+  }
+
+  /* =========================================================
+     PROFESSIONAL — Modern Minimalist
+     ========================================================= */
+  [data-theme='professional'] {
+    --radius: 0.625rem;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    --background: #fafaf9;
+    --foreground: #1c1917;
+    --card: #ffffff;
+    --card-foreground: #1c1917;
+    --popover: #ffffff;
+    --popover-foreground: #1c1917;
+    --primary: #0d9488;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f4;
+    --secondary-foreground: #1c1917;
+    --muted: #f5f5f4;
+    --muted-foreground: #78716c;
+    --accent: #e7e5e4;
+    --accent-foreground: #1c1917;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e7e5e4;
+    --input: #d6d3d1;
+    --ring: #0d9488;
+    --success: #22c55e;
+    --warning: #eab308;
+    --info: #0ea5e9;
+    --sidebar: #f5f5f4;
+    --sidebar-foreground: #57534e;
+    --sidebar-primary: #0d9488;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e7e5e4;
+    --sidebar-accent-foreground: #1c1917;
+    --sidebar-border: #e7e5e4;
+    --sidebar-ring: #0d9488;
+  }
+
+  .dark[data-theme='professional'] {
+    --background: #0c0a09;
+    --foreground: #e7e5e4;
+    --card: #1c1917;
+    --card-foreground: #e7e5e4;
+    --popover: #1c1917;
+    --popover-foreground: #e7e5e4;
+    --primary: #2dd4bf;
+    --primary-foreground: #042f2a;
+    --secondary: #292524;
+    --secondary-foreground: #e7e5e4;
+    --muted: #292524;
+    --muted-foreground: #a8a29e;
+    --accent: #292524;
+    --accent-foreground: #f5f5f4;
+    --destructive: #f87171;
+    --destructive-foreground: #0c0a09;
+    --border: #292524;
+    --input: #44403c;
+    --ring: #2dd4bf;
+    --success: #4ade80;
+    --warning: #facc15;
+    --info: #38bdf8;
+    --sidebar: #0c0a09;
+    --sidebar-foreground: #a8a29e;
+    --sidebar-primary: #2dd4bf;
+    --sidebar-primary-foreground: #042f2a;
+    --sidebar-accent: #292524;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #2dd4bf;
+  }
+
+  /* =========================================================
+     RUSTY — Warm Industrial
+     ========================================================= */
+  [data-theme='rusty'] {
+    --radius: 1rem;
+    --font-sans: 'Trebuchet MS', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+
+    --background: #faf8f6;
+    --foreground: #1c1917;
+    --card: #ffffff;
+    --card-foreground: #1c1917;
+    --popover: #ffffff;
+    --popover-foreground: #1c1917;
+    --primary: #ea580c;
+    --primary-foreground: #ffffff;
+    --secondary: #f3f1ef;
+    --secondary-foreground: #1c1917;
+    --muted: #f3f1ef;
+    --muted-foreground: #78716c;
+    --accent: #ece9e5;
+    --accent-foreground: #1c1917;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e7e3df;
+    --input: #d6d1cb;
+    --ring: #ea580c;
+    --success: #16a34a;
+    --warning: #d97706;
+    --info: #0891b2;
+    --sidebar: #292625;
+    --sidebar-foreground: #a8a29e;
+    --sidebar-primary: #ea580c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #393634;
+    --sidebar-accent-foreground: #fafaf9;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #ea580c;
+  }
+
+  .dark[data-theme='rusty'] {
+    --background: #1c1917;
+    --foreground: #f5f5f4;
+    --card: #262321;
+    --card-foreground: #f5f5f4;
+    --popover: #262321;
+    --popover-foreground: #f5f5f4;
+    --primary: #fb923c;
+    --primary-foreground: #1c1917;
+    --secondary: #2e2b28;
+    --secondary-foreground: #f5f5f4;
+    --muted: #2e2b28;
+    --muted-foreground: #a8a29e;
+    --accent: #34302d;
+    --accent-foreground: #f5f5f4;
+    --destructive: #f87171;
+    --destructive-foreground: #1c1917;
+    --border: #34302d;
+    --input: #44403c;
+    --ring: #fb923c;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --info: #22d3ee;
+    --sidebar: #161413;
+    --sidebar-foreground: #a8a29e;
+    --sidebar-primary: #fb923c;
+    --sidebar-primary-foreground: #1c1917;
+    --sidebar-accent: #2e2b28;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #fb923c;
+  }
+
+  /* =========================================================
+     TECHY — SaaS Startup
+     The modern product-tool look (Linear/Stripe energy):
+     electric blurple, cool zinc neutrals, soft 10px corners,
+     near-black dark mode with a glowing accent.
+     ========================================================= */
+  [data-theme='techy'] {
+    --radius: 0.625rem;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+
+    --background: #fafafa;
+    --foreground: #18181b;
+    --card: #ffffff;
+    --card-foreground: #18181b;
+    --popover: #ffffff;
+    --popover-foreground: #18181b;
+    --primary: #635bff;
+    --primary-foreground: #ffffff;
+    --secondary: #f0f0f3;
+    --secondary-foreground: #18181b;
+    --muted: #f0f0f3;
+    --muted-foreground: #71717a;
+    --accent: #eeedfd;
+    --accent-foreground: #3f3ab8;
+    --destructive: #e11d48;
+    --destructive-foreground: #ffffff;
+    --border: #e4e4e7;
+    --input: #bfbfc9;
+    --ring: #635bff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --info: #0ea5e9;
+    --sidebar: #131318;
+    --sidebar-foreground: #a1a1ad;
+    --sidebar-primary: #7b74ff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #222230;
+    --sidebar-accent-foreground: #ececf2;
+    --sidebar-border: rgba(255, 255, 255, 0.07);
+    --sidebar-ring: #7b74ff;
+  }
+
+  .dark[data-theme='techy'] {
+    --background: #0e0e11;
+    --foreground: #ececee;
+    --card: #16161a;
+    --card-foreground: #ececee;
+    --popover: #1a1a1f;
+    --popover-foreground: #ececee;
+    --primary: #7b74ff;
+    --primary-foreground: #ffffff;
+    --secondary: #212127;
+    --secondary-foreground: #ececee;
+    --muted: #212127;
+    --muted-foreground: #9d9da7;
+    --accent: #2a2848;
+    --accent-foreground: #c7c5f7;
+    --destructive: #fb7185;
+    --destructive-foreground: #1c0810;
+    --border: #26262b;
+    --input: #3d3d45;
+    --ring: #7b74ff;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --info: #38bdf8;
+    --sidebar: #121215;
+    --sidebar-foreground: #9d9da7;
+    --sidebar-primary: #7b74ff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #222228;
+    --sidebar-accent-foreground: #ececee;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #7b74ff;
+  }
+
+  /* =========================================================
+     WINFORMZ — Classic Windows Desktop, done professionally
+     WinUI/Office-inspired: Segoe UI, crisp 2px corners, soft
+     silver neutrals, Windows accent blue. The desktop feel
+     comes from density and precision, not retro bevels.
+     ========================================================= */
+  [data-theme='winformz'] {
+    --radius: 0.125rem;
+    --font-sans: 'Segoe UI', 'Segoe UI Variable Text', Tahoma, Arial, sans-serif;
+
+    --background: #f0f2f5;
+    --foreground: #1b1f24;
+    --card: #ffffff;
+    --card-foreground: #1b1f24;
+    --popover: #ffffff;
+    --popover-foreground: #1b1f24;
+    --primary: #0067c0;
+    --primary-foreground: #ffffff;
+    --secondary: #e8ebef;
+    --secondary-foreground: #1b1f24;
+    --muted: #e8ebef;
+    --muted-foreground: #5c6470;
+    --accent: #d9e7f7;
+    --accent-foreground: #0b3d6b;
+    --destructive: #c42b1c;
+    --destructive-foreground: #ffffff;
+    --border: #d5dae0;
+    --input: #aab2bd;
+    --ring: #0067c0;
+    --success: #107c10;
+    --warning: #9d5d00;
+    --info: #0067c0;
+    --sidebar: #e9edf2;
+    --sidebar-foreground: #1b1f24;
+    --sidebar-primary: #0067c0;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #d3e3f6;
+    --sidebar-accent-foreground: #0b3d6b;
+    --sidebar-border: #d0d6dd;
+    --sidebar-ring: #0067c0;
+  }
+
+  .dark[data-theme='winformz'] {
+    --background: #1f2124;
+    --foreground: #eceef1;
+    --card: #292c30;
+    --card-foreground: #eceef1;
+    --popover: #292c30;
+    --popover-foreground: #eceef1;
+    --primary: #479ef5;
+    --primary-foreground: #ffffff;
+    --secondary: #34383d;
+    --secondary-foreground: #eceef1;
+    --muted: #34383d;
+    --muted-foreground: #a3aab4;
+    --accent: #1f3a5c;
+    --accent-foreground: #d9e7f7;
+    --destructive: #f85149;
+    --destructive-foreground: #ffffff;
+    --border: #3d4147;
+    --input: #565c64;
+    --ring: #479ef5;
+    --success: #3fb950;
+    --warning: #d6a000;
+    --info: #479ef5;
+    --sidebar: #24272b;
+    --sidebar-foreground: #dfe2e6;
+    --sidebar-primary: #479ef5;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1f3a5c;
+    --sidebar-accent-foreground: #d9e7f7;
+    --sidebar-border: #3d4147;
+    --sidebar-ring: #479ef5;
+  }
+}
+
+/* WinFormz: the WinUI signature — form fields carry a slightly darker bottom
+   edge (instead of retro 3D bevels), and primary buttons press flat. Kept
+   outside @layer base so it overrides component utility classes. */
+[data-theme='winformz'] {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    border-bottom-color: color-mix(in srgb, var(--input) 55%, var(--foreground) 45%);
+  }
+  input:not([type='checkbox']):not([type='radio']):focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    border-bottom-color: var(--primary);
+  }
+  button[uibtn] {
+    border: 1px solid color-mix(in srgb, var(--primary) 80%, #000 20%);
+  }
+  button[uibtn]:active {
+    filter: brightness(0.92);
+  }
+}
+
+/* Techy: SaaS product polish — primary buttons get a subtle top-light gradient
+   and a soft accent glow (stronger in dark mode). Kept outside @layer base so
+   it overrides component utility classes. */
+[data-theme='techy'] button[uibtn],
+[data-theme='techy'] a[uibtn] {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 88%, #fff 12%),
+    var(--primary)
+  );
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+[data-theme='techy'] button[uibtn]:hover,
+[data-theme='techy'] a[uibtn]:hover {
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.dark[data-theme='techy'] button[uibtn],
+.dark[data-theme='techy'] a[uibtn] {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 28%, transparent);
+}
