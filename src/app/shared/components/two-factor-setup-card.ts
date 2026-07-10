@@ -28,6 +28,9 @@ import { UiButton } from '../ui/button';
           <span>{{ code }}</span>
         }
       </div>
+      <button uiBtn variant="outline" type="button" class="mb-2 w-full" (click)="download()">
+        Download codes
+      </button>
       <button uiBtn type="button" class="w-full" (click)="completed.emit()">
         I have saved my recovery codes
       </button>
@@ -96,6 +99,25 @@ export class TwoFactorSetupCard {
       },
       error: (err: unknown) => this.error.set(apiErrorInfo(err).message ?? 'Could not start setup.'),
     });
+  }
+
+  /** Save the recovery codes as a plain-text file. */
+  download(): void {
+    const codes = this.recoveryCodes();
+    if (!codes) return;
+    const content = [
+      'Pylon two-factor recovery codes',
+      `Generated ${new Date().toISOString().slice(0, 10)} — each code signs you in once.`,
+      '',
+      ...codes,
+      '',
+    ].join('\n');
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'pylon-recovery-codes.txt';
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   confirm(): void {
