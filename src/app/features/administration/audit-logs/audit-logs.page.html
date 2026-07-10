@@ -7,8 +7,9 @@
 <app-data-table
   [config]="config"
   [dataSource]="dataSource"
+  [rowDetail]="detail"
   (action)="onAction($event)"
-  (rowClick)="open($event)"
+  (rowClick)="toggle($event)"
 >
   <div toolbar class="flex flex-wrap items-end gap-2">
     <div>
@@ -56,3 +57,8 @@
     </button>
   </div>
 </app-data-table>
+
+<!-- Expandable row detail: request context + the recorded change set. -->
+<ng-template #detail let-row>
+  <app-audit-log-detail-panel [entry]="row" />
+</ng-template>
