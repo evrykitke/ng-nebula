@@ -314,6 +314,13 @@ export class AuthServiceProxy {
         this.baseUrl = baseUrl ?? "";
     }
 
+    /**
+     * Sign in with a username or email and password. No tenant header is
+    needed: the tenant is resolved from the credentials via the login
+    directory. A header (or single-tenant mode) skips resolution and
+    authenticates against that context directly — which is also how the
+    client answers a `tenant_selection` response.
+     */
     login(body: LoginRequest): Observable<LoginResponse> {
         let url_ = this.baseUrl + "/auth/login";
         url_ = url_.replace(/[?&]$/, "");
@@ -1988,6 +1995,14 @@ export interface SetUserRolesRequest {
 /** Generic acknowledgement for operations without a richer result. */
 export interface StatusResponse {
     status: string;
+
+    [key: string]: any;
+}
+
+/** One of the companies a set of credentials belongs to. */
+export interface TenantChoice {
+    display_name: string;
+    name: string;
 
     [key: string]: any;
 }

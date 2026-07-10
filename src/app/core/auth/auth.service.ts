@@ -96,35 +96,43 @@ export class AuthService {
   }
 
   /**
-   * Authenticate against a tenant (empty tenant = host context). The tenant is
-   * stored first so the outgoing request carries the `X-Tenant` header. The
-   * result's `status` tells the login page whether the session is live or a
-   * two-factor step is pending.
+   * Authenticate with credentials alone — the server resolves which company
+   * they belong to (users never type a workspace). A `tenant_selection` result
+   * means the credentials matched several companies; call again with the
+   * chosen workspace name, which is sent as the `X-Tenant` header instead.
    */
-  login(tenant: string, login: string, password: string): Observable<LoginResult['status']> {
-    this.setTenant(tenant.trim() || null);
+  login(login: string, password: string, tenant?: string): Observable<LoginResult> {
+    // Clear any stale workspace so resolution starts from the credentials;
+    // a caller-provided one (the selection retry) scopes the request instead.
+    this.setTenant(tenant?.trim() || null);
     const body: LoginRequest = { login, password };
     return this.proxy.login(body).pipe(switchMap((res) => this.settle(asLoginResult(res))));
   }
 
   /** Finish a two-factor sign-in with an authenticator (or recovery) code. */
-  loginTwoFactor(code: string): Observable<LoginResult['status']> {
+  loginTwoFactor(code: string): Observable<LoginResult> {
     const body: TwoFactorLoginRequest = { code };
     return this.proxy.login_two_factor(body).pipe(switchMap((res) => this.settle(asLoginResult(res))));
   }
 
   /** Route a login result: establish the session or hold the bridge token. */
-  private settle(result: LoginResult): Observable<LoginResult['status']> {
+  private settle(result: LoginResult): Observable<LoginResult> {
+    if (result.status === 'tenant_selection') {
+      return of(result);
+    }
+    // Adopt the server-resolved tenant: the two-factor endpoints and the
+    // whole session must carry it as the `X-Tenant` header.
+    if (result.tenant) this.setTenant(result.tenant);
     if (result.status !== 'success') {
       this._twoFactorToken.set(result.two_factor_token);
-      return of(result.status);
+      return of(result);
     }
     this._twoFactorToken.set(null);
     this.establish(result.access_token, result.refresh_token, result.user, []);
     // Permissions live server-side; fetch them with the fresh access token.
     return this.proxy.my_permissions().pipe(
       tap((permissions) => this.setPermissions(permissions)),
-      map(() => 'success' as const),
+      map(() => result),
     );
   }
 

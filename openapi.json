@@ -201,6 +201,7 @@
         "tags": [
           "auth"
         ],
+        "summary": "Sign in with a username or email and password. No tenant header is\nneeded: the tenant is resolved from the credentials via the login\ndirectory. A header (or single-tenant mode) skips resolution and\nauthenticates against that context directly — which is also how the\nclient answers a `tenant_selection` response.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -1332,6 +1333,13 @@
                   "success"
                 ]
               },
+              "tenant": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The tenant the session belongs to — send it as the tenant\nheader on subsequent requests. Null in single-tenant mode."
+              },
               "user": {
                 "$ref": "#/components/schemas/Profile"
               }
@@ -1339,7 +1347,7 @@
           },
           {
             "type": "object",
-            "description": "Password accepted; finish with `POST /auth/login/two-factor`.",
+            "description": "Password accepted; finish with `POST /auth/login/two-factor`\n(send the tenant header there too).",
             "required": [
               "two_factor_token",
               "status"
@@ -1349,6 +1357,12 @@
                 "type": "string",
                 "enum": [
                   "two_factor_required"
+                ]
+              },
+              "tenant": {
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "two_factor_token": {
@@ -1370,8 +1384,36 @@
                   "two_factor_setup_required"
                 ]
               },
+              "tenant": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "two_factor_token": {
                 "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The credentials matched accounts in more than one company: retry\nwith the tenant header set to the chosen one.",
+            "required": [
+              "tenants",
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "tenant_selection"
+                ]
+              },
+              "tenants": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TenantChoice"
+                }
               }
             }
           }
@@ -1713,6 +1755,22 @@
         ],
         "properties": {
           "status": {
+            "type": "string"
+          }
+        }
+      },
+      "TenantChoice": {
+        "type": "object",
+        "description": "One of the companies a set of credentials belongs to.",
+        "required": [
+          "name",
+          "display_name"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "name": {
             "type": "string"
           }
         }

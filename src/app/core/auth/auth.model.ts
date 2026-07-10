@@ -1,17 +1,34 @@
-import { LoginResponse, Profile } from '../../shared/service-proxies/service-proxies';
+import { LoginResponse, Profile, TenantChoice } from '../../shared/service-proxies/service-proxies';
 
 /**
  * `POST /auth/login` returns a tagged union that NSwag's interface-style DTOs
- * flatten to an index signature; this restores the discriminated shape.
+ * flatten to an index signature; this restores the discriminated shape. The
+ * tenant is resolved server-side from the credentials: every branch names it
+ * (for the `X-Tenant` header from here on), and `tenant_selection` means the
+ * credentials matched several companies — retry with one of them chosen.
  */
 export type LoginResult =
-  | { status: 'success'; access_token: string; refresh_token: string; user: Profile }
-  | { status: 'two_factor_required'; two_factor_token: string }
-  | { status: 'two_factor_setup_required'; two_factor_token: string };
+  | {
+      status: 'success';
+      access_token: string;
+      refresh_token: string;
+      user: Profile;
+      tenant: string | null;
+    }
+  | { status: 'two_factor_required'; two_factor_token: string; tenant: string | null }
+  | { status: 'two_factor_setup_required'; two_factor_token: string; tenant: string | null }
+  | { status: 'tenant_selection'; tenants: TenantChoice[] };
+
+const STATUSES: readonly LoginResult['status'][] = [
+  'success',
+  'two_factor_required',
+  'two_factor_setup_required',
+  'tenant_selection',
+];
 
 export function asLoginResult(res: LoginResponse): LoginResult {
   const status = res['status'] as LoginResult['status'] | undefined;
-  if (status === 'success' || status === 'two_factor_required' || status === 'two_factor_setup_required') {
+  if (status && STATUSES.includes(status)) {
     return res as unknown as LoginResult;
   }
   throw new Error(`unexpected login response status: ${String(status)}`);
