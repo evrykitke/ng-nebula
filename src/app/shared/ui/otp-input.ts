@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  afterNextRender,
   computed,
   input,
   model,
@@ -49,6 +50,11 @@ export class OtpInput {
   readonly indexes = computed(() => Array.from({ length: this.length() }, (_, i) => i));
 
   private readonly boxes = viewChildren<ElementRef<HTMLInputElement>>('box');
+
+  constructor() {
+    // Typing should be possible the moment the boxes appear.
+    afterNextRender(() => this.focusBox(Math.min(this.value().length, this.length() - 1)));
+  }
 
   onInput(index: number, event: Event): void {
     const box = event.target as HTMLInputElement;
