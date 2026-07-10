@@ -13,9 +13,9 @@ import {
 
 /**
  * Tenant Settings — the workspace-wide policies a tenant admin controls:
- * the company 2FA mandate, the audit-trail retention override, and the
- * on-demand tenant database migration (how a tenant picks up newly deployed
- * features without waiting for a restart).
+ * the company 2FA mandate and the audit-trail retention override. Database
+ * migrations are not a user concern — deployments migrate every tenant
+ * automatically (boot auto-migrate + the tenant migration job).
  */
 @Component({
   selector: 'app-tenant-settings-page',
@@ -39,9 +39,6 @@ export class TenantSettingsPage {
   readonly retentionSaving = signal(false);
   /** Bound to the input; empty string means "use the system default". */
   retentionDays: number | null = null;
-
-  // Migration.
-  readonly migrating = signal(false);
 
   constructor() {
     this.auth.tenant_two_factor_get().subscribe({
@@ -109,21 +106,6 @@ export class TenantSettingsPage {
       error: (err: unknown) => {
         this.retentionSaving.set(false);
         this.notify.error(apiErrorInfo(err).message || 'Could not update the retention');
-      },
-    });
-  }
-
-  migrate(): void {
-    if (this.migrating()) return;
-    this.migrating.set(true);
-    this.auth.tenant_migrate().subscribe({
-      next: (res) => {
-        this.migrating.set(false);
-        this.notify.success('Migration queued', `Task ${res.task_id} is running in the background.`);
-      },
-      error: (err: unknown) => {
-        this.migrating.set(false);
-        this.notify.error(apiErrorInfo(err).message || 'Could not queue the migration');
       },
     });
   }

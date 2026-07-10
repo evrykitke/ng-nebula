@@ -71,15 +71,4 @@
     }
   </div>
 
-  <!-- Tenant migration -->
-  <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
-    <h2 class="text-sm font-semibold text-foreground">Database migration</h2>
-    <p class="mt-1 mb-4 text-sm text-muted-foreground">
-      Queue a background migration of this workspace's database to pick up newly deployed
-      features immediately, instead of waiting for the next server restart.
-    </p>
-    <button uiBtn variant="outline" (click)="migrate()" [disabled]="migrating()">
-      {{ migrating() ? 'Queueing…' : 'Run migrations now' }}
-    </button>
-  </div>
 </div>
