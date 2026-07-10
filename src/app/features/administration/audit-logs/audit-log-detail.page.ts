@@ -10,6 +10,8 @@ import {
 import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
+import { apiErrorInfo } from '../../../shared/api/api-error';
+import { emptyChangesText } from './audit-log-detail-panel';
 import {
   AuditLog,
   AuditServiceProxy,
@@ -37,9 +39,12 @@ export class AuditLogDetailPage {
   readonly entry = signal<AuditLog | null>(null);
   readonly changes = signal<FieldChange[]>([]);
   readonly loading = signal(true);
+  /** Why the entry could not be shown (404 vs. server unreachable). */
+  readonly loadError = signal<string | null>(null);
 
   /** Update rows show before → after; create/delete a single snapshot side. */
   readonly isDiff = computed(() => this.entry()?.action === 'update');
+  readonly emptyText = computed(() => emptyChangesText(this.entry()?.action ?? ''));
 
   readonly when = computed(() => {
     const at = this.entry()?.created_at;
@@ -55,12 +60,19 @@ export class AuditLogDetailPage {
 
   private load(id: number): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.proxy.get_log(id).subscribe({
       next: (entry) => {
         this.entry.set(entry);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err: unknown) => {
+        const info = apiErrorInfo(err);
+        this.loadError.set(
+          info.status === 404
+            ? 'This audit entry does not exist (it may have been pruned by retention).'
+            : info.message || 'The audit entry could not be loaded.',
+        );
         this.entry.set(null);
         this.loading.set(false);
       },

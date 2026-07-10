@@ -62,7 +62,7 @@
     </h2>
 
     @if (changes().length === 0) {
-      <p class="text-sm text-muted-foreground">No field-level changes were recorded for this entry.</p>
+      <p class="text-sm text-muted-foreground">{{ emptyText() }}</p>
     } @else {
       <ol class="relative ml-3 border-l border-border">
         @for (c of changes(); track c.field) {
@@ -84,5 +84,7 @@
     }
   </div>
 } @else {
-  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">Audit entry not found.</div>
+  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
+    {{ loadError() || 'Audit entry not found.' }}
+  </div>
 }

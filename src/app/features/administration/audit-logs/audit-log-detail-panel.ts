@@ -14,6 +14,18 @@ import {
   FieldChange,
 } from '../../../shared/service-proxies/service-proxies';
 
+/** Why there is nothing to show for this entry's action, spelled out. */
+export function emptyChangesText(action: string): string {
+  switch (action) {
+    case 'request':
+      return 'This entry records an HTTP request — it does not contain field-level changes.';
+    case 'event':
+      return 'This entry records a security event — it does not contain field-level changes.';
+    default:
+      return 'This entry does not contain any recorded field-level changes.';
+  }
+}
+
 /**
  * The audit table's expandable row detail: the request context alongside the
  * recorded change set, fetched lazily when the row is expanded. Entity rows
@@ -65,9 +77,7 @@ import {
         @if (loading()) {
           <p class="text-sm text-muted-foreground">Loading changes…</p>
         } @else if (changes().length === 0) {
-          <p class="text-sm text-muted-foreground">
-            No field-level changes were recorded for this entry.
-          </p>
+          <p class="text-sm text-muted-foreground">{{ emptyText() }}</p>
         } @else {
           <div class="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
             @for (c of changes(); track c.field) {
@@ -105,6 +115,7 @@ export class AuditLogDetailPanel {
   readonly loading = signal(false);
 
   readonly isDiff = computed(() => this.entry().action === 'update');
+  readonly emptyText = computed(() => emptyChangesText(this.entry().action));
 
   constructor() {
     // Fetch the diff once per expansion; only entity rows carry snapshots.
