@@ -32,6 +32,14 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: 'lucideLayoutDashboard', route: '/dashboard' },
+  {
+    label: 'Workspace',
+    icon: 'lucideLayoutGrid',
+    exact: false,
+    children: [
+      { label: 'Reports', icon: 'lucideFileText', route: '/workspace/reports' },
+    ],
+  },
 ];
 
 /**

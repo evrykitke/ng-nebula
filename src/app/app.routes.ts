@@ -35,6 +35,16 @@ export const routes: Routes = [
           import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        path: 'workspace/reports',
+        loadComponent: () =>
+          import('./features/workspace/reports.page').then((m) => m.ReportsPage),
+      },
+      {
+        path: 'workspace/reports/:name',
+        loadComponent: () =>
+          import('./features/workspace/report-viewer.page').then((m) => m.ReportViewerPage),
+      },
+      {
         path: 'administration',
         loadComponent: () =>
           import('./features/administration/administration-hub.page').then(
