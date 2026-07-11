@@ -940,9 +940,10 @@ export class AuthServiceProxy {
     }
 
     /**
-     * Stores the logo at `{files.root}/{tenant-id}/logo.{ext}`; it is then
+     * Stores the logo at `{files.root}/{slug}/{id}/logo.{ext}`; it is then
     served from the `logo_url` in the profile response.
-     * @param file (optional) The image file: png, jpg, svg or webp, at most 1 MiB.
+     * @param file (optional) The image file: png, jpg or webp, at most 1 MiB. SVG is refused —
+    it is a script container, and `/public` serves it same-origin.
      */
     tenant_logo_upload(file?: FileParameter | undefined): Observable<CompanyProfileResponse> {
         let url_ = this.baseUrl + "/auth/tenant/logo";
@@ -2246,7 +2247,8 @@ export interface LoginResponse {
 
 /** Multipart body of the logo upload. */
 export interface LogoUpload {
-    /** The image file: png, jpg, svg or webp, at most 1 MiB. */
+    /** The image file: png, jpg or webp, at most 1 MiB. SVG is refused —
+it is a script container, and `/public` serves it same-origin. */
     file: string;
 
     [key: string]: any;

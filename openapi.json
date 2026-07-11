@@ -545,7 +545,7 @@
         "tags": [
           "auth"
         ],
-        "summary": "Stores the logo at `{files.root}/{tenant-id}/logo.{ext}`; it is then\nserved from the `logo_url` in the profile response.",
+        "summary": "Stores the logo at `{files.root}/{slug}/{id}/logo.{ext}`; it is then\nserved from the `logo_url` in the profile response.",
         "operationId": "tenant_logo_upload",
         "requestBody": {
           "content": {
@@ -1697,7 +1697,7 @@
           "file": {
             "type": "string",
             "format": "binary",
-            "description": "The image file: png, jpg, svg or webp, at most 1 MiB."
+            "description": "The image file: png, jpg or webp, at most 1 MiB. SVG is refused —\nit is a script container, and `/public` serves it same-origin."
           }
         }
       },
