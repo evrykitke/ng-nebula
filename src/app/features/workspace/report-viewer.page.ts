@@ -4,7 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideDownload, lucideDroplet, lucideSlidersHorizontal } from '@ng-icons/lucide';
+import {
+  lucideDownload,
+  lucideDroplet,
+  lucideFilter,
+  lucideSlidersHorizontal,
+} from '@ng-icons/lucide';
 import { UiButton } from '../../shared/ui/button';
 import { PageHeader } from '../../core/layout/page-header/page-header';
 import { AuthService } from '../../core/auth/auth.service';
@@ -29,7 +34,9 @@ import {
 @Component({
   selector: 'app-report-viewer-page',
   imports: [FormsModule, NgIcon, UiButton, PageHeader],
-  providers: [provideIcons({ lucideDownload, lucideDroplet, lucideSlidersHorizontal })],
+  providers: [
+    provideIcons({ lucideDownload, lucideDroplet, lucideFilter, lucideSlidersHorizontal }),
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './report-viewer.page.html',
 })
@@ -48,9 +55,8 @@ export class ReportViewerPage {
   readonly pdfUrl = signal<SafeResourceUrl | null>(null);
   private objectUrl: string | null = null;
 
-  // Admin report settings.
+  // Admin report settings (shown in the right sidebar for admins).
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.tenantSettings));
-  readonly settingsOpen = signal(false);
   readonly savingSettings = signal(false);
   houseFormat: ReportFormat | '' = '';
   watermark = '';
@@ -128,7 +134,6 @@ export class ReportViewerPage {
         next: (s) => {
           this.applySettings(s);
           this.savingSettings.set(false);
-          this.settingsOpen.set(false);
           this.notify.success('Report settings saved');
           this.render();
         },

@@ -15,9 +15,15 @@ export type ReportOutput = 'pdf' | 'excel';
 export interface ReportInfo {
   name: string;
   title: string;
+  group: string;
   outputs: ReportOutput[];
   default_format: ReportFormat;
   requires_permission?: string;
+}
+
+export interface ReportGroup {
+  name: string;
+  reports: ReportInfo[];
 }
 
 export interface ReportSettings {
