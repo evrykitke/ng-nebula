@@ -10,7 +10,8 @@ import { environment } from '../../../environments/environment';
  * attaches the bearer token and `X-Tenant` header.
  */
 export type ReportFormat = 'modern' | 'compact' | 'corporate';
-export type ReportOutput = 'pdf' | 'excel';
+/** `pdf`/`excel` are file downloads; `table` is the interactive datatable. */
+export type ReportOutput = 'pdf' | 'excel' | 'table';
 
 export interface ReportInfo {
   name: string;
@@ -29,6 +30,29 @@ export interface ReportGroup {
 export interface ReportSettings {
   default_format?: ReportFormat | null;
   watermark?: string | null;
+}
+
+/** The themed preview: a report's pages as SVG markup, one per page. */
+export interface ReportPreview {
+  pages: string[];
+}
+
+export interface ReportTables {
+  title: string;
+  tables: DataTable[];
+}
+
+export interface DataTable {
+  title?: string | null;
+  columns: DataColumn[];
+  rows: string[][];
+  totals?: string[] | null;
+}
+
+export interface DataColumn {
+  label: string;
+  align: 'start' | 'center' | 'end';
+  numeric: boolean;
 }
 
 export const REPORT_FORMATS: readonly ReportFormat[] = ['modern', 'compact', 'corporate'];
@@ -63,5 +87,28 @@ export class ReportService {
     return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * The themed in-app preview: the report's pages as SVG, to render inside
+   * the app's own chrome instead of the browser's native PDF viewer.
+   */
+  preview(name: string, format: ReportFormat | null): Observable<ReportPreview> {
+    const params = new URLSearchParams();
+    if (format) params.set('format', format);
+    const qs = params.toString();
+    return this.http.get<ReportPreview>(
+      `${this.base}/reports/${encodeURIComponent(name)}/preview${qs ? `?${qs}` : ''}`,
+    );
+  }
+
+  /** The interactive datatable payload for a list report (`table` output). */
+  datatables(name: string, format: ReportFormat | null): Observable<ReportTables> {
+    const params = new URLSearchParams();
+    if (format) params.set('format', format);
+    const qs = params.toString();
+    return this.http.get<ReportTables>(
+      `${this.base}/reports/${encodeURIComponent(name)}/table${qs ? `?${qs}` : ''}`,
+    );
   }
 }
