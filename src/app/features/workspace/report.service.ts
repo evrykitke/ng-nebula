@@ -55,6 +55,25 @@ export interface DataColumn {
   numeric: boolean;
 }
 
+export type ReportJobStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+/** A background report render (data-heavy reports are queued off-request). */
+export interface ReportJob {
+  id: string;
+  report: string;
+  title: string;
+  format?: ReportFormat | null;
+  output: ReportOutput;
+  status: ReportJobStatus;
+  file_name?: string | null;
+  content_type?: string | null;
+  byte_size?: number | null;
+  error?: string | null;
+  requested_by?: string | null;
+  created_at: string;
+  completed_at?: string | null;
+}
+
 export const REPORT_FORMATS: readonly ReportFormat[] = ['modern', 'compact', 'corporate'];
 
 @Injectable({ providedIn: 'root' })
@@ -110,5 +129,40 @@ export class ReportService {
     return this.http.get<ReportTables>(
       `${this.base}/reports/${encodeURIComponent(name)}/table${qs ? `?${qs}` : ''}`,
     );
+  }
+
+  /**
+   * Queue a report to render in the background — for data-heavy reports.
+   * Returns the created job; poll {@link job} until it is `completed`, then
+   * {@link downloadJob}.
+   */
+  enqueueJob(
+    name: string,
+    format: ReportFormat | null,
+    output: Exclude<ReportOutput, 'table'>,
+  ): Observable<ReportJob> {
+    const params = new URLSearchParams({ output });
+    if (format) params.set('format', format);
+    return this.http.post<ReportJob>(
+      `${this.base}/reports/${encodeURIComponent(name)}/jobs?${params.toString()}`,
+      {},
+    );
+  }
+
+  /** One background job's current status. */
+  job(id: string): Observable<ReportJob> {
+    return this.http.get<ReportJob>(`${this.base}/reports/jobs/${encodeURIComponent(id)}`);
+  }
+
+  /** The tenant's recent background job history (newest first). */
+  jobs(): Observable<ReportJob[]> {
+    return this.http.get<ReportJob[]>(`${this.base}/reports/jobs`);
+  }
+
+  /** Download a completed job's stored artifact. */
+  downloadJob(id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/reports/jobs/${encodeURIComponent(id)}/download`, {
+      responseType: 'blob',
+    });
   }
 }

@@ -266,6 +266,82 @@
       </div>
     </div>
 
+    <!-- Background generation -->
+    <div class="rounded-xl border border-border bg-card p-4">
+      <h2 class="mb-1 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <ng-icon name="lucideZap" size="15" />
+        Generate in background
+      </h2>
+      <p class="mb-3 text-sm text-muted-foreground">
+        For large reports — rendered server-side, then listed here to download.
+      </p>
+      <div class="flex flex-col gap-2">
+        <button
+          uiBtn
+          variant="outline"
+          size="sm"
+          type="button"
+          [disabled]="queuing()"
+          (click)="generate('pdf')"
+        >
+          <ng-icon name="lucideZap" size="14" />
+          Queue PDF
+        </button>
+        @if (hasExcel()) {
+          <button
+            uiBtn
+            variant="outline"
+            size="sm"
+            type="button"
+            [disabled]="queuing()"
+            (click)="generate('excel')"
+          >
+            <ng-icon name="lucideZap" size="14" />
+            Queue Excel
+          </button>
+        }
+      </div>
+
+      @if (jobs().length) {
+        <ul class="mt-3 space-y-1.5">
+          @for (job of jobs(); track job.id) {
+            <li
+              class="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs"
+            >
+              <ng-icon
+                [name]="jobIcon(job.status)"
+                size="14"
+                [class.animate-spin]="job.status === 'running'"
+                [class.text-primary]="job.status === 'completed'"
+                [class.text-destructive]="job.status === 'failed'"
+                [class.text-muted-foreground]="job.status === 'queued' || job.status === 'running'"
+              />
+              <span class="min-w-0 flex-1 truncate text-muted-foreground">
+                <span class="uppercase">{{ job.output }}</span>
+                @if (job.error) {
+                  · <span class="text-destructive" [title]="job.error">failed</span>
+                } @else {
+                  · {{ job.status }}
+                }
+              </span>
+              @if (job.status === 'completed') {
+                <button
+                  uiBtn
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  title="Download"
+                  (click)="downloadJob(job)"
+                >
+                  <ng-icon name="lucideDownload" size="14" />
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
     <!-- Report settings (admins only) -->
     @if (canManage()) {
       <div class="rounded-xl border border-border bg-card p-4">
