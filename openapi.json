@@ -1290,6 +1290,13 @@
           "display_name"
         ],
         "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Postal/street address (may be multi-line)."
+          },
           "default_currency": {
             "type": [
               "string",
@@ -1300,12 +1307,24 @@
           "display_name": {
             "type": "string"
           },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "logo_url": {
             "type": [
               "string",
               "null"
             ],
             "description": "Where the uploaded company logo is served from, when one exists."
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "tax_pin": {
             "type": [
@@ -1318,6 +1337,12 @@
             "type": "string"
           },
           "vat_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "website": {
             "type": [
               "string",
               "null"
@@ -2124,6 +2149,13 @@
           "display_name"
         ],
         "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Postal/street address (may be multi-line); blank clears it."
+          },
           "default_currency": {
             "type": [
               "string",
@@ -2134,6 +2166,18 @@
           "display_name": {
             "type": "string"
           },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "tax_pin": {
             "type": [
               "string",
@@ -2141,6 +2185,12 @@
             ]
           },
           "vat_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "website": {
             "type": [
               "string",
               "null"

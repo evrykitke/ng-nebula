@@ -66,7 +66,7 @@ export const ADMIN_PAGES: NavItem[] = [
     permission: Permissions.auditLogsView,
   },
   {
-    label: 'Tenant Settings',
+    label: 'Business Information',
     icon: 'lucideSlidersHorizontal',
     route: '/administration/settings',
     permission: Permissions.tenantSettings,

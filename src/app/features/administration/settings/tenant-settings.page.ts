@@ -50,6 +50,10 @@ export class TenantSettingsPage {
   vatNumber = '';
   currency: string | null = null;
   currencyDisplay = '';
+  address = '';
+  email = '';
+  website = '';
+  phone = '';
 
   // Two-factor mandate.
   readonly twoFactorLoading = signal(true);
@@ -88,6 +92,10 @@ export class TenantSettingsPage {
     this.displayName = res.display_name;
     this.taxPin = res.tax_pin ?? '';
     this.vatNumber = res.vat_number ?? '';
+    this.address = res.address ?? '';
+    this.email = res.email ?? '';
+    this.website = res.website ?? '';
+    this.phone = res.phone ?? '';
     this.currency = res.default_currency ?? null;
     this.currencyDisplay = res.default_currency ?? '';
     // Upgrade the bare code to "CODE — Name" once the list is at hand.
@@ -120,6 +128,10 @@ export class TenantSettingsPage {
         default_currency: this.currency ?? undefined,
         tax_pin: this.taxPin.trim() || undefined,
         vat_number: this.vatNumber.trim() || undefined,
+        address: this.address.trim() || undefined,
+        email: this.email.trim() || undefined,
+        website: this.website.trim() || undefined,
+        phone: this.phone.trim() || undefined,
       })
       .subscribe({
         next: (res) => {

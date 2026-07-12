@@ -1,7 +1,7 @@
 <app-page-header
-  title="Tenant Settings"
+  title="Business Information"
   subtitle="Workspace-wide policies"
-  [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Tenant Settings' }]"
+  [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Business Information' }]"
 />
 
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -9,7 +9,8 @@
   <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
     <h2 class="text-sm font-semibold text-foreground">Company information</h2>
     <p class="mt-1 mb-4 text-sm text-muted-foreground">
-      The name, logo and identifiers your workspace presents — and the currency it operates in.
+      The name, logo, contact details and identifiers your workspace presents (including on report
+      letterheads) — and the currency it operates in.
     </p>
     @if (profile(); as p) {
       <div class="flex flex-col gap-6 md:flex-row">
@@ -81,8 +82,48 @@
             />
           </div>
           <div>
+            <label class="mb-1.5 block text-sm font-medium">Email</label>
+            <input
+              [(ngModel)]="email"
+              name="email"
+              type="email"
+              placeholder="e.g. hello@company.com"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Phone</label>
+            <input
+              [(ngModel)]="phone"
+              name="phone"
+              type="tel"
+              placeholder="e.g. +254 700 000 000"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Website</label>
+            <input
+              [(ngModel)]="website"
+              name="website"
+              type="text"
+              placeholder="e.g. www.company.com"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
             <label class="mb-1.5 block text-sm font-medium">Default currency</label>
             <app-lookup [config]="currencies" [(value)]="currency" [(display)]="currencyDisplay" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Address</label>
+            <textarea
+              [(ngModel)]="address"
+              name="address"
+              rows="2"
+              placeholder="Street, city, postal code"
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            ></textarea>
           </div>
           <div class="flex items-end justify-end md:col-span-2">
             <button uiBtn type="submit" [disabled]="profileSaving()">

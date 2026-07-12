@@ -2124,15 +2124,20 @@ export interface ChangePasswordRequest {
 
 /** The tenant's company profile as shown to its users and edited in tenant settings. */
 export interface CompanyProfileResponse {
+    /** Postal/street address (may be multi-line). */
+    address?: string | undefined;
     /** A code from `GET /currencies`. */
     default_currency?: string | undefined;
     display_name: string;
+    email?: string | undefined;
     /** Where the uploaded company logo is served from, when one exists. */
     logo_url?: string | undefined;
+    phone?: string | undefined;
     /** Tax registration PIN (e.g. a KRA PIN). */
     tax_pin?: string | undefined;
     tenant: string;
     vat_number?: string | undefined;
+    website?: string | undefined;
 
     [key: string]: any;
 }
@@ -2424,11 +2429,16 @@ export interface TwoFactorSetup {
 }
 
 export interface UpdateCompanyProfileRequest {
+    /** Postal/street address (may be multi-line); blank clears it. */
+    address?: string | undefined;
     /** A code from `GET /currencies`; null clears the default. */
     default_currency?: string | undefined;
     display_name: string;
+    email?: string | undefined;
+    phone?: string | undefined;
     tax_pin?: string | undefined;
     vat_number?: string | undefined;
+    website?: string | undefined;
 
     [key: string]: any;
 }
