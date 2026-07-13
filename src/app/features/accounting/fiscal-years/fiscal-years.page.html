@@ -1,0 +1,150 @@
+<app-page-header
+  title="Fiscal Years"
+  subtitle="The posting calendar — periods control which dates accept entries"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Fiscal Years' }]"
+>
+  @if (canManage()) {
+    <button uiBtn actions (click)="openCreate()">
+      <ng-icon name="lucidePlus" size="16" /> Add fiscal year
+    </button>
+  }
+</app-page-header>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (!years().length) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+    No fiscal years yet. Create one to open the ledger for posting.
+  </div>
+} @else {
+  <div class="space-y-3">
+    @for (y of years(); track y.id) {
+      <div class="rounded-lg border border-border bg-card">
+        <!-- Year header -->
+        <button
+          type="button"
+          class="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/50"
+          (click)="toggle(y.id)"
+        >
+          <ng-icon
+            [name]="expanded() === y.id ? 'lucideChevronDown' : 'lucideChevronRight'"
+            size="16"
+            class="text-muted-foreground"
+          />
+          <span class="font-medium">{{ y.name }}</span>
+          <span class="text-sm text-muted-foreground">
+            {{ fmtDate(y.start_date) }} — {{ fmtDate(y.end_date) }}
+          </span>
+          <span
+            class="ml-auto inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusClass(y.status)"
+          >
+            {{ y.status }}
+          </span>
+        </button>
+
+        <!-- Periods -->
+        @if (expanded() === y.id) {
+          <div class="overflow-x-auto border-t border-border">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border text-left text-xs text-muted-foreground">
+                  <th class="px-4 py-2 font-medium">#</th>
+                  <th class="px-4 py-2 font-medium">Period</th>
+                  <th class="px-4 py-2 font-medium">From</th>
+                  <th class="px-4 py-2 font-medium">To</th>
+                  <th class="px-4 py-2 font-medium">Status</th>
+                  @if (canManage()) {
+                    <th class="px-4 py-2 text-right font-medium">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of y.periods; track p.id) {
+                  <tr class="border-b border-border/50 last:border-0">
+                    <td class="px-4 py-2 text-muted-foreground">{{ p.period_number }}</td>
+                    <td class="px-4 py-2">{{ p.name }}</td>
+                    <td class="px-4 py-2 text-muted-foreground">{{ fmtDate(p.start_date) }}</td>
+                    <td class="px-4 py-2 text-muted-foreground">{{ fmtDate(p.end_date) }}</td>
+                    <td class="px-4 py-2">
+                      <span
+                        class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+                        [class]="statusClass(p.status)"
+                      >
+                        {{ p.status }}
+                      </span>
+                    </td>
+                    @if (canManage()) {
+                      <td class="px-4 py-2 text-right">
+                        @if (p.status === 'open') {
+                          <button
+                            type="button"
+                            class="rounded-md border border-input px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                            (click)="close(p)"
+                          >
+                            Close
+                          </button>
+                        } @else if (p.status === 'closed') {
+                          <button
+                            type="button"
+                            class="rounded-md border border-input px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                            (click)="reopen(p)"
+                          >
+                            Reopen
+                          </button>
+                          <button
+                            type="button"
+                            class="ml-1 rounded-md border border-input px-2.5 py-1 text-xs font-medium text-destructive hover:bg-accent"
+                            (click)="lock(p)"
+                          >
+                            Lock
+                          </button>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Create dialog -->
+<app-modal [open]="creating()" size="sm" title="Add fiscal year" (closed)="creating.set(false)">
+  <form (ngSubmit)="save()">
+    <label class="mb-1.5 block text-sm font-medium">Start date</label>
+    <app-datepicker [(date)]="form.start_date" placeholder="Start date" />
+    <p class="mt-1 text-xs text-muted-foreground">
+      Twelve monthly periods are created from this date (must be the first of a month).
+    </p>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Name</label>
+    <input
+      [(ngModel)]="form.name"
+      name="name"
+      placeholder="Optional — defaults to e.g. FY2026"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    @if (formError()) {
+      <p class="mt-3 text-sm text-destructive">{{ formError() }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+        (click)="creating.set(false)"
+      >
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="saving()">
+        {{ saving() ? 'Creating…' : 'Create' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

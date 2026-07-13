@@ -1,0 +1,98 @@
+<app-page-header
+  [title]="data() ? data()!.code + ' — ' + data()!.name : 'Account ledger'"
+  subtitle="Postings in date order with a running balance"
+  [breadcrumbs]="[
+    { label: 'Accounting' },
+    { label: 'Chart of Accounts', route: '/accounting/accounts' },
+    { label: 'Ledger' },
+  ]"
+>
+  <div actions class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">From</label>
+      <app-datepicker [(date)]="from" (dateChange)="load()" placeholder="Earliest" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">To</label>
+      <app-datepicker [(date)]="to" (dateChange)="load()" placeholder="Latest" />
+    </div>
+  </div>
+</app-page-header>
+
+<a
+  routerLink="/accounting/accounts"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to chart of accounts
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (data(); as l) {
+  <div class="mb-4 flex flex-wrap gap-6 rounded-lg border border-border bg-card p-4 text-sm">
+    <div>
+      <p class="text-xs text-muted-foreground">Type</p>
+      <p class="mt-0.5 font-medium capitalize">{{ l.account_type }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-muted-foreground">Currency</p>
+      <p class="mt-0.5 font-medium">{{ l.currency }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-muted-foreground">Opening balance</p>
+      <p class="mt-0.5 font-medium">{{ balance(l.opening_balance) }}</p>
+    </div>
+    <div>
+      <p class="text-xs text-muted-foreground">Closing balance</p>
+      <p class="mt-0.5 font-medium">{{ balance(l.closing_balance) }}</p>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Date</th>
+          <th class="px-4 py-2 font-medium">Number</th>
+          <th class="px-4 py-2 font-medium">Memo</th>
+          <th class="px-4 py-2 text-right font-medium">Debit</th>
+          <th class="px-4 py-2 text-right font-medium">Credit</th>
+          <th class="px-4 py-2 text-right font-medium">Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border-b border-border/50">
+          <td colspan="5" class="px-4 py-2 text-xs text-muted-foreground">Opening balance</td>
+          <td class="px-4 py-2 text-right font-medium">{{ balance(l.opening_balance) }}</td>
+        </tr>
+        @for (line of l.lines; track line.entry_id + '-' + $index) {
+          <tr
+            class="cursor-pointer border-b border-border/50 last:border-0 hover:bg-accent/50"
+            (click)="openEntry(line.entry_id)"
+          >
+            <td class="px-4 py-2">{{ fmtDate(line.entry_date) }}</td>
+            <td class="px-4 py-2 font-medium">{{ line.number ?? '—' }}</td>
+            <td class="px-4 py-2 text-muted-foreground">{{ line.memo || '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ amount(line.debit) }}</td>
+            <td class="px-4 py-2 text-right">{{ amount(line.credit) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ balance(line.balance) }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+              No postings in this period.
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-semibold">
+          <td colspan="5" class="px-4 py-2 text-right text-xs text-muted-foreground">
+            Closing balance
+          </td>
+          <td class="px-4 py-2 text-right">{{ balance(l.closing_balance) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}

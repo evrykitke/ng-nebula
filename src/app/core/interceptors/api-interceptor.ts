@@ -88,7 +88,10 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const withAuth = (r: HttpRequest<unknown>): HttpRequest<unknown> => {
     const token =
       auth.token() ?? (isTwoFactorEndpoint(r) ? auth.twoFactorToken() : null);
-    const tenant = auth.tenant();
+    // Registration creates a workspace, so it cannot belong to one: sending a
+    // leftover `X-Tenant` would have the server resolve that tenant first and
+    // refuse the request outright if it is gone.
+    const tenant = r.url.includes('/auth/register') ? null : auth.tenant();
     let headers = r.headers;
     if (token) headers = headers.set('Authorization', `Bearer ${token}`);
     if (tenant && !headers.has('X-Tenant')) headers = headers.set('X-Tenant', tenant);

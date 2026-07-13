@@ -19,6 +19,1505 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 @Injectable({
     providedIn: 'root'
 })
+export class AccountingServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    list_accounts(): Observable<AccountingAccount[]> {
+        let url_ = this.baseUrl + "/accounting/accounts";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_accounts(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_accounts(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingAccount[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingAccount[]>;
+        }));
+    }
+
+    protected processList_accounts(response: HttpResponseBase): Observable<AccountingAccount[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingAccount[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create_account(body: CreateAccountRequest): Observable<AccountingAccount> {
+        let url_ = this.baseUrl + "/accounting/accounts";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_account(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_account(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingAccount>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingAccount>;
+        }));
+    }
+
+    protected processCreate_account(response: HttpResponseBase): Observable<AccountingAccount> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingAccount;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Account id
+     */
+    get_account(id: string): Observable<AccountingAccount> {
+        let url_ = this.baseUrl + "/accounting/accounts/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_account(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_account(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingAccount>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingAccount>;
+        }));
+    }
+
+    protected processGet_account(response: HttpResponseBase): Observable<AccountingAccount> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingAccount;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Account id
+     */
+    update_account(id: string, body: UpdateAccountRequest): Observable<AccountingAccount> {
+        let url_ = this.baseUrl + "/accounting/accounts/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate_account(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate_account(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingAccount>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingAccount>;
+        }));
+    }
+
+    protected processUpdate_account(response: HttpResponseBase): Observable<AccountingAccount> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingAccount;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Account id
+     */
+    delete_account(id: string): Observable<AccountingAccount> {
+        let url_ = this.baseUrl + "/accounting/accounts/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete_account(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete_account(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingAccount>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingAccount>;
+        }));
+    }
+
+    protected processDelete_account(response: HttpResponseBase): Observable<AccountingAccount> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingAccount;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Account id
+     * @param from (optional) From date (inclusive)
+     * @param to (optional) To date (inclusive)
+     */
+    account_ledger(id: string, from?: string | undefined, to?: string | undefined): Observable<AccountLedger> {
+        let url_ = this.baseUrl + "/accounting/accounts/{id}/ledger?";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (from === null)
+            throw new globalThis.Error("The parameter 'from' cannot be null.");
+        else if (from !== undefined)
+            url_ += "from=" + encodeURIComponent("" + from) + "&";
+        if (to === null)
+            throw new globalThis.Error("The parameter 'to' cannot be null.");
+        else if (to !== undefined)
+            url_ += "to=" + encodeURIComponent("" + to) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAccount_ledger(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAccount_ledger(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountLedger>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountLedger>;
+        }));
+    }
+
+    protected processAccount_ledger(response: HttpResponseBase): Observable<AccountLedger> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountLedger;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param as_of (optional) Balances as of this date
+     */
+    balance_sheet(as_of?: string | undefined): Observable<BalanceSheet> {
+        let url_ = this.baseUrl + "/accounting/balance-sheet?";
+        if (as_of === null)
+            throw new globalThis.Error("The parameter 'as_of' cannot be null.");
+        else if (as_of !== undefined)
+            url_ += "as_of=" + encodeURIComponent("" + as_of) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processBalance_sheet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processBalance_sheet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BalanceSheet>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BalanceSheet>;
+        }));
+    }
+
+    protected processBalance_sheet(response: HttpResponseBase): Observable<BalanceSheet> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as BalanceSheet;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    list_expenses(): Observable<JournalEntryHeader[]> {
+        let url_ = this.baseUrl + "/accounting/expenses";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_expenses(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_expenses(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryHeader[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryHeader[]>;
+        }));
+    }
+
+    protected processList_expenses(response: HttpResponseBase): Observable<JournalEntryHeader[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryHeader[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    record_expense(body: RecordExpenseRequest): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/expenses";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRecord_expense(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRecord_expense(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processRecord_expense(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    list_fiscal_years(): Observable<FiscalYearView[]> {
+        let url_ = this.baseUrl + "/accounting/fiscal-years";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_fiscal_years(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_fiscal_years(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FiscalYearView[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FiscalYearView[]>;
+        }));
+    }
+
+    protected processList_fiscal_years(response: HttpResponseBase): Observable<FiscalYearView[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FiscalYearView[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create_fiscal_year(body: CreateFiscalYearRequest): Observable<FiscalYearView> {
+        let url_ = this.baseUrl + "/accounting/fiscal-years";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_fiscal_year(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_fiscal_year(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FiscalYearView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FiscalYearView>;
+        }));
+    }
+
+    protected processCreate_fiscal_year(response: HttpResponseBase): Observable<FiscalYearView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FiscalYearView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param from (optional) From date (inclusive)
+     * @param to (optional) To date (inclusive)
+     */
+    income_statement(from?: string | undefined, to?: string | undefined): Observable<IncomeStatement> {
+        let url_ = this.baseUrl + "/accounting/income-statement?";
+        if (from === null)
+            throw new globalThis.Error("The parameter 'from' cannot be null.");
+        else if (from !== undefined)
+            url_ += "from=" + encodeURIComponent("" + from) + "&";
+        if (to === null)
+            throw new globalThis.Error("The parameter 'to' cannot be null.");
+        else if (to !== undefined)
+            url_ += "to=" + encodeURIComponent("" + to) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIncome_statement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIncome_statement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<IncomeStatement>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<IncomeStatement>;
+        }));
+    }
+
+    protected processIncome_statement(response: HttpResponseBase): Observable<IncomeStatement> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as IncomeStatement;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param status (optional) Filter by status
+     */
+    list_entries(status?: EntryStatus | undefined): Observable<JournalEntryHeader[]> {
+        let url_ = this.baseUrl + "/accounting/journal?";
+        if (status === null)
+            throw new globalThis.Error("The parameter 'status' cannot be null.");
+        else if (status !== undefined)
+            url_ += "status=" + encodeURIComponent("" + status) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_entries(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_entries(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryHeader[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryHeader[]>;
+        }));
+    }
+
+    protected processList_entries(response: HttpResponseBase): Observable<JournalEntryHeader[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryHeader[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create_entry(body: CreateEntryRequest): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processCreate_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Entry id
+     */
+    get_entry(id: string): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processGet_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Entry id
+     */
+    update_entry(id: string, body: CreateEntryRequest): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processUpdate_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Entry id
+     */
+    delete_entry(id: string): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processDelete_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Entry id
+     */
+    post_entry(id: string): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal/{id}/post";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPost_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPost_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processPost_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Entry id
+     */
+    reverse_entry(id: string, body: ReverseEntryRequest): Observable<JournalEntryView> {
+        let url_ = this.baseUrl + "/accounting/journal/{id}/reverse";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReverse_entry(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReverse_entry(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<JournalEntryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<JournalEntryView>;
+        }));
+    }
+
+    protected processReverse_entry(response: HttpResponseBase): Observable<JournalEntryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JournalEntryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Period id
+     */
+    close_period(id: string): Observable<FiscalYearView> {
+        let url_ = this.baseUrl + "/accounting/periods/{id}/close";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processClose_period(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processClose_period(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FiscalYearView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FiscalYearView>;
+        }));
+    }
+
+    protected processClose_period(response: HttpResponseBase): Observable<FiscalYearView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FiscalYearView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Period id
+     */
+    lock_period(id: string): Observable<FiscalYearView> {
+        let url_ = this.baseUrl + "/accounting/periods/{id}/lock";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLock_period(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLock_period(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FiscalYearView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FiscalYearView>;
+        }));
+    }
+
+    protected processLock_period(response: HttpResponseBase): Observable<FiscalYearView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FiscalYearView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Period id
+     */
+    reopen_period(id: string): Observable<FiscalYearView> {
+        let url_ = this.baseUrl + "/accounting/periods/{id}/reopen";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReopen_period(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReopen_period(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<FiscalYearView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<FiscalYearView>;
+        }));
+    }
+
+    protected processReopen_period(response: HttpResponseBase): Observable<FiscalYearView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FiscalYearView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    list_tax_codes(): Observable<AccountingTaxCode[]> {
+        let url_ = this.baseUrl + "/accounting/tax-codes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_tax_codes(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_tax_codes(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingTaxCode[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingTaxCode[]>;
+        }));
+    }
+
+    protected processList_tax_codes(response: HttpResponseBase): Observable<AccountingTaxCode[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingTaxCode[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create_tax_code(body: CreateTaxCodeRequest): Observable<AccountingTaxCode> {
+        let url_ = this.baseUrl + "/accounting/tax-codes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_tax_code(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_tax_code(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingTaxCode>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingTaxCode>;
+        }));
+    }
+
+    protected processCreate_tax_code(response: HttpResponseBase): Observable<AccountingTaxCode> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingTaxCode;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Tax code id
+     */
+    get_tax_code(id: string): Observable<AccountingTaxCode> {
+        let url_ = this.baseUrl + "/accounting/tax-codes/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_tax_code(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_tax_code(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingTaxCode>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingTaxCode>;
+        }));
+    }
+
+    protected processGet_tax_code(response: HttpResponseBase): Observable<AccountingTaxCode> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingTaxCode;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Tax code id
+     */
+    update_tax_code(id: string, body: UpdateTaxCodeRequest): Observable<AccountingTaxCode> {
+        let url_ = this.baseUrl + "/accounting/tax-codes/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate_tax_code(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate_tax_code(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingTaxCode>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingTaxCode>;
+        }));
+    }
+
+    protected processUpdate_tax_code(response: HttpResponseBase): Observable<AccountingTaxCode> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingTaxCode;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Tax code id
+     */
+    delete_tax_code(id: string): Observable<AccountingTaxCode> {
+        let url_ = this.baseUrl + "/accounting/tax-codes/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDelete_tax_code(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDelete_tax_code(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountingTaxCode>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountingTaxCode>;
+        }));
+    }
+
+    protected processDelete_tax_code(response: HttpResponseBase): Observable<AccountingTaxCode> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AccountingTaxCode;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param as_of (optional) Balances as of this date
+     */
+    trial_balance(as_of?: string | undefined): Observable<TrialBalance> {
+        let url_ = this.baseUrl + "/accounting/trial-balance?";
+        if (as_of === null)
+            throw new globalThis.Error("The parameter 'as_of' cannot be null.");
+        else if (as_of !== undefined)
+            url_ += "as_of=" + encodeURIComponent("" + as_of) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTrial_balance(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTrial_balance(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TrialBalance>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TrialBalance>;
+        }));
+    }
+
+    protected processTrial_balance(response: HttpResponseBase): Observable<TrialBalance> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TrialBalance;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
 export class AuditServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
@@ -2086,6 +3585,77 @@ export class HealthServiceProxy {
     }
 }
 
+export interface AccountLedger {
+    account_id: string;
+    account_type: AccountType;
+    closing_balance: string;
+    code: string;
+    currency: string;
+    lines: AccountLedgerLine[];
+    name: string;
+    opening_balance: string;
+
+    [key: string]: any;
+}
+
+export interface AccountLedgerLine {
+    /** Running balance on the account's normal side. */
+    balance: string;
+    credit: string;
+    debit: string;
+    entry_date: DateTime;
+    entry_id: string;
+    memo: string;
+    number?: string | undefined;
+    reference?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** The five account classes of double-entry bookkeeping. Each one fixes whether the account increases on the debit or the credit side. */
+export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
+
+export interface AccountingAccount {
+    /** One of asset|liability|equity|revenue|expense. */
+    account_type: string;
+    /** Human-facing identifier, unique per tenant (e.g. `1000`). */
+    code: string;
+    created_at: DateTime;
+    /** ISO 4217 code the account is denominated in. */
+    currency: string;
+    description?: string | undefined;
+    id: string;
+    is_active: boolean;
+    /** Seeded by the platform's default chart of accounts; cannot be
+deleted (but may be renamed or deactivated). */
+    is_system: boolean;
+    name: string;
+    parent_id?: string | undefined;
+    /** Stable platform role (e.g. `ar`, `vat_output`, `sales`) other
+modules resolve this account by; `None` for user-created accounts. */
+    system_key?: string | undefined;
+    updated_at: DateTime;
+
+    [key: string]: any;
+}
+
+export interface AccountingTaxCode {
+    account_id?: string | undefined;
+    code: string;
+    created_at: DateTime;
+    /** output|input. */
+    direction: string;
+    id: string;
+    is_active: boolean;
+    is_system: boolean;
+    name: string;
+    /** Percentage rate, e.g. `16` for 16%. */
+    rate: string;
+    updated_at: DateTime;
+
+    [key: string]: any;
+}
+
 export interface AuditLog {
     /** `request`, `create`, `update`, `delete` or `event`. */
     action: string;
@@ -2111,6 +3681,21 @@ bigserial — audit rows are log lines, not domain entities. */
     tenant_id?: string | undefined;
     user_agent?: string | undefined;
     user_id?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** The balance sheet as of a date. The still-open nominal accounts' net income is folded into equity so the sheet balances: `prior_earnings` is income from fiscal years before the one covering the reference date (retained earnings), `current_earnings` the current year's. */
+export interface BalanceSheet {
+    as_of?: DateTime | undefined;
+    assets: StatementSection;
+    balanced: boolean;
+    current_earnings: string;
+    equity: StatementSection;
+    liabilities: StatementSection;
+    prior_earnings: string;
+    total_assets: string;
+    total_liabilities_and_equity: string;
 
     [key: string]: any;
 }
@@ -2155,6 +3740,18 @@ export interface ConfirmTwoFactorResponse {
     [key: string]: any;
 }
 
+export interface CreateAccountRequest {
+    account_type: AccountType;
+    code: string;
+    /** ISO 4217 code the account is denominated in. */
+    currency: string;
+    description?: string | undefined;
+    name: string;
+    parent_id?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface CreateCurrencyRequest {
     /** Three uppercase ASCII letters (ISO 4217 or an app-defined unit). */
     code: string;
@@ -2165,10 +3762,40 @@ export interface CreateCurrencyRequest {
     [key: string]: any;
 }
 
+export interface CreateEntryRequest {
+    /** ISO 4217 code; every line's account must be in this currency. */
+    currency: string;
+    entry_date: DateTime;
+    lines: PostingInputRequest[];
+    memo: string;
+    reference?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface CreateFiscalYearRequest {
+    /** Optional display name; defaults to `FY<year>`. */
+    name?: string | undefined;
+    /** First day of the year; must be the first day of a month. */
+    start_date: DateTime;
+
+    [key: string]: any;
+}
+
 export interface CreateRoleRequest {
     display_name: string;
     name: string;
     permissions?: string[];
+
+    [key: string]: any;
+}
+
+export interface CreateTaxCodeRequest {
+    account_id?: string | undefined;
+    code: string;
+    direction?: TaxDirection;
+    name: string;
+    rate: string;
 
     [key: string]: any;
 }
@@ -2207,10 +3834,37 @@ export interface DisableTwoFactorRequest {
     [key: string]: any;
 }
 
+/** Where a journal entry is in its lifecycle. */
+export type EntryStatus = "draft" | "posted" | "reversed";
+
 export interface FieldChange {
     field: string;
     new?: any;
     old?: any;
+
+    [key: string]: any;
+}
+
+export interface FiscalPeriodView {
+    end_date: DateTime;
+    id: string;
+    name: string;
+    period_number: number;
+    start_date: DateTime;
+    status: PeriodStatus;
+
+    [key: string]: any;
+}
+
+export interface FiscalYearView {
+    end_date: DateTime;
+    id: string;
+    name: string;
+    periods: FiscalPeriodView[];
+    start_date: DateTime;
+    /** Derived: `locked` if every period is locked, `closed` if none is open,
+otherwise `open`. */
+    status: PeriodStatus;
 
     [key: string]: any;
 }
@@ -2222,6 +3876,51 @@ export interface Health {
     status: string;
     /** Framework version. */
     version: string;
+
+    [key: string]: any;
+}
+
+/** The income statement over a period. */
+export interface IncomeStatement {
+    expenses: StatementSection;
+    from?: DateTime | undefined;
+    net_income: string;
+    revenue: StatementSection;
+    to?: DateTime | undefined;
+
+    [key: string]: any;
+}
+
+/** A row of the journal register (entry without its lines). */
+export interface JournalEntryHeader {
+    /** Total debit (== total credit for a posted entry). */
+    amount: string;
+    currency: string;
+    entry_date: DateTime;
+    id: string;
+    memo: string;
+    number?: string | undefined;
+    reference?: string | undefined;
+    status: EntryStatus;
+
+    [key: string]: any;
+}
+
+export interface JournalEntryView {
+    created_at: DateTime;
+    currency: string;
+    entry_date: DateTime;
+    id: string;
+    lines: PostingView[];
+    memo: string;
+    number?: string | undefined;
+    posted_at?: DateTime | undefined;
+    reference?: string | undefined;
+    reversed_by_id?: string | undefined;
+    reverses_id?: string | undefined;
+    status: EntryStatus;
+    total_credit: string;
+    total_debit: string;
 
     [key: string]: any;
 }
@@ -2259,11 +3958,37 @@ it is a script container, and `/public` serves it same-origin. */
     [key: string]: any;
 }
 
+/** A period's lifecycle: postings land only in `Open`; `Closed` finalises a month (reversible); `Locked` is permanent. */
+export type PeriodStatus = "open" | "closed" | "locked";
+
 export interface PermissionDef {
     children?: PermissionDef[];
     display_name: string;
     /** Dot-separated unique name, e.g. `Pages.Sales.Invoices.Post`. */
     name: string;
+
+    [key: string]: any;
+}
+
+export interface PostingInputRequest {
+    account_id: string;
+    credit?: string;
+    /** Non-negative; exactly one of debit/credit is set on a line. */
+    debit?: string;
+    memo?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface PostingView {
+    account_code: string;
+    account_id: string;
+    account_name: string;
+    credit: string;
+    debit: string;
+    id: string;
+    line_no: number;
+    memo?: string | undefined;
 
     [key: string]: any;
 }
@@ -2302,6 +4027,23 @@ export interface Readiness {
     /** Per-dependency states: `up`, `down`, or `not_configured`. */
     database: string;
     status: string;
+
+    [key: string]: any;
+}
+
+export interface RecordExpenseRequest {
+    /** The net amount, before tax. */
+    amount: string;
+    entry_date: DateTime;
+    expense_account_id: string;
+    /** What the money was for, e.g. "Office stationery". */
+    memo: string;
+    /** The asset account the money left (cash, bank, a petty-cash float). */
+    payment_account_id: string;
+    /** External document (a till slip, an invoice number). */
+    reference?: string | undefined;
+    /** An input (purchase) tax code, when the spend carries recoverable tax. */
+    tax_code_id?: string | undefined;
 
     [key: string]: any;
 }
@@ -2353,6 +4095,15 @@ export interface RetentionResponse {
     [key: string]: any;
 }
 
+export interface ReverseEntryRequest {
+    /** The reversal's date; defaults to today. Never before the original
+entry's date, and its period must be open. */
+    entry_date?: DateTime | undefined;
+    reason?: string;
+
+    [key: string]: any;
+}
+
 export interface RoleResponse {
     display_name: string;
     id: string;
@@ -2385,12 +4136,34 @@ export interface SetUserRolesRequest {
     [key: string]: any;
 }
 
+/** One account's contribution to a financial statement, at its natural-side balance. */
+export interface StatementLine {
+    account_id: string;
+    amount: string;
+    code: string;
+    name: string;
+
+    [key: string]: any;
+}
+
+/** A titled group of statement lines with its subtotal (e.g. "Assets"). */
+export interface StatementSection {
+    lines: StatementLine[];
+    title: string;
+    total: string;
+
+    [key: string]: any;
+}
+
 /** Generic acknowledgement for operations without a richer result. */
 export interface StatusResponse {
     status: string;
 
     [key: string]: any;
 }
+
+/** Which side of the ledger a tax code lands on. */
+export type TaxDirection = "output" | "input";
 
 /** One of the companies a set of credentials belongs to. */
 export interface TenantChoice {
@@ -2413,6 +4186,27 @@ export interface TenantTwoFactorResponse {
     [key: string]: any;
 }
 
+export interface TrialBalance {
+    as_of?: DateTime | undefined;
+    rows: TrialBalanceRow[];
+    total_credit: string;
+    total_debit: string;
+
+    [key: string]: any;
+}
+
+export interface TrialBalanceRow {
+    account_id: string;
+    account_type: AccountType;
+    code: string;
+    credit: string;
+    currency: string;
+    debit: string;
+    name: string;
+
+    [key: string]: any;
+}
+
 export interface TwoFactorLoginRequest {
     /** Authenticator code or a recovery code. */
     code: string;
@@ -2424,6 +4218,14 @@ export interface TwoFactorLoginRequest {
 export interface TwoFactorSetup {
     otpauth_url: string;
     secret: string;
+
+    [key: string]: any;
+}
+
+export interface UpdateAccountRequest {
+    description?: string | undefined;
+    is_active?: boolean | undefined;
+    name?: string | undefined;
 
     [key: string]: any;
 }
@@ -2446,6 +4248,16 @@ export interface UpdateCompanyProfileRequest {
 export interface UpdateRoleRequest {
     display_name?: string | undefined;
     permissions?: string[] | undefined;
+
+    [key: string]: any;
+}
+
+export interface UpdateTaxCodeRequest {
+    /** Present to change the linked account (may be null to clear it). */
+    account_id?: string | undefined;
+    is_active?: boolean | undefined;
+    name?: string | undefined;
+    rate?: string | undefined;
 
     [key: string]: any;
 }

@@ -45,6 +45,106 @@ export const routes: Routes = [
           import('./features/workspace/report-viewer.page').then((m) => m.ReportViewerPage),
       },
       {
+        path: 'accounting/accounts',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.accountsView },
+        loadComponent: () =>
+          import('./features/accounting/accounts/accounts.page').then((m) => m.AccountsPage),
+      },
+      {
+        path: 'accounting/accounts/:id/ledger',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.accountingReportsView },
+        loadComponent: () =>
+          import('./features/accounting/ledger/account-ledger.page').then(
+            (m) => m.AccountLedgerPage,
+          ),
+      },
+      {
+        path: 'accounting/fiscal-years',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.fiscalYearsView },
+        loadComponent: () =>
+          import('./features/accounting/fiscal-years/fiscal-years.page').then(
+            (m) => m.FiscalYearsPage,
+          ),
+      },
+      {
+        path: 'accounting/journal',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.journalView },
+        loadComponent: () =>
+          import('./features/accounting/journal/journal.page').then((m) => m.JournalPage),
+      },
+      {
+        path: 'accounting/journal/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.journalCreate },
+        loadComponent: () =>
+          import('./features/accounting/journal/journal-entry-new.page').then(
+            (m) => m.JournalEntryNewPage,
+          ),
+      },
+      {
+        path: 'accounting/journal/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.journalCreate },
+        loadComponent: () =>
+          import('./features/accounting/journal/journal-entry-new.page').then(
+            (m) => m.JournalEntryNewPage,
+          ),
+      },
+      {
+        path: 'accounting/journal/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.journalView },
+        loadComponent: () =>
+          import('./features/accounting/journal/journal-entry-detail.page').then(
+            (m) => m.JournalEntryDetailPage,
+          ),
+      },
+      {
+        path: 'accounting/expenses',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.expensesView },
+        loadComponent: () =>
+          import('./features/accounting/expenses/expenses.page').then((m) => m.ExpensesPage),
+      },
+      {
+        path: 'accounting/tax-codes',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.taxView },
+        loadComponent: () =>
+          import('./features/accounting/tax-codes/tax-codes.page').then((m) => m.TaxCodesPage),
+      },
+      {
+        path: 'accounting/trial-balance',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.accountingReportsView },
+        loadComponent: () =>
+          import('./features/accounting/trial-balance/trial-balance.page').then(
+            (m) => m.TrialBalancePage,
+          ),
+      },
+      {
+        path: 'accounting/balance-sheet',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.accountingReportsView },
+        loadComponent: () =>
+          import('./features/accounting/balance-sheet/balance-sheet.page').then(
+            (m) => m.BalanceSheetPage,
+          ),
+      },
+      {
+        path: 'accounting/income-statement',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.accountingReportsView },
+        loadComponent: () =>
+          import('./features/accounting/income-statement/income-statement.page').then(
+            (m) => m.IncomeStatementPage,
+          ),
+      },
+      {
         path: 'administration',
         loadComponent: () =>
           import('./features/administration/administration-hub.page').then(

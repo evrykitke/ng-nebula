@@ -1,0 +1,110 @@
+<app-page-header
+  title="Expenses"
+  subtitle="Everyday spending, recorded without touching the journal"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Expenses' }]"
+>
+  @if (canRecord()) {
+    <button uiBtn actions (click)="openRecord()">
+      <ng-icon name="lucidePlus" size="16" /> Record expense
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig" [dataSource]="dataSource" (action)="onAction($event)" />
+
+<!-- Record dialog -->
+<app-modal
+  [open]="recording()"
+  size="md"
+  title="Record an expense"
+  (closed)="recording.set(false)"
+>
+  <form (ngSubmit)="save()">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Date</label>
+        <app-datepicker [(date)]="form.entry_date" placeholder="Today" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Reference</label>
+        <input
+          [(ngModel)]="form.reference"
+          name="reference"
+          placeholder="Receipt / invoice no. (optional)"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">What was it for?</label>
+    <input
+      [(ngModel)]="form.memo"
+      name="memo"
+      placeholder="e.g. Office stationery"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Expense account</label>
+    <app-lookup
+      [config]="expenseLookup()"
+      [value]="form.expense_account_id"
+      (valueChange)="form.expense_account_id = $event ?? ''"
+    />
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Paid from</label>
+    <app-lookup
+      [config]="paymentLookup()"
+      [value]="form.payment_account_id"
+      (valueChange)="form.payment_account_id = $event ?? ''"
+    />
+
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Amount (before tax)</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="form.amount"
+          name="amount"
+          placeholder="0.00"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Tax</label>
+        <select [(ngModel)]="form.tax_code_id" name="tax_code_id" class="w-full">
+          <option value="">No tax</option>
+          @for (t of inputTaxCodes(); track t.id) {
+            <option [value]="t.id">{{ t.code }} — {{ t.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (preview(); as p) {
+      @if (p.tax > 0) {
+        <p class="mt-2 text-xs text-muted-foreground">
+          Recoverable tax {{ money(p.tax) }} — total paid {{ money(p.total) }}
+        </p>
+      }
+    }
+
+    @if (formError()) {
+      <p class="mt-3 text-sm text-destructive">{{ formError() }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+        (click)="recording.set(false)"
+      >
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="saving()">
+        {{ saving() ? 'Recording…' : 'Record' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

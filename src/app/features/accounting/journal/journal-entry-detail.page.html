@@ -1,0 +1,149 @@
+<app-page-header
+  [title]="entry()?.number ?? 'Journal entry'"
+  subtitle="Journal entry detail"
+  [breadcrumbs]="[
+    { label: 'Accounting' },
+    { label: 'Journal', route: '/accounting/journal' },
+    { label: entry()?.number ?? '…' },
+  ]"
+>
+  @if (entry(); as e) {
+    @if (canEdit() && e.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+        <ng-icon name="lucidePencil" size="16" />
+        Edit
+      </button>
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" />
+        Delete
+      </button>
+    }
+    @if (canPost() && e.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="post()">
+        <ng-icon name="lucideCheck" size="16" />
+        {{ busy() ? 'Posting…' : 'Post' }}
+      </button>
+    }
+    @if (canReverse() && e.status === 'posted' && !e.reverses_id) {
+      <button uiBtn actions [disabled]="busy()" (click)="reverse()">
+        <ng-icon name="lucideUndo2" size="16" />
+        {{ busy() ? 'Reversing…' : 'Reverse' }}
+      </button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/accounting/journal"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to journal
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (entry(); as e) {
+  <!-- Header card -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(e.entry_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="
+              e.status === 'posted'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                : e.status === 'reversed'
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                  : 'bg-muted text-muted-foreground'
+            "
+          >
+            {{ e.status }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ e.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted at</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(e.posted_at) }}</p>
+      </div>
+      <div class="col-span-2">
+        <p class="text-xs text-muted-foreground">Memo</p>
+        <p class="mt-0.5 font-medium">{{ e.memo || '—' }}</p>
+      </div>
+      <div class="col-span-2">
+        <p class="text-xs text-muted-foreground">Reference</p>
+        <p class="mt-0.5 font-medium">{{ e.reference || '—' }}</p>
+      </div>
+    </div>
+
+    @if (e.reverses_id || e.reversed_by_id) {
+      <div class="mt-4 flex flex-wrap gap-4 border-t border-border pt-3 text-sm">
+        @if (e.reverses_id) {
+          <a
+            [routerLink]="['/accounting/journal', e.reverses_id]"
+            class="text-primary hover:underline"
+          >
+            This entry reverses another — view the original
+          </a>
+        }
+        @if (e.reversed_by_id) {
+          <a
+            [routerLink]="['/accounting/journal', e.reversed_by_id]"
+            class="text-primary hover:underline"
+          >
+            Reversed — view the reversing entry
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Lines -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">#</th>
+          <th class="px-4 py-2 font-medium">Account</th>
+          <th class="px-4 py-2 font-medium">Memo</th>
+          <th class="px-4 py-2 text-right font-medium">Debit</th>
+          <th class="px-4 py-2 text-right font-medium">Credit</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of e.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 text-muted-foreground">{{ l.line_no }}</td>
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.account_code }}</span>
+              <span class="text-muted-foreground"> — {{ l.account_name }}</span>
+            </td>
+            <td class="px-4 py-2 text-muted-foreground">{{ l.memo || '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ amount(l.debit) }}</td>
+            <td class="px-4 py-2 text-right">{{ amount(l.credit) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-medium">
+          <td colspan="3" class="px-4 py-2 text-right text-xs text-muted-foreground">Totals</td>
+          <td class="px-4 py-2 text-right">{{ amount(e.total_debit) }}</td>
+          <td class="px-4 py-2 text-right">{{ amount(e.total_credit) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}

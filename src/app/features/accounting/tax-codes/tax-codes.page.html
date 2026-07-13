@@ -1,0 +1,108 @@
+<app-page-header
+  title="Tax Codes"
+  subtitle="Rates applied to taxable amounts and the accounts they post to"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Tax Codes' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="openCreate()">
+      <ng-icon name="lucidePlus" size="16" /> Add tax code
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />
+
+<!-- Add / edit dialog -->
+<app-modal
+  [open]="editing()"
+  size="md"
+  [title]="editingId ? 'Edit tax code' : 'Add tax code'"
+  (closed)="editing.set(false)"
+>
+  <form (ngSubmit)="save()">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code</label>
+        <input
+          [(ngModel)]="form.code"
+          name="code"
+          [disabled]="!!editingId"
+          placeholder="VAT16"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm uppercase disabled:opacity-60"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Rate (%)</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="form.rate"
+          name="rate"
+          placeholder="16"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Name</label>
+    <input
+      [(ngModel)]="form.name"
+      name="name"
+      placeholder="VAT (Standard 16%)"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Direction</label>
+        <select
+          [(ngModel)]="form.direction"
+          name="direction"
+          [disabled]="!!editingId"
+          class="w-full capitalize disabled:opacity-60"
+        >
+          @for (d of directions; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Booked to account</label>
+        <select [(ngModel)]="form.account_id" name="account_id" class="w-full">
+          <option value="">None</option>
+          @for (a of accounts(); track a.id) {
+            <option [value]="a.id">{{ a.code }} — {{ a.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <p class="mt-1 text-xs text-muted-foreground">
+      Output tax is collected on sales (a liability); input tax is paid on purchases (recoverable).
+    </p>
+
+    @if (editingId) {
+      <label class="mt-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+        Active
+      </label>
+    }
+
+    @if (formError()) {
+      <p class="mt-3 text-sm text-destructive">{{ formError() }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+        (click)="editing.set(false)"
+      >
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

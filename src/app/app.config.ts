@@ -6,6 +6,8 @@ import {
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
+import { provideDateAdapter } from '@spartan-ng/brain/date-time';
+import { BrnLuxonDateAdapter } from '@spartan-ng/brain/date-time-luxon';
 
 import { routes } from './app.routes';
 import { apiInterceptor } from './core/interceptors/api-interceptor';
@@ -20,6 +22,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([apiInterceptor])),
     provideIcons(appIcons),
+    provideDateAdapter(BrnLuxonDateAdapter),
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
   ],
 };

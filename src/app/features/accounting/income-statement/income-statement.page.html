@@ -1,0 +1,90 @@
+<app-page-header
+  title="Income Statement"
+  subtitle="Revenue less expenses over a period"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Income Statement' }]"
+>
+  <div actions class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">From</label>
+      <app-datepicker [(date)]="from" (dateChange)="load()" placeholder="Earliest" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">To</label>
+      <app-datepicker [(date)]="to" (dateChange)="load()" placeholder="Latest" />
+    </div>
+  </div>
+</app-page-header>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (data(); as is) {
+  <div class="mx-auto max-w-2xl rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <tbody>
+        <!-- Revenue -->
+        <tr class="bg-muted/40">
+          <td colspan="2" class="px-4 py-2 text-xs font-medium text-muted-foreground">
+            {{ is.revenue.title }}
+          </td>
+        </tr>
+        @for (l of is.revenue.lines; track l.account_id) {
+          <tr
+            class="cursor-pointer border-b border-border/40 hover:bg-accent/50"
+            (click)="openLedger(l.account_id)"
+          >
+            <td class="px-4 py-1.5">
+              <span class="font-medium">{{ l.code }}</span>
+              <span class="text-muted-foreground"> — {{ l.name }}</span>
+            </td>
+            <td class="px-4 py-1.5 text-right">{{ amount(l.amount) }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="2" class="px-4 py-2 text-muted-foreground">No revenue in this period.</td>
+          </tr>
+        }
+        <tr class="border-b border-border font-medium">
+          <td class="px-4 py-1.5 text-right text-muted-foreground">Total revenue</td>
+          <td class="px-4 py-1.5 text-right">{{ amount(is.revenue.total) }}</td>
+        </tr>
+
+        <!-- Expenses -->
+        <tr class="bg-muted/40">
+          <td colspan="2" class="px-4 py-2 text-xs font-medium text-muted-foreground">
+            {{ is.expenses.title }}
+          </td>
+        </tr>
+        @for (l of is.expenses.lines; track l.account_id) {
+          <tr
+            class="cursor-pointer border-b border-border/40 hover:bg-accent/50"
+            (click)="openLedger(l.account_id)"
+          >
+            <td class="px-4 py-1.5">
+              <span class="font-medium">{{ l.code }}</span>
+              <span class="text-muted-foreground"> — {{ l.name }}</span>
+            </td>
+            <td class="px-4 py-1.5 text-right">{{ amount(l.amount) }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="2" class="px-4 py-2 text-muted-foreground">No expenses in this period.</td>
+          </tr>
+        }
+        <tr class="border-b border-border font-medium">
+          <td class="px-4 py-1.5 text-right text-muted-foreground">Total expenses</td>
+          <td class="px-4 py-1.5 text-right">{{ amount(is.expenses.total) }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border text-base font-semibold">
+          <td class="px-4 py-2.5">Net income</td>
+          <td class="px-4 py-2.5 text-right">{{ amount(is.net_income) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+} @else {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+    No data.
+  </div>
+}

@@ -1,0 +1,30 @@
+<app-page-header
+  title="Journal"
+  subtitle="Every double-entry recorded in the ledger"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Journal' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newEntry()">
+      <ng-icon name="lucidePlus" size="16" /> New entry
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select
+        [(ngModel)]="statusFilter"
+        name="statusFilter"
+        (ngModelChange)="applyFilters()"
+        class="capitalize"
+      >
+        <option value="">All statuses</option>
+        @for (s of statuses; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</app-data-table>

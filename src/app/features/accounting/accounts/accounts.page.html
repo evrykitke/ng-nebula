@@ -1,0 +1,137 @@
+<app-page-header
+  title="Chart of Accounts"
+  subtitle="The ledger accounts your business posts against"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Chart of Accounts' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="openCreate()">
+      <ng-icon name="lucidePlus" size="16" /> Add account
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <!-- Projected type filter -->
+  <div toolbar class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
+      <select
+        [(ngModel)]="typeFilter"
+        name="typeFilter"
+        (ngModelChange)="applyFilters()"
+        class="capitalize"
+      >
+        <option value="">All types</option>
+        @for (t of accountTypes; track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</app-data-table>
+
+<!-- Add / edit dialog -->
+<app-modal
+  [open]="editing()"
+  size="md"
+  [title]="editingId ? 'Edit account' : 'Add account'"
+  (closed)="editing.set(false)"
+>
+  <form (ngSubmit)="save()">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code</label>
+        <input
+          [(ngModel)]="form.code"
+          name="code"
+          [disabled]="!!editingId"
+          placeholder="1500"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Type</label>
+        <select
+          [(ngModel)]="form.account_type"
+          name="account_type"
+          [disabled]="!!editingId"
+          class="w-full capitalize disabled:opacity-60"
+        >
+          @for (t of accountTypes; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Name</label>
+    <input
+      [(ngModel)]="form.name"
+      name="name"
+      placeholder="Petty Cash"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    @if (!editingId) {
+      <div class="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Currency</label>
+          <input
+            [(ngModel)]="form.currency"
+            name="currency"
+            maxlength="3"
+            placeholder="USD"
+            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm uppercase"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Parent account</label>
+          <select [(ngModel)]="form.parent_id" name="parent_id" class="w-full">
+            <option value="">None (top-level)</option>
+            @for (a of parentOptions(); track a.id) {
+              @if (a.account_type === form.account_type && a.id !== editingId) {
+                <option [value]="a.id">{{ a.code }} — {{ a.name }}</option>
+              }
+            }
+          </select>
+        </div>
+      </div>
+      <p class="mt-1 text-xs text-muted-foreground">
+        A parent turns into a header account; postings are made to leaf accounts.
+      </p>
+    }
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Description</label>
+    <input
+      [(ngModel)]="form.description"
+      name="description"
+      placeholder="Optional"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    @if (editingId) {
+      <label class="mt-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+        Active
+        <span class="text-xs text-muted-foreground">(inactive accounts reject new postings)</span>
+      </label>
+    }
+
+    @if (formError()) {
+      <p class="mt-3 text-sm text-destructive">{{ formError() }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+        (click)="editing.set(false)"
+      >
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

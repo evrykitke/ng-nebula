@@ -219,10 +219,19 @@ export class AuthService {
     this.clear();
   }
 
-  /** Drop all local authentication state (tenant choice is kept). */
+  /**
+   * Drop all local authentication state, the workspace included. Keeping it
+   * would be worse than useless: sign-in resolves the workspace from the
+   * credentials, so nothing reads it back — but the interceptor would go on
+   * stamping `X-Tenant` on every request, and a workspace that has since been
+   * renamed or removed makes the server refuse them all (tenant resolution
+   * runs ahead of the handler, so even anonymous ones like the currency list
+   * on the sign-up page 404).
+   */
   private clear(): void {
     this._session.set(null);
     this._twoFactorToken.set(null);
+    this.setTenant(null);
     localStorage.removeItem(SESSION_KEY);
   }
 

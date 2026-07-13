@@ -33,6 +33,61 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', icon: 'lucideLayoutDashboard', route: '/dashboard' },
   {
+    label: 'Accounting',
+    icon: 'lucideCalculator',
+    exact: false,
+    children: [
+      {
+        label: 'Chart of Accounts',
+        icon: 'lucideListTree',
+        route: '/accounting/accounts',
+        permission: Permissions.accountsView,
+      },
+      {
+        label: 'Fiscal Years',
+        icon: 'lucideCalendarRange',
+        route: '/accounting/fiscal-years',
+        permission: Permissions.fiscalYearsView,
+      },
+      {
+        label: 'Journal',
+        icon: 'lucideBookText',
+        route: '/accounting/journal',
+        permission: Permissions.journalView,
+      },
+      {
+        label: 'Expenses',
+        icon: 'lucideReceipt',
+        route: '/accounting/expenses',
+        permission: Permissions.expensesView,
+      },
+      {
+        label: 'Tax Codes',
+        icon: 'lucidePercent',
+        route: '/accounting/tax-codes',
+        permission: Permissions.taxView,
+      },
+      {
+        label: 'Trial Balance',
+        icon: 'lucideScale',
+        route: '/accounting/trial-balance',
+        permission: Permissions.accountingReportsView,
+      },
+      {
+        label: 'Balance Sheet',
+        icon: 'lucideLayers',
+        route: '/accounting/balance-sheet',
+        permission: Permissions.accountingReportsView,
+      },
+      {
+        label: 'Income Statement',
+        icon: 'lucideTrendingUp',
+        route: '/accounting/income-statement',
+        permission: Permissions.accountingReportsView,
+      },
+    ],
+  },
+  {
     label: 'Workspace',
     icon: 'lucideLayoutGrid',
     exact: false,

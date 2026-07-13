@@ -1,0 +1,129 @@
+<app-page-header
+  title="Balance Sheet"
+  subtitle="What the business owns and owes at a point in time"
+  [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Balance Sheet' }]"
+>
+  <div actions class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">As of</label>
+      <app-datepicker [(date)]="asOf" (dateChange)="load()" placeholder="Today" />
+    </div>
+  </div>
+</app-page-header>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (data(); as bs) {
+  <div class="grid gap-4 lg:grid-cols-2">
+    <!-- Assets -->
+    <section class="rounded-lg border border-border bg-card">
+      <h2 class="border-b border-border px-4 py-2.5 text-sm font-semibold">
+        {{ bs.assets.title }}
+      </h2>
+      <table class="w-full text-sm">
+        <tbody>
+          @for (l of bs.assets.lines; track l.account_id) {
+            <tr
+              class="cursor-pointer border-b border-border/40 hover:bg-accent/50"
+              (click)="openLedger(l.account_id)"
+            >
+              <td class="px-4 py-1.5">
+                <span class="font-medium">{{ l.code }}</span>
+                <span class="text-muted-foreground"> — {{ l.name }}</span>
+              </td>
+              <td class="px-4 py-1.5 text-right">{{ amount(l.amount) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="2" class="px-4 py-3 text-center text-muted-foreground">No assets.</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border font-semibold">
+            <td class="px-4 py-2">Total assets</td>
+            <td class="px-4 py-2 text-right">{{ amount(bs.total_assets) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <!-- Liabilities + Equity -->
+    <section class="rounded-lg border border-border bg-card">
+      <h2 class="border-b border-border px-4 py-2.5 text-sm font-semibold">
+        Liabilities &amp; Equity
+      </h2>
+      <table class="w-full text-sm">
+        <tbody>
+          <tr class="bg-muted/40">
+            <td colspan="2" class="px-4 py-1.5 text-xs font-medium text-muted-foreground">
+              {{ bs.liabilities.title }}
+            </td>
+          </tr>
+          @for (l of bs.liabilities.lines; track l.account_id) {
+            <tr
+              class="cursor-pointer border-b border-border/40 hover:bg-accent/50"
+              (click)="openLedger(l.account_id)"
+            >
+              <td class="px-4 py-1.5">
+                <span class="font-medium">{{ l.code }}</span>
+                <span class="text-muted-foreground"> — {{ l.name }}</span>
+              </td>
+              <td class="px-4 py-1.5 text-right">{{ amount(l.amount) }}</td>
+            </tr>
+          }
+          <tr class="border-b border-border/60 text-sm font-medium">
+            <td class="px-4 py-1.5 text-right text-muted-foreground">Total liabilities</td>
+            <td class="px-4 py-1.5 text-right">{{ amount(bs.liabilities.total) }}</td>
+          </tr>
+
+          <tr class="bg-muted/40">
+            <td colspan="2" class="px-4 py-1.5 text-xs font-medium text-muted-foreground">
+              {{ bs.equity.title }}
+            </td>
+          </tr>
+          @for (l of bs.equity.lines; track l.account_id) {
+            <tr
+              class="cursor-pointer border-b border-border/40 hover:bg-accent/50"
+              (click)="openLedger(l.account_id)"
+            >
+              <td class="px-4 py-1.5">
+                <span class="font-medium">{{ l.code }}</span>
+                <span class="text-muted-foreground"> — {{ l.name }}</span>
+              </td>
+              <td class="px-4 py-1.5 text-right">{{ amount(l.amount) }}</td>
+            </tr>
+          }
+          @if (nonZero(bs.prior_earnings)) {
+            <tr class="border-b border-border/40">
+              <td class="px-4 py-1.5 text-muted-foreground">Retained earnings (prior years)</td>
+              <td class="px-4 py-1.5 text-right">{{ amount(bs.prior_earnings) }}</td>
+            </tr>
+          }
+          <tr class="border-b border-border/40">
+            <td class="px-4 py-1.5 text-muted-foreground">Current earnings</td>
+            <td class="px-4 py-1.5 text-right">{{ amount(bs.current_earnings) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border font-semibold">
+            <td class="px-4 py-2">Total liabilities &amp; equity</td>
+            <td class="px-4 py-2 text-right">{{ amount(bs.total_liabilities_and_equity) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+  </div>
+
+  <p class="mt-3 text-sm">
+    @if (bs.balanced) {
+      <span class="font-medium text-green-600 dark:text-green-400">In balance</span>
+    } @else {
+      <span class="font-medium text-destructive">Out of balance</span>
+    }
+  </p>
+} @else {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+    No data.
+  </div>
+}

@@ -14,6 +14,900 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/accounting/accounts": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "list_accounts",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountingAccount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "create_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingAccount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/accounts/{id}": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "get_account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Account id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingAccount"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "update_account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Account id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingAccount"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "delete_account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Account id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingAccount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/accounts/{id}/ledger": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "account_ledger",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Account id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "From date (inclusive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "To date (inclusive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLedger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/balance-sheet": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "balance_sheet",
+        "parameters": [
+          {
+            "name": "as_of",
+            "in": "query",
+            "description": "Balances as of this date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceSheet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/expenses": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "list_expenses",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryHeader"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "record_expense",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/fiscal-years": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "list_fiscal_years",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FiscalYearView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "create_fiscal_year",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFiscalYearRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/income-statement": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "income_statement",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "From date (inclusive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "To date (inclusive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeStatement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/journal": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "list_entries",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/EntryStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntryHeader"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "create_entry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/journal/{id}": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "get_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entry id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "update_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entry id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "delete_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entry id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/journal/{id}/post": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "post_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entry id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/journal/{id}/reverse": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "reverse_entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entry id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/periods/{id}/close": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "close_period",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Period id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/periods/{id}/lock": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "lock_period",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Period id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/periods/{id}/reopen": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "reopen_period",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Period id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalYearView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/tax-codes": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "list_tax_codes",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountingTaxCode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "create_tax_code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaxCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingTaxCode"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/tax-codes/{id}": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "get_tax_code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tax code id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingTaxCode"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "update_tax_code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tax code id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaxCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingTaxCode"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "delete_tax_code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Tax code id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingTaxCode"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounting/trial-balance": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "operationId": "trial_balance",
+        "parameters": [
+          {
+            "name": "as_of",
+            "in": "query",
+            "description": "Balances as of this date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialBalance"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/audit/logs": {
       "get": {
         "tags": [
@@ -1147,6 +2041,231 @@
   },
   "components": {
     "schemas": {
+      "AccountLedger": {
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name",
+          "account_type",
+          "currency",
+          "opening_balance",
+          "closing_balance",
+          "lines"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account_type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "closing_balance": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountLedgerLine"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "opening_balance": {
+            "type": "string"
+          }
+        }
+      },
+      "AccountLedgerLine": {
+        "type": "object",
+        "required": [
+          "entry_id",
+          "entry_date",
+          "memo",
+          "debit",
+          "credit",
+          "balance"
+        ],
+        "properties": {
+          "balance": {
+            "type": "string",
+            "description": "Running balance on the account's normal side."
+          },
+          "credit": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "string"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "entry_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "memo": {
+            "type": "string"
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AccountType": {
+        "type": "string",
+        "description": "The five account classes of double-entry bookkeeping. Each one fixes\nwhether the account increases on the debit or the credit side.",
+        "enum": [
+          "asset",
+          "liability",
+          "equity",
+          "revenue",
+          "expense"
+        ]
+      },
+      "AccountingAccount": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "account_type",
+          "currency",
+          "is_system",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "account_type": {
+            "type": "string",
+            "description": "One of asset|liability|equity|revenue|expense."
+          },
+          "code": {
+            "type": "string",
+            "description": "Human-facing identifier, unique per tenant (e.g. `1000`)."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code the account is denominated in."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_system": {
+            "type": "boolean",
+            "description": "Seeded by the platform's default chart of accounts; cannot be\ndeleted (but may be renamed or deactivated)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "system_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stable platform role (e.g. `ar`, `vat_output`, `sales`) other\nmodules resolve this account by; `None` for user-created accounts."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccountingTaxCode": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "rate",
+          "direction",
+          "is_system",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "direction": {
+            "type": "string",
+            "description": "output|input."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_system": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "string",
+            "description": "Percentage rate, e.g. `16` for 16%."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AuditLog": {
         "type": "object",
         "required": [
@@ -1267,6 +2386,53 @@
           }
         }
       },
+      "BalanceSheet": {
+        "type": "object",
+        "description": "The balance sheet as of a date. The still-open nominal accounts' net\nincome is folded into equity so the sheet balances: `prior_earnings` is\nincome from fiscal years before the one covering the reference date\n(retained earnings), `current_earnings` the current year's.",
+        "required": [
+          "assets",
+          "liabilities",
+          "equity",
+          "prior_earnings",
+          "current_earnings",
+          "total_assets",
+          "total_liabilities_and_equity",
+          "balanced"
+        ],
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "assets": {
+            "$ref": "#/components/schemas/StatementSection"
+          },
+          "balanced": {
+            "type": "boolean"
+          },
+          "current_earnings": {
+            "type": "string"
+          },
+          "equity": {
+            "$ref": "#/components/schemas/StatementSection"
+          },
+          "liabilities": {
+            "$ref": "#/components/schemas/StatementSection"
+          },
+          "prior_earnings": {
+            "type": "string"
+          },
+          "total_assets": {
+            "type": "string"
+          },
+          "total_liabilities_and_equity": {
+            "type": "string"
+          }
+        }
+      },
       "ChangePasswordRequest": {
         "type": "object",
         "required": [
@@ -1376,6 +2542,43 @@
           }
         }
       },
+      "CreateAccountRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "account_type",
+          "currency"
+        ],
+        "properties": {
+          "account_type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code the account is denominated in."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "CreateCurrencyRequest": {
         "type": "object",
         "required": [
@@ -1398,6 +2601,60 @@
           }
         }
       },
+      "CreateEntryRequest": {
+        "type": "object",
+        "required": [
+          "entry_date",
+          "memo",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code; every line's account must be in this currency."
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostingInputRequest"
+            }
+          },
+          "memo": {
+            "type": "string"
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateFiscalYearRequest": {
+        "type": "object",
+        "required": [
+          "start_date"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional display name; defaults to `FY<year>`."
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the year; must be the first day of a month."
+          }
+        }
+      },
       "CreateRoleRequest": {
         "type": "object",
         "required": [
@@ -1416,6 +2673,35 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "CreateTaxCodeRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "rate"
+        ],
+        "properties": {
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/TaxDirection"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "string"
           }
         }
       },
@@ -1515,6 +2801,15 @@
           }
         }
       },
+      "EntryStatus": {
+        "type": "string",
+        "description": "Where a journal entry is in its lifecycle.",
+        "enum": [
+          "draft",
+          "posted",
+          "reversed"
+        ]
+      },
       "FieldChange": {
         "type": "object",
         "required": [
@@ -1526,6 +2821,79 @@
           },
           "new": {},
           "old": {}
+        }
+      },
+      "FiscalPeriodView": {
+        "type": "object",
+        "required": [
+          "id",
+          "period_number",
+          "name",
+          "start_date",
+          "end_date",
+          "status"
+        ],
+        "properties": {
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "period_number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PeriodStatus"
+          }
+        }
+      },
+      "FiscalYearView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "start_date",
+          "end_date",
+          "status",
+          "periods"
+        ],
+        "properties": {
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FiscalPeriodView"
+            }
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PeriodStatus",
+            "description": "Derived: `locked` if every period is locked, `closed` if none is open,\notherwise `open`."
+          }
         }
       },
       "Health": {
@@ -1547,6 +2915,169 @@
           "version": {
             "type": "string",
             "description": "Framework version."
+          }
+        }
+      },
+      "IncomeStatement": {
+        "type": "object",
+        "description": "The income statement over a period.",
+        "required": [
+          "revenue",
+          "expenses",
+          "net_income"
+        ],
+        "properties": {
+          "expenses": {
+            "$ref": "#/components/schemas/StatementSection"
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "net_income": {
+            "type": "string"
+          },
+          "revenue": {
+            "$ref": "#/components/schemas/StatementSection"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "JournalEntryHeader": {
+        "type": "object",
+        "description": "A row of the journal register (entry without its lines).",
+        "required": [
+          "id",
+          "entry_date",
+          "memo",
+          "currency",
+          "status",
+          "amount"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Total debit (== total credit for a posted entry)."
+          },
+          "currency": {
+            "type": "string"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "memo": {
+            "type": "string"
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntryStatus"
+          }
+        }
+      },
+      "JournalEntryView": {
+        "type": "object",
+        "required": [
+          "id",
+          "entry_date",
+          "memo",
+          "currency",
+          "status",
+          "created_at",
+          "lines",
+          "total_debit",
+          "total_credit"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostingView"
+            }
+          },
+          "memo": {
+            "type": "string"
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "posted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reversed_by_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "reverses_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntryStatus"
+          },
+          "total_credit": {
+            "type": "string"
+          },
+          "total_debit": {
+            "type": "string"
           }
         }
       },
@@ -1726,6 +3257,15 @@
           }
         }
       },
+      "PeriodStatus": {
+        "type": "string",
+        "description": "A period's lifecycle: postings land only in `Open`; `Closed` finalises a\nmonth (reversible); `Locked` is permanent.",
+        "enum": [
+          "open",
+          "closed",
+          "locked"
+        ]
+      },
       "PermissionDef": {
         "type": "object",
         "required": [
@@ -1745,6 +3285,75 @@
           "name": {
             "type": "string",
             "description": "Dot-separated unique name, e.g. `Pages.Sales.Invoices.Post`."
+          }
+        }
+      },
+      "PostingInputRequest": {
+        "type": "object",
+        "required": [
+          "account_id"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "credit": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "string",
+            "description": "Non-negative; exactly one of debit/credit is set on a line."
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PostingView": {
+        "type": "object",
+        "required": [
+          "id",
+          "account_id",
+          "account_code",
+          "account_name",
+          "line_no",
+          "debit",
+          "credit"
+        ],
+        "properties": {
+          "account_code": {
+            "type": "string"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "credit": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "line_no": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "memo": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -1866,6 +3475,54 @@
           }
         }
       },
+      "RecordExpenseRequest": {
+        "type": "object",
+        "required": [
+          "entry_date",
+          "memo",
+          "expense_account_id",
+          "payment_account_id",
+          "amount"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "The net amount, before tax."
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "expense_account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "memo": {
+            "type": "string",
+            "description": "What the money was for, e.g. \"Office stationery\"."
+          },
+          "payment_account_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The asset account the money left (cash, bank, a petty-cash float)."
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "External document (a till slip, an invoice number)."
+          },
+          "tax_code_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "An input (purchase) tax code, when the spend carries recoverable tax."
+          }
+        }
+      },
       "RefreshRequest": {
         "type": "object",
         "required": [
@@ -1984,6 +3641,22 @@
           }
         }
       },
+      "ReverseEntryRequest": {
+        "type": "object",
+        "properties": {
+          "entry_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "The reversal's date; defaults to today. Never before the original\nentry's date, and its period must be open."
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "RoleResponse": {
         "type": "object",
         "required": [
@@ -2061,6 +3734,54 @@
           }
         }
       },
+      "StatementLine": {
+        "type": "object",
+        "description": "One account's contribution to a financial statement, at its natural-side\nbalance.",
+        "required": [
+          "account_id",
+          "code",
+          "name",
+          "amount"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "StatementSection": {
+        "type": "object",
+        "description": "A titled group of statement lines with its subtotal (e.g. \"Assets\").",
+        "required": [
+          "title",
+          "lines",
+          "total"
+        ],
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLine"
+            }
+          },
+          "title": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          }
+        }
+      },
       "StatusResponse": {
         "type": "object",
         "description": "Generic acknowledgement for operations without a richer result.",
@@ -2072,6 +3793,14 @@
             "type": "string"
           }
         }
+      },
+      "TaxDirection": {
+        "type": "string",
+        "description": "Which side of the ledger a tax code lands on.",
+        "enum": [
+          "output",
+          "input"
+        ]
       },
       "TenantChoice": {
         "type": "object",
@@ -2115,6 +3844,71 @@
           }
         }
       },
+      "TrialBalance": {
+        "type": "object",
+        "required": [
+          "rows",
+          "total_debit",
+          "total_credit"
+        ],
+        "properties": {
+          "as_of": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrialBalanceRow"
+            }
+          },
+          "total_credit": {
+            "type": "string"
+          },
+          "total_debit": {
+            "type": "string"
+          }
+        }
+      },
+      "TrialBalanceRow": {
+        "type": "object",
+        "required": [
+          "account_id",
+          "code",
+          "name",
+          "account_type",
+          "currency",
+          "debit",
+          "credit"
+        ],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account_type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "code": {
+            "type": "string"
+          },
+          "credit": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "debit": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "TwoFactorLoginRequest": {
         "type": "object",
         "required": [
@@ -2140,6 +3934,29 @@
           },
           "secret": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateAccountRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -2215,6 +4032,37 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "UpdateTaxCodeRequest": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Present to change the linked account (may be null to clear it)."
+          },
+          "is_active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rate": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
