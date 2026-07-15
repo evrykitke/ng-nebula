@@ -115,7 +115,7 @@ const SETUP_MESSAGES = [
           @switch (step()) {
             @case ('company') {
               <form (ngSubmit)="toAdministrator()">
-                <h1 class="text-xl font-semibold text-foreground">Create your company</h1>
+                <h1 class="text-xl font-semibold text-foreground">Create your Workspace</h1>
                 <p class="mb-5 text-sm text-muted-foreground">
                   Set up a workspace and its administrator account — you can invite your team
                   afterwards.
