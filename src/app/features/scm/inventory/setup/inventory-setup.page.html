@@ -1,0 +1,247 @@
+<app-page-header
+  title="Inventory setup"
+  subtitle="Categories and units of measure — the references items are built on"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Setup' }]"
+/>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <!-- Categories -->
+  <div class="rounded-lg border border-border bg-card">
+    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+      <h2 class="text-sm font-semibold">Categories</h2>
+      @if (canManage()) {
+        <button uiBtn size="sm" variant="outline" (click)="openNewCategory()">
+          <ng-icon name="lucidePlus" size="14" /> New
+        </button>
+      }
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Name</th>
+            <th class="px-4 py-2 font-medium">Code</th>
+            <th class="px-4 py-2 font-medium">Parent</th>
+            <th class="px-4 py-2 font-medium">Active</th>
+            @if (canManage()) {
+              <th class="px-4 py-2"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of categories(); track c.id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2 font-medium">{{ c.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ c.code || '—' }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ categoryName(c.parent_id) }}</td>
+              <td class="px-4 py-2">
+                <span
+                  class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                  [class]="
+                    c.is_active
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                      : 'bg-muted text-muted-foreground'
+                  "
+                >
+                  {{ c.is_active ? 'yes' : 'no' }}
+                </span>
+              </td>
+              @if (canManage()) {
+                <td class="px-4 py-2 text-right whitespace-nowrap">
+                  <button
+                    type="button"
+                    class="text-xs text-primary hover:underline"
+                    (click)="openEditCategory(c)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="ml-3 text-xs text-destructive hover:underline"
+                    (click)="removeCategory(c)"
+                  >
+                    Delete
+                  </button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-6 text-center text-muted-foreground">
+                No categories yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Units of measure -->
+  <div class="rounded-lg border border-border bg-card">
+    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+      <h2 class="text-sm font-semibold">Units of measure</h2>
+      @if (canManage()) {
+        <button uiBtn size="sm" variant="outline" (click)="openNewUom()">
+          <ng-icon name="lucidePlus" size="14" /> New
+        </button>
+      }
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Code</th>
+            <th class="px-4 py-2 font-medium">Name</th>
+            <th class="px-4 py-2 font-medium">Symbol</th>
+            <th class="px-4 py-2 font-medium">Fractional</th>
+            <th class="px-4 py-2 font-medium">Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of uoms(); track u.id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2 font-medium">{{ u.code }}</td>
+              <td class="px-4 py-2">{{ u.name }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ u.symbol || '—' }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ u.fractional ? 'yes' : 'no' }}</td>
+              <td class="px-4 py-2">
+                <span
+                  class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                  [class]="
+                    u.is_active
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                      : 'bg-muted text-muted-foreground'
+                  "
+                >
+                  {{ u.is_active ? 'yes' : 'no' }}
+                </span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-6 text-center text-muted-foreground">
+                No units yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Category modal -->
+<app-modal
+  [open]="categoryModal()"
+  size="md"
+  [title]="categoryEditId() ? 'Edit category' : 'New category'"
+  (closed)="categoryModal.set(false)"
+>
+  <form (ngSubmit)="saveCategory()" class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Name</label>
+      <input
+        [(ngModel)]="categoryForm.name"
+        name="cat_name"
+        placeholder="e.g. Raw materials"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code</label>
+        <input
+          [(ngModel)]="categoryForm.code"
+          name="cat_code"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Parent</label>
+        <select [(ngModel)]="categoryForm.parent_id" name="cat_parent" class="h-9 w-full">
+          <option value="">No parent</option>
+          @for (p of parentChoices(); track p.id) {
+            <option [value]="p.id">{{ p.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Description</label>
+      <input
+        [(ngModel)]="categoryForm.description"
+        name="cat_description"
+        placeholder="Optional"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" [(ngModel)]="categoryForm.is_active" name="cat_active" /> Active
+    </label>
+
+    @if (categoryError()) {
+      <p class="text-sm text-destructive">{{ categoryError() }}</p>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="categoryModal.set(false)">
+        Cancel
+      </button>
+      <button uiBtn type="submit" [disabled]="categorySaving()">
+        {{ categorySaving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- UoM modal -->
+<app-modal [open]="uomModal()" size="sm" title="New unit of measure" (closed)="uomModal.set(false)">
+  <form (ngSubmit)="saveUom()" class="space-y-3">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code</label>
+        <input
+          [(ngModel)]="uomForm.code"
+          name="uom_code"
+          placeholder="e.g. KG"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Symbol</label>
+        <input
+          [(ngModel)]="uomForm.symbol"
+          name="uom_symbol"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Name</label>
+      <input
+        [(ngModel)]="uomForm.name"
+        name="uom_name"
+        placeholder="e.g. Kilogram"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <label class="flex items-center gap-2 text-sm" title="Quantities may carry decimals">
+      <input type="checkbox" [(ngModel)]="uomForm.fractional" name="uom_fractional" /> Fractional
+      quantities
+    </label>
+
+    @if (uomError()) {
+      <p class="text-sm text-destructive">{{ uomError() }}</p>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="uomModal.set(false)">Cancel</button>
+      <button uiBtn type="submit" [disabled]="uomSaving()">
+        {{ uomSaving() ? 'Saving…' : 'Create' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

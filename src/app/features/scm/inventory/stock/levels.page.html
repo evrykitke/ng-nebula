@@ -1,0 +1,50 @@
+<app-page-header
+  title="Stock levels"
+  subtitle="On-hand, availability and value per item and warehouse"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Stock levels' }]"
+/>
+
+@if (valuation(); as v) {
+  <div class="mb-4 grid gap-3 sm:grid-cols-3">
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Total stock value</p>
+      <p class="mt-1 text-2xl font-semibold">{{ fmtMoney(v.total_value) }}</p>
+    </div>
+    @for (w of v.warehouses.slice(0, 2); track w.warehouse_id) {
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">{{ w.warehouse_code }} — {{ w.warehouse_name }}</p>
+        <p class="mt-1 text-2xl font-semibold">{{ fmtMoney(w.total_value) }}</p>
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          {{ w.items }} items · {{ fmtQty(w.total_qty) }} units
+        </p>
+      </div>
+    }
+  </div>
+}
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Warehouse</label>
+      <select
+        [(ngModel)]="warehouseFilter"
+        name="warehouseFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">All warehouses</option>
+        @for (w of warehouses(); track w.id) {
+          <option [value]="w.id">{{ w.code }} — {{ w.name }}</option>
+        }
+      </select>
+    </div>
+    <label class="flex h-9 items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        [(ngModel)]="belowReorder"
+        name="belowReorder"
+        (ngModelChange)="applyFilters()"
+      />
+      Below reorder only
+    </label>
+  </div>
+</app-data-table>

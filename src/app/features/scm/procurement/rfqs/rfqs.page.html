@@ -1,0 +1,27 @@
+<app-page-header
+  title="Requests for quotation"
+  subtitle="Invite suppliers to quote, compare, and award to a purchase order"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'RFQs' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newRfq()">
+      <ng-icon name="lucidePlus" size="16" /> New RFQ
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="sent">Sent</option>
+        <option value="closed">Closed</option>
+        <option value="awarded">Awarded</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+  </div>
+</app-data-table>

@@ -1,0 +1,13 @@
+<app-page-header
+  title="Warehouses"
+  subtitle="The physical and logical locations stock lives in"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Warehouses' }]"
+>
+  @if (canManage()) {
+    <button uiBtn actions (click)="newWarehouse()">
+      <ng-icon name="lucidePlus" size="16" /> New warehouse
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

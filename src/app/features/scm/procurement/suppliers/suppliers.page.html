@@ -1,0 +1,13 @@
+<app-page-header
+  title="Suppliers"
+  subtitle="The vendor master — who purchase orders, receipts and bills are raised against"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Suppliers' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newSupplier()">
+      <ng-icon name="lucidePlus" size="16" /> New supplier
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

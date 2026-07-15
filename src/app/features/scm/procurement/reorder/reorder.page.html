@@ -1,0 +1,75 @@
+<app-page-header
+  title="Auto-reorder"
+  subtitle="Raise draft purchase orders for everything below its reorder point"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Auto-reorder' }]"
+>
+  @if (canRun()) {
+    <button uiBtn actions [disabled]="running()" (click)="run()">
+      <ng-icon name="lucideRefreshCw" size="16" />
+      {{ running() ? 'Running…' : 'Run reorder' }}
+    </button>
+  }
+</app-page-header>
+
+<div class="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+  Each item at or below its reorder level is grouped by preferred supplier and delivery warehouse,
+  and a draft purchase order is created for the reorder quantity. Review and submit the drafts as
+  usual — nothing is ordered automatically.
+</div>
+
+@if (result(); as r) {
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <!-- Orders created -->
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Draft orders created ({{ r.orders.length }})
+      </div>
+      @if (r.orders.length) {
+        <ul class="divide-y divide-border/50">
+          @for (o of r.orders; track o.order_id) {
+            <li>
+              <a
+                [routerLink]="['/procurement/orders', o.order_id]"
+                class="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-accent/40"
+              >
+                <span>
+                  <span class="font-medium text-primary">{{ o.supplier_name }}</span>
+                  <span class="block text-xs text-muted-foreground">
+                    {{ o.warehouse_code }} · {{ o.lines }} line{{ o.lines === 1 ? '' : 's' }}
+                  </span>
+                </span>
+                <ng-icon name="lucideShoppingCart" size="16" class="text-muted-foreground" />
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">
+          Nothing needed reordering.
+        </p>
+      }
+    </div>
+
+    <!-- Skipped -->
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Skipped shortages ({{ r.skipped.length }})
+      </div>
+      @if (r.skipped.length) {
+        <ul class="divide-y divide-border/50">
+          @for (s of r.skipped; track s.item_id + s.warehouse_code) {
+            <li class="px-4 py-3 text-sm">
+              <span class="font-medium">{{ s.sku }}</span>
+              <span class="text-muted-foreground"> · {{ s.warehouse_code }}</span>
+              <span class="block text-xs text-amber-600 dark:text-amber-400">{{ s.reason }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">
+          Nothing was skipped.
+        </p>
+      }
+    </div>
+  </div>
+}

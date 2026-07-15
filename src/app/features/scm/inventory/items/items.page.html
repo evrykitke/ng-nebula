@@ -1,0 +1,33 @@
+<app-page-header
+  title="Items"
+  subtitle="The item master — everything stock, purchasing and sales revolve around"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Items' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newItem()">
+      <ng-icon name="lucidePlus" size="16" /> New item
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-2">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Category</label>
+      <select [(ngModel)]="categoryFilter" name="categoryFilter" (ngModelChange)="applyFilters()">
+        <option value="">All categories</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="activeFilter" name="activeFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+  </div>
+</app-data-table>

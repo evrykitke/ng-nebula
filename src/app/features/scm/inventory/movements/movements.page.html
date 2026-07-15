@@ -1,0 +1,58 @@
+<app-page-header
+  title="Stock movements"
+  subtitle="Receipts, issues, transfers and adjustments — the documents stock is moved by"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Movements' }]"
+>
+  @if (canCreate()) {
+    <div actions class="flex gap-2">
+      <button uiBtn variant="outline" (click)="newMove('receipt')">
+        <ng-icon name="lucidePackageCheck" size="16" /> Receipt
+      </button>
+      <button uiBtn variant="outline" (click)="newMove('issue')">
+        <ng-icon name="lucidePackageX" size="16" /> Issue
+      </button>
+      <button uiBtn variant="outline" (click)="newMove('transfer')">
+        <ng-icon name="lucideArrowLeftRight" size="16" /> Transfer
+      </button>
+      <button uiBtn (click)="newMove('adjustment')">
+        <ng-icon name="lucideGitCompareArrows" size="16" /> Adjustment
+      </button>
+    </div>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
+      <select [(ngModel)]="typeFilter" name="typeFilter" (ngModelChange)="applyFilters()">
+        <option value="">All types</option>
+        @for (t of moveTypes; track t) {
+          <option [value]="t" class="capitalize">{{ t }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="posted">Posted</option>
+        <option value="reversed">Reversed</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Warehouse</label>
+      <select
+        [(ngModel)]="warehouseFilter"
+        name="warehouseFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">All warehouses</option>
+        @for (w of warehouses(); track w.id) {
+          <option [value]="w.id">{{ w.code }} — {{ w.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</app-data-table>

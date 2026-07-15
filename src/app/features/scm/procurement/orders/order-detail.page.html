@@ -1,0 +1,290 @@
+<app-page-header
+  [title]="order()?.number ?? 'Purchase order'"
+  [subtitle]="order()?.supplier_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Purchase orders', route: '/procurement/orders' },
+    { label: order()?.number ?? '…' },
+  ]"
+>
+  @if (order(); as o) {
+    @if (canCreate() && o.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+        <ng-icon name="lucidePencil" size="16" /> Edit
+      </button>
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" /> Delete
+      </button>
+    }
+    @if (canSubmit() && o.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="submit()">
+        <ng-icon name="lucideSend" size="16" /> Submit
+      </button>
+    }
+    @if (canApprove() && o.status === 'submitted') {
+      <button uiBtn actions [disabled]="busy()" (click)="openApprove()">
+        <ng-icon name="lucideCircleCheck" size="16" /> Approve
+      </button>
+    }
+    @if (canReceive() && (o.status === 'approved' || o.status === 'partially_received')) {
+      <button uiBtn actions [disabled]="busy()" (click)="newReceipt()">
+        <ng-icon name="lucidePackageCheck" size="16" /> Receive
+      </button>
+    }
+    @if (canBill() && o.status !== 'draft' && o.status !== 'cancelled') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newInvoice()">
+        <ng-icon name="lucideReceiptText" size="16" /> Bill
+      </button>
+    }
+    @if (canReturn() && (o.status === 'partially_received' || o.status === 'received' || o.status === 'closed')) {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newReturn()">
+        <ng-icon name="lucidePackageX" size="16" /> Return
+      </button>
+    }
+    @if (fullyReceived() && o.status === 'received') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">Close</button>
+    }
+    @if (canCancel() && (o.status === 'submitted' || o.status === 'approved')) {
+      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openCancel()">Cancel</button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/orders"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to purchase orders
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (order(); as o) {
+  <!-- Header -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(o.status)"
+          >
+            {{ statusLabel(o.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Order date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(o.order_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Expected</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(o.expected_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Deliver to</p>
+        <p class="mt-0.5 font-medium">{{ o.warehouse_code }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ o.currency }} &middot; rate {{ o.exchange_rate }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Payment terms</p>
+        <p class="mt-0.5 font-medium">{{ o.payment_terms_days }} days</p>
+      </div>
+      @if (o.reference) {
+        <div>
+          <p class="text-xs text-muted-foreground">Reference</p>
+          <p class="mt-0.5 font-medium">{{ o.reference }}</p>
+        </div>
+      }
+      @if (o.incoterms) {
+        <div>
+          <p class="text-xs text-muted-foreground">Incoterms</p>
+          <p class="mt-0.5 font-medium">{{ o.incoterms }}</p>
+        </div>
+      }
+      @if (o.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ o.memo }}</p>
+        </div>
+      }
+      @if (o.cancel_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Cancel reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ o.cancel_reason }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Lines with progress -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 text-right font-medium">Price</th>
+          <th class="px-4 py-2 text-right font-medium">Disc %</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+          <th class="px-4 py-2 font-medium" style="width: 180px">Received</th>
+          <th class="px-4 py-2 text-right font-medium">Billed</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of o.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="block text-xs text-muted-foreground">
+                {{ l.description || l.item_name }}
+              </span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtCost(l.unit_price) }}</td>
+            <td class="px-4 py-2 text-right">{{ l.discount_pct ? l.discount_pct + '%' : '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.net) }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    class="h-full rounded-full bg-primary"
+                    [style.width.%]="progressPct(l.received_qty, l.qty)"
+                  ></div>
+                </div>
+                <span class="whitespace-nowrap text-xs text-muted-foreground">
+                  {{ fmtQty(l.received_qty) }}/{{ fmtQty(l.qty) }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-2 text-right text-muted-foreground">
+              {{ fmtQty(l.billed_qty) }}/{{ fmtQty(l.qty) }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-medium">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Subtotal</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(o.subtotal) }}</td>
+          <td colspan="2"></td>
+        </tr>
+        <tr class="font-semibold">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Total before tax</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(o.total) }} {{ o.currency }}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Linked documents -->
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Goods receipts ({{ receipts().length }})
+      </div>
+      @if (receipts().length) {
+        <ul class="divide-y divide-border/50">
+          @for (r of receipts(); track r.id) {
+            <li>
+              <a
+                [routerLink]="['/procurement/receipts', r.id]"
+                class="flex items-center justify-between px-4 py-2 text-sm hover:bg-accent/40"
+              >
+                <span class="font-medium text-primary">{{ r.number ?? '(draft)' }}</span>
+                <span class="text-muted-foreground">
+                  {{ fmtDate(r.receipt_date) }} · {{ statusLabel(r.status) }}
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">None yet.</p>
+      }
+    </div>
+
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Returns ({{ returns().length }})
+      </div>
+      @if (returns().length) {
+        <ul class="divide-y divide-border/50">
+          @for (r of returns(); track r.id) {
+            <li>
+              <a
+                [routerLink]="['/procurement/returns', r.id]"
+                class="flex items-center justify-between px-4 py-2 text-sm hover:bg-accent/40"
+              >
+                <span class="font-medium text-primary">{{ r.number ?? '(draft)' }}</span>
+                <span class="text-muted-foreground">
+                  {{ fmtDate(r.return_date) }} · {{ statusLabel(r.status) }}
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">None yet.</p>
+      }
+    </div>
+  </div>
+}
+
+<!-- Approve modal -->
+<app-modal [open]="approveModal()" size="sm" title="Approve order" (closed)="approveModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Exchange rate</label>
+      <input
+        type="number"
+        min="0"
+        step="0.000001"
+        [(ngModel)]="approveRate"
+        name="approveRate"
+        placeholder="Leave blank for base currency / order default"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+      />
+      <p class="mt-1 text-xs text-muted-foreground">
+        Required only when the order currency differs from the base currency.
+      </p>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="approveModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="busy()" (click)="confirmApprove()">
+        {{ busy() ? 'Working…' : 'Approve' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Cancel modal -->
+<app-modal [open]="cancelModal()" size="sm" title="Cancel order" (closed)="cancelModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea
+        [(ngModel)]="cancelReason"
+        name="cancelReason"
+        rows="3"
+        placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      ></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="cancelModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmCancel()">
+        {{ busy() ? 'Working…' : 'Cancel order' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -1,0 +1,200 @@
+<app-page-header
+  title="Procurement reports"
+  subtitle="GRNI position, supplier balances and performance scorecards"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Reports' }]"
+/>
+
+<div class="mb-4 flex gap-1 border-b border-border">
+  <button
+    type="button"
+    class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class]="tab() === 'grni' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    (click)="select('grni')"
+  >
+    GRNI
+  </button>
+  <button
+    type="button"
+    class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class]="tab() === 'balances' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    (click)="select('balances')"
+  >
+    Supplier balances
+  </button>
+  <button
+    type="button"
+    class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class]="tab() === 'scorecards' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'"
+    (click)="select('scorecards')"
+  >
+    Scorecards
+  </button>
+</div>
+
+@switch (tab()) {
+  @case ('grni') {
+    <p class="mb-3 text-sm text-muted-foreground">
+      Goods received but not yet invoiced — the accrued liability to suppliers.
+    </p>
+    @if (grni(); as g) {
+      <div class="mb-3 rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Total GRNI (base currency)</p>
+        <p class="mt-1 text-2xl font-semibold">{{ fmtMoney(g.total) }}</p>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Order</th>
+              <th class="px-4 py-2 font-medium">Supplier</th>
+              <th class="px-4 py-2 font-medium">Item</th>
+              <th class="px-4 py-2 text-right font-medium">Qty</th>
+              <th class="px-4 py-2 text-right font-medium">Unit value</th>
+              <th class="px-4 py-2 text-right font-medium">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of g.rows; track r.order_id + r.item_id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2">
+                  <a [routerLink]="['/procurement/orders', r.order_id]" class="font-medium text-primary hover:underline">
+                    {{ r.order_number ?? 'view' }}
+                  </a>
+                </td>
+                <td class="px-4 py-2">{{ r.supplier_name }}</td>
+                <td class="px-4 py-2">
+                  <span class="font-medium">{{ r.sku }}</span>
+                  <span class="text-muted-foreground"> — {{ r.item_name }}</span>
+                </td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(r.qty) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(r.unit_value) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(r.value) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-4 py-6 text-center text-muted-foreground">
+                  Nothing received but unbilled — GRNI is clear.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (loading()) {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    }
+  }
+
+  @case ('balances') {
+    <p class="mb-3 text-sm text-muted-foreground">
+      Outstanding balances from posted invoices, per supplier.
+    </p>
+    @if (balances(); as b) {
+      <div class="mb-3 rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Total owed (base currency)</p>
+        <p class="mt-1 text-2xl font-semibold">{{ fmtMoney(b.total_base) }}</p>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Code</th>
+              <th class="px-4 py-2 font-medium">Supplier</th>
+              <th class="px-4 py-2 text-right font-medium">Invoices</th>
+              <th class="px-4 py-2 text-right font-medium">Balance</th>
+              <th class="px-4 py-2 text-right font-medium">Base balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of b.rows; track r.supplier_id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2 font-medium">{{ r.code }}</td>
+                <td class="px-4 py-2">
+                  <a [routerLink]="['/procurement/suppliers', r.supplier_id]" class="text-primary hover:underline">
+                    {{ r.name }}
+                  </a>
+                </td>
+                <td class="px-4 py-2 text-right">{{ r.invoices }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(r.balance) }} {{ r.currency }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(r.base_balance) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-muted-foreground">
+                  No outstanding supplier balances.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (loading()) {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    }
+  }
+
+  @case ('scorecards') {
+    <div class="mb-3 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-muted-foreground">From</label>
+        <app-datepicker [(date)]="scoreFrom" placeholder="Start" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-muted-foreground">To</label>
+        <app-datepicker [(date)]="scoreTo" placeholder="End" />
+      </div>
+      <button uiBtn [disabled]="loading()" (click)="loadScorecards()">
+        {{ loading() ? 'Loading…' : 'Run' }}
+      </button>
+    </div>
+    @if (scorecards(); as s) {
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-3 py-2 font-medium">Supplier</th>
+              <th class="px-3 py-2 text-right font-medium">Orders</th>
+              <th class="px-3 py-2 text-right font-medium">Receipts</th>
+              <th class="px-3 py-2 text-right font-medium">On-time</th>
+              <th class="px-3 py-2 text-right font-medium">Rejection</th>
+              <th class="px-3 py-2 text-right font-medium">Returns</th>
+              <th class="px-3 py-2 text-right font-medium">Avg lead</th>
+              <th class="px-3 py-2 text-right font-medium">Price var.</th>
+              <th class="px-3 py-2 text-right font-medium">Billed value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of s.rows; track r.supplier_id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-3 py-2">
+                  <a [routerLink]="['/procurement/suppliers', r.supplier_id]" class="font-medium text-primary hover:underline">
+                    {{ r.code }}
+                  </a>
+                  <span class="block text-xs text-muted-foreground">{{ r.name }}</span>
+                </td>
+                <td class="px-3 py-2 text-right">{{ r.orders }}</td>
+                <td class="px-3 py-2 text-right">{{ r.receipts }}</td>
+                <td class="px-3 py-2 text-right">{{ fmtPct(r.on_time_pct) }}</td>
+                <td class="px-3 py-2 text-right">{{ fmtPct(r.rejection_pct) }}</td>
+                <td class="px-3 py-2 text-right">{{ fmtPct(r.return_pct) }}</td>
+                <td class="px-3 py-2 text-right">
+                  {{ r.avg_lead_days ? fmtQty(r.avg_lead_days) + 'd' : '—' }}
+                </td>
+                <td class="px-3 py-2 text-right">{{ fmtPct(r.price_variance_pct) }}</td>
+                <td class="px-3 py-2 text-right">{{ fmtMoney(r.billed_value_base) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-4 py-6 text-center text-muted-foreground">
+                  No supplier activity in this window.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (loading()) {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    }
+  }
+}

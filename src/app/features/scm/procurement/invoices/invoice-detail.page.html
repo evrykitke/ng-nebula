@@ -1,0 +1,167 @@
+<app-page-header
+  [title]="invoice()?.number ?? 'Purchase invoice'"
+  [subtitle]="invoice()?.supplier_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Purchase invoices', route: '/procurement/invoices' },
+    { label: invoice()?.number ?? '…' },
+  ]"
+>
+  @if (invoice(); as i) {
+    @if (canCreate() && i.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" /> Delete
+      </button>
+    }
+    @if (canPost() && i.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="post()">
+        <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+      </button>
+    }
+    @if (canCancel() && i.status === 'posted') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openCancel()">
+        <ng-icon name="lucideBan" size="16" /> Cancel
+      </button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/invoices"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to purchase invoices
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (invoice(); as i) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(i.status)"
+          >
+            {{ statusLabel(i.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Supplier invoice no.</p>
+        <p class="mt-0.5 font-medium">{{ i.supplier_invoice_no }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Invoice date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(i.invoice_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Due date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(i.due_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Order</p>
+        <p class="mt-0.5 font-medium">
+          @if (i.order_id) {
+            <a [routerLink]="['/procurement/orders', i.order_id]" class="text-primary hover:underline">
+              {{ i.order_number ?? 'view' }}
+            </a>
+          } @else {
+            —
+          }
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ i.currency }} &middot; rate {{ i.exchange_rate }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted at</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(i.posted_at) }}</p>
+      </div>
+      @if (i.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ i.memo }}</p>
+        </div>
+      }
+      @if (i.cancel_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Cancel reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ i.cancel_reason }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">#</th>
+          <th class="px-4 py-2 font-medium">Item / description</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 text-right font-medium">Unit price</th>
+          <th class="px-4 py-2 text-right font-medium">Disc %</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of i.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 text-muted-foreground">{{ l.line_no }}</td>
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="text-muted-foreground"> — {{ l.description }}</span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtCost(l.unit_price) }}</td>
+            <td class="px-4 py-2 text-right">{{ l.discount_pct ? l.discount_pct + '%' : '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.net) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-medium">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="5">Subtotal</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(i.subtotal) }}</td>
+        </tr>
+        <tr class="font-semibold">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="5">Total before tax</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(i.total) }} {{ i.currency }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<!-- Cancel modal -->
+<app-modal [open]="cancelModal()" size="sm" title="Cancel invoice" (closed)="cancelModal.set(false)">
+  <div class="space-y-3">
+    <p class="text-sm text-muted-foreground">
+      Cancelling a posted invoice reverses its ledger entry.
+    </p>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea
+        [(ngModel)]="cancelReason"
+        name="cancelReason"
+        rows="3"
+        placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      ></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="cancelModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmCancel()">
+        {{ busy() ? 'Working…' : 'Cancel invoice' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

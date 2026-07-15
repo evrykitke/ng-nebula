@@ -1,0 +1,75 @@
+<app-page-header
+  title="GL reconciliation"
+  subtitle="Stock engine value against the balances booked in the general ledger"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'GL reconciliation' }]"
+>
+  <button uiBtn actions variant="outline" [disabled]="loading()" (click)="load()">
+    <ng-icon name="lucideRefreshCw" size="16" />
+    Refresh
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (view(); as v) {
+  @if (v.pending_outbox > 0) {
+    <div
+      class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+    >
+      {{ v.pending_outbox }} posting request(s) still awaiting acknowledgement — a gap below may
+      close on its own once they land.
+    </div>
+  }
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <!-- Inventory -->
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Inventory</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex items-center justify-between">
+          <dt class="text-muted-foreground">Stock value (engine)</dt>
+          <dd class="font-medium">{{ fmtMoney(v.stock_value) }}</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-muted-foreground">Inventory account balance (GL)</dt>
+          <dd class="font-medium">
+            {{ v.inventory_account_balance ? fmtMoney(v.inventory_account_balance) : '—' }}
+          </dd>
+        </div>
+        <div class="flex items-center justify-between border-t border-border pt-2">
+          <dt class="font-medium">Gap</dt>
+          <dd class="text-lg font-semibold" [class]="gapClass(v.inventory_gap)">
+            {{ v.inventory_gap ? fmtMoney(v.inventory_gap) : '—' }}
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- GRNI -->
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Goods received, not invoiced</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex items-center justify-between">
+          <dt class="text-muted-foreground">Open GRNI position (operational)</dt>
+          <dd class="font-medium">{{ fmtMoney(v.grni_open) }}</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-muted-foreground">GRNI account balance (GL)</dt>
+          <dd class="font-medium">
+            {{ v.grni_account_balance ? fmtMoney(v.grni_account_balance) : '—' }}
+          </dd>
+        </div>
+        <div class="flex items-center justify-between border-t border-border pt-2">
+          <dt class="font-medium">Gap</dt>
+          <dd class="text-lg font-semibold" [class]="gapClass(v.grni_gap)">
+            {{ v.grni_gap ? fmtMoney(v.grni_gap) : '—' }}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+}

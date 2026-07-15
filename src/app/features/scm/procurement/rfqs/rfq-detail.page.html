@@ -1,0 +1,310 @@
+<app-page-header
+  [title]="rfq()?.number ?? 'RFQ'"
+  [subtitle]="rfq()?.title ?? 'Request for quotation'"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'RFQs', route: '/procurement/rfqs' },
+    { label: rfq()?.number ?? '…' },
+  ]"
+>
+  @if (rfq(); as r) {
+    @if (canCreate() && r.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+        <ng-icon name="lucidePencil" size="16" /> Edit
+      </button>
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" /> Delete
+      </button>
+    }
+    @if (canSend() && r.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="send()">
+        <ng-icon name="lucideSend" size="16" /> Send
+      </button>
+    }
+    @if (canSend() && r.status === 'sent') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">
+        <ng-icon name="lucideBan" size="16" /> Close quoting
+      </button>
+    }
+    @if (canAward() && (r.status === 'sent' || r.status === 'closed')) {
+      <button uiBtn actions [disabled]="busy()" (click)="openAward()">
+        <ng-icon name="lucideAward" size="16" /> Award
+      </button>
+    }
+    @if (canSend() && r.status !== 'awarded' && r.status !== 'cancelled') {
+      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/rfqs"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to RFQs
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (rfq(); as r) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(r.status)"
+          >
+            {{ statusLabel(r.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Due date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(r.due_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Sent</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(r.sent_at) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Suppliers invited</p>
+        <p class="mt-0.5 font-medium">{{ r.suppliers.length }}</p>
+      </div>
+      @if (r.requisition_id) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">From requisition</p>
+          <a
+            [routerLink]="['/procurement/requisitions', r.requisition_id]"
+            class="mt-0.5 block font-medium text-primary hover:underline"
+          >
+            {{ r.requisition_number ?? 'view' }}
+          </a>
+        </div>
+      }
+      @if (r.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ r.memo }}</p>
+        </div>
+      }
+    </div>
+
+    @if (r.order_id) {
+      <div class="mt-4 border-t border-border pt-3 text-sm">
+        <a [routerLink]="['/procurement/orders', r.order_id]" class="text-primary hover:underline">
+          Awarded — draft purchase order {{ r.order_number ?? '' }} created. View it.
+        </a>
+      </div>
+    }
+  </div>
+
+  <!-- Quote comparison matrix -->
+  <div class="mt-4">
+    <h2 class="mb-2 text-sm font-semibold">Quote comparison</h2>
+    @if (r.suppliers.length === 0) {
+      <div class="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+        No suppliers invited. Edit the RFQ to add some.
+      </div>
+    } @else {
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Item</th>
+              <th class="px-4 py-2 text-right font-medium">Qty</th>
+              @for (s of r.suppliers; track s.supplier_id) {
+                <th class="px-4 py-2 text-right font-medium">
+                  <div class="flex items-center justify-end gap-2">
+                    <span>{{ s.code }}</span>
+                    @if (canRecord() && (r.status === 'sent' || r.status === 'closed')) {
+                      <button
+                        type="button"
+                        class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Record quotes"
+                        (click)="openRecord(s)"
+                      >
+                        <ng-icon name="lucidePencil" size="13" />
+                      </button>
+                    }
+                  </div>
+                  <div class="font-normal text-muted-foreground">{{ s.name }}</div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of r.lines; track l.id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2">
+                  <span class="font-medium">{{ l.sku }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+                </td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+                @for (s of r.suppliers; track s.supplier_id) {
+                  @let q = quoteFor(l.id, s.supplier_id);
+                  <td
+                    class="px-4 py-2 text-right"
+                    [class.bg-green-50]="q && isBest(l.id, q.unit_price)"
+                    [class.dark:bg-green-950/20]="q && isBest(l.id, q.unit_price)"
+                  >
+                    @if (q) {
+                      <span
+                        class="font-medium"
+                        [class.text-green-700]="isBest(l.id, q.unit_price)"
+                        [class.dark:text-green-400]="isBest(l.id, q.unit_price)"
+                      >
+                        {{ fmtCost(q.unit_price) }}
+                      </span>
+                      @if (q.lead_time_days != null) {
+                        <span class="block text-xs text-muted-foreground">{{ q.lead_time_days }}d lead</span>
+                      }
+                    } @else {
+                      <span class="text-muted-foreground">—</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="border-t border-border font-medium">
+              <td class="px-4 py-2 text-xs text-muted-foreground" colspan="2">Total quoted value</td>
+              @for (s of r.suppliers; track s.supplier_id) {
+                <td class="px-4 py-2 text-right">
+                  {{ totalsBySupplier().get(s.supplier_id) ? fmtCost(totalsBySupplier().get(s.supplier_id)!) : '—' }}
+                </td>
+              }
+            </tr>
+            @if (canAward() && (r.status === 'sent' || r.status === 'closed')) {
+              <tr>
+                <td class="px-4 py-2" colspan="2"></td>
+                @for (s of r.suppliers; track s.supplier_id) {
+                  <td class="px-4 py-2 text-right">
+                    <button
+                      uiBtn
+                      size="sm"
+                      variant="outline"
+                      [disabled]="busy() || !totalsBySupplier().get(s.supplier_id)"
+                      (click)="openAward(s.supplier_id)"
+                    >
+                      Award
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tfoot>
+        </table>
+      </div>
+    }
+  </div>
+}
+
+<!-- Record quotes modal -->
+<app-modal
+  [open]="recordModal()"
+  size="lg"
+  title="Record quotes"
+  [subtitle]="recordSupplierName()"
+  (closed)="recordModal.set(false)"
+>
+  <div class="space-y-3">
+    <p class="text-xs text-muted-foreground">
+      Leave a line's price blank if the supplier did not quote it.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-2 py-2 font-medium">Item</th>
+            <th class="px-2 py-2 text-right font-medium">Qty</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 130px">Unit price</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 110px">Min qty</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 100px">Lead (d)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of quoteEntries(); track e.rfq_line_id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-2 py-2">
+                <span class="font-medium">{{ e.sku }}</span>
+                <span class="block text-xs text-muted-foreground">{{ e.item_name }}</span>
+              </td>
+              <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(e.qty) }}</td>
+              <td class="px-2 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  [(ngModel)]="e.unit_price"
+                  [name]="'price_' + e.rfq_line_id"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                />
+              </td>
+              <td class="px-2 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  [(ngModel)]="e.min_qty"
+                  [name]="'minq_' + e.rfq_line_id"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                />
+              </td>
+              <td class="px-2 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  [(ngModel)]="e.lead_time_days"
+                  [name]="'lead_' + e.rfq_line_id"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (recordError()) {
+      <p class="text-sm text-destructive">{{ recordError() }}</p>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="recordModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="recordSaving()" (click)="saveQuotes()">
+        {{ recordSaving() ? 'Saving…' : 'Save quotes' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Award modal -->
+<app-modal [open]="awardModal()" size="sm" title="Award RFQ" (closed)="awardModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Winning supplier</label>
+      <select [(ngModel)]="awardSupplierId" name="awardSupplier" class="h-9 w-full">
+        <option value="">Select supplier…</option>
+        @for (s of rfq()?.suppliers ?? []; track s.supplier_id) {
+          <option [value]="s.supplier_id">{{ s.code }} — {{ s.name }}</option>
+        }
+      </select>
+    </div>
+    <p class="text-xs text-muted-foreground">
+      A draft purchase order is created from this supplier's quoted lines.
+    </p>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="awardModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="busy() || !awardSupplierId" (click)="confirmAward()">
+        {{ busy() ? 'Working…' : 'Award & create PO' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -1,0 +1,180 @@
+<app-page-header
+  [title]="req()?.number ?? 'Requisition'"
+  subtitle="Purchase requisition"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Requisitions', route: '/procurement/requisitions' },
+    { label: req()?.number ?? '…' },
+  ]"
+>
+  @if (req(); as r) {
+    @if (canCreate() && r.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+        <ng-icon name="lucidePencil" size="16" /> Edit
+      </button>
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" /> Delete
+      </button>
+    }
+    @if (canSubmit() && r.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="submit()">
+        <ng-icon name="lucideSend" size="16" /> Submit
+      </button>
+    }
+    @if (canApprove() && r.status === 'submitted') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openReject()">
+        <ng-icon name="lucideBan" size="16" /> Reject
+      </button>
+      <button uiBtn actions [disabled]="busy()" (click)="approve()">
+        <ng-icon name="lucideCircleCheck" size="16" /> Approve
+      </button>
+    }
+    @if (canConvert() && r.status === 'approved') {
+      <button uiBtn actions [disabled]="busy()" (click)="openConvert()">
+        <ng-icon name="lucideShoppingCart" size="16" /> Convert to PO
+      </button>
+    }
+    @if (canSubmit() && (r.status === 'draft' || r.status === 'submitted' || r.status === 'approved')) {
+      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/requisitions"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to requisitions
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (req(); as r) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(r.status)"
+          >
+            {{ statusLabel(r.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Warehouse</p>
+        <p class="mt-0.5 font-medium">{{ r.warehouse_code }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Needed by</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(r.needed_by) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Submitted</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(r.submitted_at) }}</p>
+      </div>
+      @if (r.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ r.memo }}</p>
+        </div>
+      }
+      @if (r.reject_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Reject reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ r.reject_reason }}</p>
+        </div>
+      }
+    </div>
+
+    @if (r.order_id) {
+      <div class="mt-4 border-t border-border pt-3 text-sm">
+        <a [routerLink]="['/procurement/orders', r.order_id]" class="text-primary hover:underline">
+          Converted to purchase order {{ r.order_number ?? '' }} — view it
+        </a>
+      </div>
+    }
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">#</th>
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 font-medium">Memo</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of r.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 text-muted-foreground">{{ l.line_no }}</td>
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="text-muted-foreground"> — {{ l.item_name }}</span>
+            </td>
+            <td class="px-4 py-2 text-muted-foreground">{{ l.memo || '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Convert modal -->
+<app-modal
+  [open]="convertModal()"
+  size="sm"
+  title="Convert to purchase order"
+  subtitle="Pick the supplier the draft order goes to"
+  (closed)="convertModal.set(false)"
+>
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Supplier</label>
+      <app-lookup
+        [config]="supplierLookup"
+        [value]="convertSupplierId()"
+        [display]="convertSupplierLabel()"
+        (valueChange)="convertSupplierId.set($event ?? '')"
+        (selected)="onSupplierSelected($event)"
+      />
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="convertModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="busy() || !convertSupplierId()" (click)="confirmConvert()">
+        {{ busy() ? 'Working…' : 'Create draft PO' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Reject modal -->
+<app-modal [open]="rejectModal()" size="sm" title="Reject requisition" (closed)="rejectModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea
+        [(ngModel)]="rejectReason"
+        name="rejectReason"
+        rows="3"
+        placeholder="Optional — why it was rejected"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      ></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="rejectModal.set(false)">Cancel</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmReject()">
+        {{ busy() ? 'Working…' : 'Reject' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

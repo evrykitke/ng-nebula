@@ -1,0 +1,101 @@
+<app-page-header
+  title="Stock ledger"
+  subtitle="The immutable trail of every posted stock movement"
+  [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Stock ledger' }]"
+/>
+
+<!-- Filters -->
+<div class="mb-4 rounded-lg border border-border bg-card p-4">
+  <div class="grid gap-3 md:grid-cols-5">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Item</label>
+      <app-lookup
+        [config]="itemLookup"
+        [value]="filters.item_id"
+        [display]="filters.item_label"
+        (valueChange)="filters.item_id = $event ?? ''"
+        (selected)="filters.item_label = $event.sku + ' — ' + $event.name"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Warehouse</label>
+      <select [(ngModel)]="filters.warehouse_id" name="warehouse_id" class="h-9 w-full">
+        <option value="">All warehouses</option>
+        @for (w of warehouses(); track w.id) {
+          <option [value]="w.id">{{ w.code }} — {{ w.name }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">From</label>
+      <app-datepicker [(date)]="filters.from" placeholder="Start date" />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">To</label>
+      <app-datepicker [(date)]="filters.to" placeholder="End date" />
+    </div>
+    <div class="flex items-end">
+      <button uiBtn [disabled]="loading()" (click)="load()">
+        {{ loading() ? 'Loading…' : 'Apply' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overflow-x-auto rounded-lg border border-border bg-card">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-border text-left text-xs text-muted-foreground">
+        <th class="px-4 py-2 font-medium">Seq</th>
+        <th class="px-4 py-2 font-medium">Date</th>
+        <th class="px-4 py-2 font-medium">Document</th>
+        <th class="px-4 py-2 font-medium">Type</th>
+        <th class="px-4 py-2 font-medium">SKU</th>
+        <th class="px-4 py-2 font-medium">Warehouse</th>
+        <th class="px-4 py-2 text-right font-medium">Qty ±</th>
+        <th class="px-4 py-2 text-right font-medium">Qty after</th>
+        <th class="px-4 py-2 text-right font-medium">Unit cost</th>
+        <th class="px-4 py-2 text-right font-medium">Value ±</th>
+        <th class="px-4 py-2 text-right font-medium">Value after</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (r of rows(); track r.seq) {
+        <tr class="border-b border-border/50 last:border-0">
+          <td class="px-4 py-2 text-muted-foreground">{{ r.seq }}</td>
+          <td class="px-4 py-2">{{ fmtDate(r.entry_date) }}</td>
+          <td class="px-4 py-2">
+            <a
+              [routerLink]="['/inventory/movements', r.move_id]"
+              class="font-medium text-primary hover:underline"
+            >
+              {{ r.number || 'view' }}
+            </a>
+          </td>
+          <td class="px-4 py-2 capitalize text-muted-foreground">{{ r.move_type || '—' }}</td>
+          <td class="px-4 py-2">{{ r.sku }}</td>
+          <td class="px-4 py-2">{{ r.warehouse_code }}</td>
+          <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_delta) }}</td>
+          <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_after) }}</td>
+          <td class="px-4 py-2 text-right">{{ fmtCost(r.unit_cost) }}</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(r.value_delta) }}</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(r.value_after) }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="11" class="px-4 py-6 text-center text-muted-foreground">
+            {{ loading() ? 'Loading…' : 'No ledger entries match.' }}
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (hasMore()) {
+  <div class="mt-3 text-center">
+    <button uiBtn variant="outline" [disabled]="loading()" (click)="loadMore()">
+      {{ loading() ? 'Loading…' : 'Load more' }}
+    </button>
+  </div>
+}

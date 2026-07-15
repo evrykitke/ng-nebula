@@ -1,0 +1,209 @@
+<app-page-header
+  title="New purchase invoice"
+  subtitle="Bill a purchase order — matched to what was ordered and received"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Purchase invoices', route: '/procurement/invoices' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/procurement/invoices"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to purchase invoices
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Purchase order</label>
+        <app-lookup
+          [config]="orderLookup"
+          [value]="orderId"
+          [display]="orderLabel"
+          (valueChange)="onOrderCleared($event)"
+          (selected)="onOrderSelected($event)"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Supplier invoice no.</label>
+        <input
+          [(ngModel)]="form.supplier_invoice_no"
+          name="supplier_invoice_no"
+          placeholder="Their document number"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div></div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Invoice date</label>
+        <app-datepicker [(date)]="form.invoice_date" placeholder="Invoice date" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Due date</label>
+        <app-datepicker [(date)]="form.due_date" placeholder="Optional" />
+      </div>
+    </div>
+  </div>
+
+  @if (order(); as o) {
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-1 text-sm font-semibold">
+        Lines — {{ o.number ?? '(draft)' }} · {{ o.supplier_name }} ({{ o.currency }})
+      </h2>
+      <p class="mb-3 text-xs text-muted-foreground">
+        Quantities prefill with what has been received but not yet billed. Rows that would bill
+        more than received are flagged.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-2 py-2 font-medium">Item</th>
+              <th class="px-2 py-2 text-right font-medium">Ordered</th>
+              <th class="px-2 py-2 text-right font-medium">Received</th>
+              <th class="px-2 py-2 text-right font-medium">Billed</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 100px">Bill qty</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 110px">Unit price</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 80px">Disc %</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 100px">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lines(); track l.order_line_id) {
+              <tr
+                class="border-b border-border/50 align-top last:border-0"
+                [class.bg-red-50]="overBilled(l)"
+                [class.dark:bg-red-950/20]="overBilled(l)"
+              >
+                <td class="px-2 py-2">
+                  <span class="font-medium">{{ l.sku }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+                  @if (overBilled(l)) {
+                    <span class="block text-xs text-destructive">Exceeds received quantity</span>
+                  }
+                </td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.ordered) }}</td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.received) }}</td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.billed) }}</td>
+                <td class="px-2 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    [(ngModel)]="l.qty"
+                    [name]="'qty_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                  />
+                </td>
+                <td class="px-2 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    [(ngModel)]="l.unit_price"
+                    [name]="'price_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                  />
+                </td>
+                <td class="px-2 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [(ngModel)]="l.discount_pct"
+                    [name]="'disc_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                  />
+                </td>
+                <td class="px-2 py-2 text-right text-muted-foreground">
+                  {{ fmtMoney(num(l.qty) * num(l.unit_price) * (1 - num(l.discount_pct) / 100)) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Adjustments</h2>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Header discount %</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.discount_pct"
+              name="header_discount"
+              (ngModelChange)="recompute()"
+              placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Other charges</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="form.other_charges"
+              name="other_charges"
+              (ngModelChange)="recompute()"
+              placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Memo</label>
+            <input
+              [(ngModel)]="form.memo"
+              name="memo"
+              placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Total</h2>
+        <div class="flex items-center justify-between text-sm">
+          <span class="font-medium">Total before tax</span>
+          <span class="text-lg font-semibold">{{ fmtMoney(total()) }} {{ o.currency }}</span>
+        </div>
+        <p class="mt-2 text-xs text-muted-foreground">
+          Tax is computed on the server from each order line's tax code.
+        </p>
+      </div>
+    </div>
+  } @else {
+    <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      Select a purchase order to bill.
+    </div>
+  }
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/procurement/invoices">Cancel</a>
+  </div>
+</form>

@@ -1,0 +1,157 @@
+<app-page-header
+  [title]="receipt()?.number ?? 'Goods receipt'"
+  subtitle="Goods receipt"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Goods receipts', route: '/procurement/receipts' },
+    { label: receipt()?.number ?? '…' },
+  ]"
+>
+  @if (receipt(); as r) {
+    @if (canCreate() && r.status === 'draft') {
+      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+        <ng-icon name="lucideTrash2" size="16" /> Delete
+      </button>
+    }
+    @if (canPost() && r.status === 'draft') {
+      <button uiBtn actions [disabled]="busy()" (click)="post()">
+        <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+      </button>
+    }
+    @if (canReverse() && r.status === 'posted' && !r.reversed_by_id) {
+      <button uiBtn actions [disabled]="busy()" (click)="reverse()">
+        <ng-icon name="lucideUndo2" size="16" /> {{ busy() ? 'Reversing…' : 'Reverse' }}
+      </button>
+    }
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/receipts"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to goods receipts
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (receipt(); as r) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(r.status)"
+          >
+            {{ statusLabel(r.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Receipt date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(r.receipt_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Order</p>
+        <p class="mt-0.5 font-medium">
+          @if (r.order_id) {
+            <a [routerLink]="['/procurement/orders', r.order_id]" class="text-primary hover:underline">
+              {{ r.order_number ?? 'view' }}
+            </a>
+          } @else {
+            —
+          }
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted at</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(r.posted_at) }}</p>
+      </div>
+      @if (r.reference) {
+        <div>
+          <p class="text-xs text-muted-foreground">Delivery note</p>
+          <p class="mt-0.5 font-medium">{{ r.reference }}</p>
+        </div>
+      }
+      @if (r.carrier) {
+        <div>
+          <p class="text-xs text-muted-foreground">Carrier</p>
+          <p class="mt-0.5 font-medium">{{ r.carrier }}</p>
+        </div>
+      }
+      @if (r.tracking_no) {
+        <div>
+          <p class="text-xs text-muted-foreground">Tracking</p>
+          <p class="mt-0.5 font-medium">{{ r.tracking_no }}</p>
+        </div>
+      }
+      @if (r.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ r.memo }}</p>
+        </div>
+      }
+    </div>
+
+    @if (r.move_id || r.reverses_id || r.reversed_by_id) {
+      <div class="mt-4 flex flex-wrap gap-4 border-t border-border pt-3 text-sm">
+        @if (r.move_id) {
+          <a [routerLink]="['/inventory/movements', r.move_id]" class="text-primary hover:underline">
+            View the stock movement
+          </a>
+        }
+        @if (r.reversed_by_id) {
+          <a [routerLink]="['/procurement/receipts', r.reversed_by_id]" class="text-primary hover:underline">
+            Reversed — view the reversing receipt
+          </a>
+        }
+        @if (r.reverses_id) {
+          <a [routerLink]="['/procurement/receipts', r.reverses_id]" class="text-primary hover:underline">
+            Reverses another receipt — view the original
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">#</th>
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 font-medium">Batch</th>
+          <th class="px-4 py-2 font-medium">Serials</th>
+          <th class="px-4 py-2 text-right font-medium">Received</th>
+          <th class="px-4 py-2 text-right font-medium">Rejected</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of r.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 text-muted-foreground">{{ l.line_no }}</td>
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="text-muted-foreground"> — {{ l.item_name }}</span>
+              @if (l.reject_reason) {
+                <span class="block text-xs text-destructive">Rejected: {{ l.reject_reason }}</span>
+              }
+            </td>
+            <td class="px-4 py-2 text-muted-foreground">{{ l.batch_no || '—' }}</td>
+            <td class="px-4 py-2 text-muted-foreground">
+              {{ l.serial_nos.length ? l.serial_nos.join(', ') : '—' }}
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.rejected_qty) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

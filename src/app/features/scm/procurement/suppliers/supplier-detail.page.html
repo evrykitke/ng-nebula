@@ -1,0 +1,342 @@
+<app-page-header
+  [title]="supplier()?.name ?? 'Supplier'"
+  [subtitle]="supplier()?.code ?? ''"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Suppliers', route: '/procurement/suppliers' },
+    { label: supplier()?.code ?? '…' },
+  ]"
+>
+  @if (canEdit() && supplier()) {
+    <button uiBtn actions variant="outline" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/suppliers"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to suppliers
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (supplier(); as s) {
+  @if (s.on_hold) {
+    <div
+      class="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+    >
+      This supplier is on hold — new purchase orders are blocked.
+      @if (s.hold_reason) {
+        <span class="font-medium">{{ s.hold_reason }}</span>
+      }
+    </div>
+  }
+
+  <!-- Tabs -->
+  <div class="mb-4 flex gap-1 border-b border-border">
+    <button
+      type="button"
+      class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+      [class]="
+        tab() === 'profile'
+          ? 'border-primary text-foreground'
+          : 'border-transparent text-muted-foreground hover:text-foreground'
+      "
+      (click)="tab.set('profile')"
+    >
+      Profile
+    </button>
+    <button
+      type="button"
+      class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+      [class]="
+        tab() === 'catalog'
+          ? 'border-primary text-foreground'
+          : 'border-transparent text-muted-foreground hover:text-foreground'
+      "
+      (click)="tab.set('catalog')"
+    >
+      Item catalog ({{ catalog().length }})
+    </button>
+  </div>
+
+  @if (tab() === 'profile') {
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Contact</h2>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Contact</dt>
+            <dd class="text-right font-medium">{{ s.contact_name || '—' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Email</dt>
+            <dd class="text-right font-medium">{{ s.email || '—' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Phone</dt>
+            <dd class="text-right font-medium">{{ s.phone || '—' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Website</dt>
+            <dd class="text-right font-medium">{{ s.website || '—' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Address</dt>
+            <dd class="text-right font-medium">
+              {{ [s.city, s.region, s.country].join(', ') || '—' }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Commercial terms</h2>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Currency</dt>
+            <dd class="text-right font-medium">{{ s.currency }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Payment terms</dt>
+            <dd class="text-right font-medium">{{ s.payment_terms_days }} days</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Lead time</dt>
+            <dd class="text-right font-medium">
+              {{ s.lead_time_days != null ? s.lead_time_days + ' days' : '—' }}
+            </dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Default discount</dt>
+            <dd class="text-right font-medium">
+              {{ s.default_discount_pct ? s.default_discount_pct + '%' : '—' }}
+            </dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Credit limit</dt>
+            <dd class="text-right font-medium">{{ s.credit_limit ? fmtCost(s.credit_limit) : '—' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-muted-foreground">Tax number</dt>
+            <dd class="text-right font-medium">{{ s.tax_number || '—' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      @if (s.bank_name || s.bank_account_no || s.mobile_money_no) {
+        <div class="rounded-lg border border-border bg-card p-4">
+          <h2 class="mb-3 text-sm font-semibold">Banking</h2>
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted-foreground">Bank</dt>
+              <dd class="text-right font-medium">
+                {{ s.bank_name || '—' }}{{ s.bank_branch ? ' · ' + s.bank_branch : '' }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted-foreground">Account</dt>
+              <dd class="text-right font-medium">
+                {{ s.bank_account_name || '—' }}
+                {{ s.bank_account_no ? '· ' + s.bank_account_no : '' }}
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted-foreground">SWIFT</dt>
+              <dd class="text-right font-medium">{{ s.bank_swift || '—' }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-muted-foreground">Mobile money</dt>
+              <dd class="text-right font-medium">{{ s.mobile_money_no || '—' }}</dd>
+            </div>
+          </dl>
+        </div>
+      }
+
+      @if (s.notes) {
+        <div class="rounded-lg border border-border bg-card p-4">
+          <h2 class="mb-3 text-sm font-semibold">Notes</h2>
+          <p class="text-sm text-muted-foreground">{{ s.notes }}</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="mb-3 flex items-center justify-between">
+      <p class="text-sm text-muted-foreground">
+        Supplier-specific SKUs, pack sizes and last-paid prices used when ordering.
+      </p>
+      @if (canEdit()) {
+        <button uiBtn size="sm" (click)="openCatalogAdd()">
+          <ng-icon name="lucidePlus" size="14" /> Add item
+        </button>
+      }
+    </div>
+    <div class="overflow-x-auto rounded-lg border border-border bg-card">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Item</th>
+            <th class="px-4 py-2 font-medium">Supplier SKU</th>
+            <th class="px-4 py-2 text-right font-medium">Pack</th>
+            <th class="px-4 py-2 text-right font-medium">Min qty</th>
+            <th class="px-4 py-2 text-right font-medium">Last price</th>
+            <th class="px-4 py-2 font-medium">Last bought</th>
+            <th class="px-4 py-2 font-medium">Preferred</th>
+            @if (canEdit()) {
+              <th class="px-4 py-2"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of catalog(); track row.id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2 font-medium">{{ itemName(row.item_id) }}</td>
+              <td class="px-4 py-2 text-muted-foreground">{{ row.supplier_sku || '—' }}</td>
+              <td class="px-4 py-2 text-right">{{ row.pack_qty || '—' }}</td>
+              <td class="px-4 py-2 text-right">{{ row.min_order_qty || '—' }}</td>
+              <td class="px-4 py-2 text-right">{{ row.last_price ? fmtCost(row.last_price) : '—' }}</td>
+              <td class="px-4 py-2">{{ fmtDate(row.last_purchased_on) }}</td>
+              <td class="px-4 py-2">{{ row.is_preferred ? 'yes' : '—' }}</td>
+              @if (canEdit()) {
+                <td class="px-4 py-2 text-right whitespace-nowrap">
+                  <button
+                    type="button"
+                    class="text-xs text-primary hover:underline"
+                    (click)="openCatalogEdit(row)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="ml-3 text-xs text-destructive hover:underline"
+                    (click)="removeCatalog(row)"
+                  >
+                    Remove
+                  </button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="canEdit() ? 8 : 7" class="px-4 py-6 text-center text-muted-foreground">
+                No catalog entries yet.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Catalog entry modal -->
+<app-modal
+  [open]="catalogModal()"
+  size="md"
+  title="Catalog entry"
+  (closed)="catalogModal.set(false)"
+>
+  <form (ngSubmit)="saveCatalog()" class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Item</label>
+      <app-lookup
+        [config]="itemLookup"
+        [value]="catalogForm.item_id"
+        [display]="catalogForm.item_label"
+        (valueChange)="catalogForm.item_id = $event ?? ''"
+        (selected)="onItemSelected($event)"
+      />
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Supplier SKU</label>
+        <input
+          [(ngModel)]="catalogForm.supplier_sku"
+          name="cat_sku"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Supplier item name</label>
+        <input
+          [(ngModel)]="catalogForm.supplier_item_name"
+          name="cat_name"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Pack qty</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="catalogForm.pack_qty"
+          name="cat_pack"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Min order qty</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="catalogForm.min_order_qty"
+          name="cat_minqty"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Lead time (days)</label>
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="catalogForm.lead_time_days"
+          name="cat_lead"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-5 text-sm">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="catalogForm.is_preferred" name="cat_preferred" />
+        Preferred source
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="catalogForm.is_active" name="cat_active" /> Active
+      </label>
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Notes</label>
+      <input
+        [(ngModel)]="catalogForm.notes"
+        name="cat_notes"
+        placeholder="Optional"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+
+    @if (catalogError()) {
+      <p class="text-sm text-destructive">{{ catalogError() }}</p>
+    }
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="catalogModal.set(false)">Cancel</button>
+      <button uiBtn type="submit" [disabled]="catalogSaving()">
+        {{ catalogSaving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

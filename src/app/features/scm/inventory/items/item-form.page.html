@@ -1,0 +1,426 @@
+<app-page-header
+  [title]="title()"
+  subtitle="An item's identity, units, pricing, planning and tracking policy"
+  [breadcrumbs]="[
+    { label: 'Inventory' },
+    { label: 'Items', route: '/inventory/items' },
+    { label: editId() ? 'Edit' : 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/inventory/items"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to items
+</a>
+
+<form (ngSubmit)="save()" class="space-y-4">
+  <!-- Identity -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Identity</h2>
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">SKU</label>
+        <input
+          [(ngModel)]="form.sku"
+          name="sku"
+          [disabled]="!!editId()"
+          placeholder="e.g. WID-001"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Name</label>
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          placeholder="Item name"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Category</label>
+        <select [(ngModel)]="form.category_id" name="category_id" class="h-9 w-full">
+          <option value="">No category</option>
+          @for (c of categories(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Type</label>
+        <select [(ngModel)]="form.item_type" name="item_type" class="h-9 w-full capitalize">
+          @for (t of itemTypes; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+      <div class="md:col-span-3">
+        <label class="mb-1.5 block text-sm font-medium">Description</label>
+        <input
+          [(ngModel)]="form.description"
+          name="description"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-5 text-sm">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" /> Active
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.is_purchasable" name="is_purchasable" />
+        Purchasable
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.is_sellable" name="is_sellable" /> Sellable
+      </label>
+    </div>
+  </div>
+
+  <!-- Units & costing -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Units &amp; costing</h2>
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Stock unit</label>
+        <app-lookup
+          [config]="uomLookup"
+          [value]="form.uom_id"
+          [display]="form.uom_label"
+          (valueChange)="form.uom_id = $event ?? ''"
+          (selected)="form.uom_label = $event.code + ' — ' + $event.name"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Costing method</label>
+        <select [(ngModel)]="form.costing_method" name="costing_method" class="h-9 w-full">
+          @for (m of costingMethods; track m) {
+            <option [value]="m">moving average</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Standard cost</label>
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          [(ngModel)]="form.standard_cost"
+          name="standard_cost"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Purchasing -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Purchasing</h2>
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Purchase price</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="form.purchase_price"
+          name="purchase_price"
+          placeholder="0.00"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Purchase tax</label>
+        <app-lookup
+          [config]="purchaseTaxLookup"
+          [value]="form.purchase_tax_code_id"
+          [display]="form.purchase_tax_label"
+          (valueChange)="form.purchase_tax_code_id = $event ?? ''"
+          (selected)="form.purchase_tax_label = $event.code"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Preferred supplier</label>
+        <app-lookup
+          [config]="supplierLookup"
+          [value]="form.preferred_supplier_id"
+          [display]="form.preferred_supplier_label"
+          (valueChange)="form.preferred_supplier_id = $event ?? ''"
+          (selected)="form.preferred_supplier_label = $event.code + ' — ' + $event.name"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Lead time (days)</label>
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="form.lead_time_days"
+          name="lead_time_days"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Minimum order qty</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.min_order_qty"
+          name="min_order_qty"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Order multiple</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.order_multiple"
+          name="order_multiple"
+          placeholder="e.g. pack of 12"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Selling -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Selling</h2>
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Selling price</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="form.selling_price"
+          name="selling_price"
+          placeholder="0.00"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Minimum selling price</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="form.min_selling_price"
+          name="min_selling_price"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Sales tax</label>
+        <app-lookup
+          [config]="salesTaxLookup"
+          [value]="form.sales_tax_code_id"
+          [display]="form.sales_tax_label"
+          (valueChange)="form.sales_tax_code_id = $event ?? ''"
+          (selected)="form.sales_tax_label = $event.code"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Planning -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Replenishment planning</h2>
+    <p class="mb-3 text-xs text-muted-foreground">
+      When on hand plus on order falls to the reorder level, the auto-reorder worker drafts a
+      purchase order for the reorder quantity (or up to the maximum level).
+    </p>
+    <div class="grid gap-3 md:grid-cols-5">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Default warehouse</label>
+        <app-lookup
+          [config]="warehouseLookup"
+          [value]="form.default_warehouse_id"
+          [display]="form.default_warehouse_label"
+          (valueChange)="form.default_warehouse_id = $event ?? ''"
+          (selected)="form.default_warehouse_label = $event.code + ' — ' + $event.name"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Reorder level</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.reorder_level"
+          name="reorder_level"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Reorder qty</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.reorder_qty"
+          name="reorder_qty"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Maximum level</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.max_level"
+          name="max_level"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Safety stock</label>
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          [(ngModel)]="form.safety_stock"
+          name="safety_stock"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracking & control -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Tracking &amp; stock control</h2>
+    <div class="flex flex-wrap gap-5 text-sm">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.track_batches" name="track_batches" />
+        Track batches / lots
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.track_serials" name="track_serials" />
+        Track serial numbers
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="form.allow_negative" name="allow_negative" />
+        Allow negative stock
+      </label>
+    </div>
+    <div class="mt-3 grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Shelf life (days)</label>
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="form.shelf_life_days"
+          name="shelf_life_days"
+          placeholder="Defaults lot expiry"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Warranty (days)</label>
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="form.warranty_days"
+          name="warranty_days"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Identification -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Identification</h2>
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Barcode</label>
+        <input
+          [(ngModel)]="form.barcode"
+          name="barcode"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Brand</label>
+        <input
+          [(ngModel)]="form.brand"
+          name="brand"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Model</label>
+        <input
+          [(ngModel)]="form.model"
+          name="model"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Manufacturer</label>
+        <input
+          [(ngModel)]="form.manufacturer"
+          name="manufacturer"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Manufacturer part no</label>
+        <input
+          [(ngModel)]="form.manufacturer_part_no"
+          name="manufacturer_part_no"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">HS code</label>
+        <input
+          [(ngModel)]="form.hs_code"
+          name="hs_code"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Country of origin</label>
+        <input
+          [(ngModel)]="form.country_of_origin"
+          name="country_of_origin"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+    <div class="mt-3">
+      <label class="mb-1.5 block text-sm font-medium">Notes</label>
+      <textarea
+        [(ngModel)]="form.notes"
+        name="notes"
+        rows="2"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      ></textarea>
+    </div>
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex justify-end gap-2">
+    <a
+      routerLink="/inventory/items"
+      class="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+    >
+      Cancel
+    </a>
+    <button uiBtn type="submit" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : editId() ? 'Save changes' : 'Create item' }}
+    </button>
+  </div>
+</form>

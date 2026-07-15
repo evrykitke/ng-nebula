@@ -1,0 +1,31 @@
+<app-page-header
+  title="Purchase invoices"
+  subtitle="Supplier bills matched to orders and receipts, then posted to the ledger"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Purchase invoices' }]"
+/>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="posted">Posted</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Supplier</label>
+      <select [(ngModel)]="supplierFilter" name="supplierFilter" (ngModelChange)="applyFilters()">
+        <option value="">All suppliers</option>
+        @for (s of suppliers(); track s.id) {
+          <option [value]="s.id">{{ s.code }} — {{ s.name }}</option>
+        }
+      </select>
+    </div>
+    <p class="pb-2 text-xs text-muted-foreground">
+      New bills are started from a purchase order's <span class="font-medium">Bill</span> action.
+    </p>
+  </div>
+</app-data-table>

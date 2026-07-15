@@ -1,0 +1,308 @@
+<app-page-header
+  [title]="item()?.name ?? 'Item'"
+  [subtitle]="item()?.sku ?? ''"
+  [breadcrumbs]="[
+    { label: 'Inventory' },
+    { label: 'Items', route: '/inventory/items' },
+    { label: item()?.sku ?? '…' },
+  ]"
+>
+  @if (canEdit() && item()) {
+    <button uiBtn actions variant="outline" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" />
+      Edit
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/inventory/items"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to items
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (item(); as i) {
+  <!-- Summary cards -->
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">On hand ({{ uomCode() }})</p>
+      <p class="mt-1 text-2xl font-semibold">{{ fmtQty(totals().onHand) }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Available</p>
+      <p class="mt-1 text-2xl font-semibold">{{ fmtQty(totals().available) }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Stock value</p>
+      <p class="mt-1 text-2xl font-semibold">{{ fmtMoney(totals().value) }}</p>
+    </div>
+  </div>
+
+  <!-- Master data -->
+  <div class="mt-4 rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Type</p>
+        <p class="mt-0.5 font-medium capitalize">{{ i.item_type }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Category</p>
+        <p class="mt-0.5 font-medium">{{ categoryName() }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Costing</p>
+        <p class="mt-0.5 font-medium">{{ statusLabel(i.costing_method) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+            [class]="
+              i.is_active
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                : 'bg-muted text-muted-foreground'
+            "
+          >
+            {{ i.is_active ? 'active' : 'inactive' }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Purchase price</p>
+        <p class="mt-0.5 font-medium">{{ i.purchase_price ? fmtMoney(i.purchase_price) : '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Selling price</p>
+        <p class="mt-0.5 font-medium">{{ i.selling_price ? fmtMoney(i.selling_price) : '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Reorder level / qty</p>
+        <p class="mt-0.5 font-medium">
+          {{ i.reorder_level ? fmtQty(i.reorder_level) : '—' }} /
+          {{ i.reorder_qty ? fmtQty(i.reorder_qty) : '—' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Tracking</p>
+        <p class="mt-0.5 font-medium">
+          {{
+            (i.track_batches ? 'batches ' : '') + (i.track_serials ? 'serials' : '') || 'none'
+          }}
+        </p>
+      </div>
+      @if (i.barcode) {
+        <div>
+          <p class="text-xs text-muted-foreground">Barcode</p>
+          <p class="mt-0.5 font-medium">{{ i.barcode }}</p>
+        </div>
+      }
+      @if (i.brand || i.model) {
+        <div>
+          <p class="text-xs text-muted-foreground">Brand / model</p>
+          <p class="mt-0.5 font-medium">{{ i.brand || '—' }} / {{ i.model || '—' }}</p>
+        </div>
+      }
+      @if (i.description) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Description</p>
+          <p class="mt-0.5 font-medium">{{ i.description }}</p>
+        </div>
+      }
+      @if (i.notes) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Notes</p>
+          <p class="mt-0.5 font-medium">{{ i.notes }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mt-4 flex gap-1 border-b border-border">
+    @for (t of tabs(); track t) {
+      <button
+        type="button"
+        class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+        [class]="
+          tab() === t
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        "
+        (click)="tab.set(t)"
+      >
+        {{ tabLabel(t) }}
+      </button>
+    }
+  </div>
+
+  @switch (tab()) {
+    @case ('stock') {
+      <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Warehouse</th>
+              <th class="px-4 py-2 text-right font-medium">On hand</th>
+              <th class="px-4 py-2 text-right font-medium">Reserved</th>
+              <th class="px-4 py-2 text-right font-medium">Available</th>
+              <th class="px-4 py-2 text-right font-medium">On order</th>
+              <th class="px-4 py-2 text-right font-medium">Avg cost</th>
+              <th class="px-4 py-2 text-right font-medium">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of levels(); track l.warehouse_id) {
+              <tr
+                class="border-b border-border/50 last:border-0"
+                [class.bg-amber-50]="l.below_reorder"
+                [class.dark:bg-amber-950/20]="l.below_reorder"
+              >
+                <td class="px-4 py-2 font-medium">
+                  {{ l.warehouse_code }}
+                  @if (l.below_reorder) {
+                    <span class="ml-2 text-xs text-amber-600 dark:text-amber-400"
+                      >below reorder</span
+                    >
+                  }
+                </td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(l.on_hand) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(l.reserved) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(l.available) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(l.on_order) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtCost(l.avg_cost) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(l.value) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="px-4 py-6 text-center text-muted-foreground">
+                  No stock on record for this item.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @case ('batches') {
+      <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Batch</th>
+              <th class="px-4 py-2 font-medium">Supplier batch</th>
+              <th class="px-4 py-2 font-medium">Expires</th>
+              <th class="px-4 py-2 text-right font-medium">On hand</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of batches(); track b.batch_id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2 font-medium">{{ b.batch_no }}</td>
+                <td class="px-4 py-2 text-muted-foreground">{{ b.supplier_batch_no || '—' }}</td>
+                <td class="px-4 py-2">{{ fmtDate(b.expires_on) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(b.on_hand) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="px-4 py-6 text-center text-muted-foreground">
+                  No batches with stock.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @case ('serials') {
+      <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Serial</th>
+              <th class="px-4 py-2 font-medium">Status</th>
+              <th class="px-4 py-2 font-medium">Warehouse</th>
+              <th class="px-4 py-2 font-medium">Warranty until</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of serials(); track s.id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2 font-medium">{{ s.serial_no }}</td>
+                <td class="px-4 py-2">
+                  <span
+                    class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class]="serialToneClass(s.status)"
+                  >
+                    {{ statusLabel(s.status) }}
+                  </span>
+                </td>
+                <td class="px-4 py-2">{{ warehouseName(s.warehouse_id) }}</td>
+                <td class="px-4 py-2">{{ fmtDate(s.warranty_until) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="px-4 py-6 text-center text-muted-foreground">
+                  No serial units on record.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @case ('history') {
+      <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Date</th>
+              <th class="px-4 py-2 font-medium">Document</th>
+              <th class="px-4 py-2 font-medium">Type</th>
+              <th class="px-4 py-2 font-medium">Warehouse</th>
+              <th class="px-4 py-2 text-right font-medium">Qty ±</th>
+              <th class="px-4 py-2 text-right font-medium">Qty after</th>
+              <th class="px-4 py-2 text-right font-medium">Unit cost</th>
+              <th class="px-4 py-2 text-right font-medium">Value ±</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of ledger(); track r.seq) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2">{{ fmtDate(r.entry_date) }}</td>
+                <td class="px-4 py-2">
+                  <a
+                    [routerLink]="['/inventory/movements', r.move_id]"
+                    class="font-medium text-primary hover:underline"
+                  >
+                    {{ r.number || 'view' }}
+                  </a>
+                </td>
+                <td class="px-4 py-2 capitalize text-muted-foreground">{{ r.move_type || '—' }}</td>
+                <td class="px-4 py-2">{{ r.warehouse_code }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_delta) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_after) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtCost(r.unit_cost) }}</td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(r.value_delta) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-6 text-center text-muted-foreground">
+                  No ledger history yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-muted-foreground">Showing the 50 most recent entries.</p>
+    }
+  }
+}

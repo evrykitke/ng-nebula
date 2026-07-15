@@ -1,0 +1,22 @@
+<app-page-header
+  title="Purchase returns"
+  subtitle="Goods sent back to suppliers — posting them moves stock out"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Returns' }]"
+/>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="posted">Posted</option>
+        <option value="reversed">Reversed</option>
+      </select>
+    </div>
+    <p class="pb-2 text-xs text-muted-foreground">
+      New returns are started from a purchase order's <span class="font-medium">Return</span> action.
+    </p>
+  </div>
+</app-data-table>

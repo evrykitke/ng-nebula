@@ -1,0 +1,41 @@
+<app-page-header
+  title="Requisitions"
+  subtitle="Internal requests to buy — the front of the purchase-to-pay cycle"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Requisitions' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newRequisition()">
+      <ng-icon name="lucidePlus" size="16" /> New requisition
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="submitted">Submitted</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+        <option value="converted">Converted</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Warehouse</label>
+      <select
+        [(ngModel)]="warehouseFilter"
+        name="warehouseFilter"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">All warehouses</option>
+        @for (w of warehouses(); track w.id) {
+          <option [value]="w.id">{{ w.code }} — {{ w.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</app-data-table>

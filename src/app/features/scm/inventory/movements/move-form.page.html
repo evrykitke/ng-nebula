@@ -1,0 +1,194 @@
+<app-page-header
+  [title]="title()"
+  [subtitle]="meta().subtitle"
+  [breadcrumbs]="[
+    { label: 'Inventory' },
+    { label: 'Movements', route: '/inventory/movements' },
+    { label: editId() ? 'Edit' : 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/inventory/movements"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to movements
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <!-- Header -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Date</label>
+        <app-datepicker [(date)]="form.entry_date" placeholder="Movement date" />
+      </div>
+      @if (needsFrom()) {
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">
+            {{ moveType() === 'adjustment' ? 'Warehouse' : 'From warehouse' }}
+          </label>
+          <app-lookup
+            [config]="warehouseLookup"
+            [value]="form.from_warehouse_id"
+            [display]="form.from_warehouse_label"
+            (valueChange)="form.from_warehouse_id = $event ?? ''"
+            (selected)="form.from_warehouse_label = $event.code + ' — ' + $event.name"
+          />
+        </div>
+      }
+      @if (needsTo()) {
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">To warehouse</label>
+          <app-lookup
+            [config]="warehouseLookup"
+            [value]="form.to_warehouse_id"
+            [display]="form.to_warehouse_label"
+            (valueChange)="form.to_warehouse_id = $event ?? ''"
+            (selected)="form.to_warehouse_label = $event.code + ' — ' + $event.name"
+          />
+        </div>
+      }
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Reference</label>
+        <input
+          [(ngModel)]="form.reference"
+          name="reference"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+    <div class="mt-3">
+      <label class="mb-1.5 block text-sm font-medium">Memo</label>
+      <input
+        [(ngModel)]="form.memo"
+        name="memo"
+        placeholder="Optional note describing this movement"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+  </div>
+
+  <!-- Lines -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-sm font-semibold">Lines</h2>
+      @if (moveType() === 'adjustment') {
+        <p class="text-xs text-muted-foreground">Enter the counted quantity per line.</p>
+      }
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-2 py-2 font-medium" style="min-width: 220px">Item</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 110px">
+              {{ moveType() === 'adjustment' ? 'Counted' : 'Qty' }}
+            </th>
+            @if (needsCost()) {
+              <th class="px-2 py-2 text-right font-medium" style="width: 120px">Unit cost</th>
+            }
+            <th class="px-2 py-2 font-medium" style="width: 140px">Batch</th>
+            <th class="px-2 py-2 font-medium" style="width: 180px">Serials</th>
+            <th class="px-2 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of lines(); track $index) {
+            <tr class="border-b border-border/50 align-top last:border-0">
+              <td class="px-2 py-2">
+                <app-lookup
+                  [config]="itemLookup"
+                  [value]="l.item_id"
+                  [display]="l.item_label"
+                  (valueChange)="onItemValue(l, $event)"
+                  (selected)="onItemSelected(l, $event)"
+                />
+              </td>
+              <td class="px-2 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  [(ngModel)]="l.qty"
+                  [name]="'qty_' + $index"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                />
+              </td>
+              @if (needsCost()) {
+                <td class="px-2 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    [(ngModel)]="l.unit_cost"
+                    [name]="'cost_' + $index"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                  />
+                </td>
+              }
+              <td class="px-2 py-2">
+                @if (l.track_batches) {
+                  <input
+                    [(ngModel)]="l.batch_no"
+                    [name]="'batch_' + $index"
+                    placeholder="Batch no."
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  />
+                } @else {
+                  <span class="text-xs text-muted-foreground">—</span>
+                }
+              </td>
+              <td class="px-2 py-2">
+                @if (l.track_serials) {
+                  <input
+                    [(ngModel)]="l.serial_nos"
+                    [name]="'serials_' + $index"
+                    placeholder="SN1, SN2, …"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  />
+                } @else {
+                  <span class="text-xs text-muted-foreground">—</span>
+                }
+              </td>
+              <td class="px-2 py-2 text-right">
+                @if (lines().length > 1) {
+                  <button
+                    type="button"
+                    class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                    (click)="removeLine($index)"
+                    aria-label="Remove line"
+                  >
+                    <ng-icon name="lucideTrash2" size="16" />
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <button uiBtn type="button" variant="outline" size="sm" class="mt-3" (click)="addLine()">
+      <ng-icon name="lucidePlus" size="14" /> Add line
+    </button>
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/inventory/movements">Cancel</a>
+  </div>
+</form>

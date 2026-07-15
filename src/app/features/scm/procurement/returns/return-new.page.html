@@ -1,0 +1,178 @@
+<app-page-header
+  title="New purchase return"
+  subtitle="Send received goods back to a supplier"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Returns', route: '/procurement/returns' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/procurement/returns"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to returns
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Purchase order</label>
+        <app-lookup
+          [config]="orderLookup"
+          [value]="orderId"
+          [display]="orderLabel"
+          (valueChange)="onOrderCleared($event)"
+          (selected)="onOrderSelected($event)"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Return date</label>
+        <app-datepicker [(date)]="form.return_date" placeholder="Return date" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">RMA / reference</label>
+        <input
+          [(ngModel)]="form.reference"
+          name="reference"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Reason</label>
+        <input
+          [(ngModel)]="form.reason"
+          name="reason"
+          placeholder="e.g. Damaged in transit"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Carrier</label>
+        <input
+          [(ngModel)]="form.carrier"
+          name="carrier"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  @if (order(); as o) {
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-1 text-sm font-semibold">
+        Lines — {{ o.number ?? '(draft)' }} · {{ o.supplier_name }}
+      </h2>
+      <p class="mb-3 text-xs text-muted-foreground">
+        Only received lines are shown. Enter the quantity going back per line.
+      </p>
+      @if (lines().length === 0) {
+        <p class="py-6 text-center text-sm text-muted-foreground">
+          Nothing received on this order to return.
+        </p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border text-left text-xs text-muted-foreground">
+                <th class="px-2 py-2 font-medium">Item</th>
+                <th class="px-2 py-2 text-right font-medium">Received</th>
+                <th class="px-2 py-2 text-right font-medium" style="width: 100px">Return</th>
+                <th class="px-2 py-2 font-medium" style="width: 140px">Batch</th>
+                <th class="px-2 py-2 font-medium" style="width: 170px">Serials</th>
+                <th class="px-2 py-2 font-medium" style="width: 150px">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of lines(); track l.order_line_id) {
+                <tr class="border-b border-border/50 align-top last:border-0">
+                  <td class="px-2 py-2">
+                    <span class="font-medium">{{ l.sku }}</span>
+                    <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+                  </td>
+                  <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.received) }}</td>
+                  <td class="px-2 py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      [(ngModel)]="l.qty"
+                      [name]="'qty_' + l.order_line_id"
+                      class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                    />
+                  </td>
+                  <td class="px-2 py-2">
+                    @if (l.track_batches) {
+                      <input
+                        [(ngModel)]="l.batch_no"
+                        [name]="'batch_' + l.order_line_id"
+                        placeholder="Batch no."
+                        class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      />
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                  <td class="px-2 py-2">
+                    @if (l.track_serials) {
+                      <input
+                        [(ngModel)]="l.serial_nos"
+                        [name]="'ser_' + l.order_line_id"
+                        placeholder="SN1, SN2, …"
+                        class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      />
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                  <td class="px-2 py-2">
+                    <input
+                      [(ngModel)]="l.reason"
+                      [name]="'rsn_' + l.order_line_id"
+                      placeholder="Optional"
+                      class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      Select a purchase order to return against.
+    </div>
+  }
+
+  <div class="rounded-lg border border-border bg-card p-4">
+    <label class="mb-1.5 block text-sm font-medium">Memo</label>
+    <input
+      [(ngModel)]="form.memo"
+      name="memo"
+      placeholder="Optional"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/procurement/returns">Cancel</a>
+  </div>
+</form>
