@@ -35,7 +35,7 @@ export const routes: Routes = [
           import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
-        path: 'workspace/apps',
+        path: 'apps',
         loadComponent: () => import('./features/workspace/apps.page').then((m) => m.AppsPage),
       },
       // Each app is getting its own landing page. The sidebar links to them

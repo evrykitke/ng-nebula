@@ -63,10 +63,19 @@ export class LayoutService {
   /** Viewport is below the `lg` breakpoint (drawer mode). */
   private readonly _isMobile = signal(false);
 
-  /** How the sidebar presents the product. */
-  private readonly _navMode = signal<NavMode>(stored(MODE_KEY) === 'app' ? 'app' : 'classic');
-  /** The app whose menu the sidebar is showing, under app navigation. */
-  private readonly _activeApp = signal<string | null>(stored(APP_KEY));
+  /**
+   * How the sidebar presents the product. App navigation is the default —
+   * classic is the one you opt into, and only `'classic'` is honoured, so a
+   * cleared or corrupt preference lands on the house style rather than the
+   * fallback.
+   */
+  private readonly _navMode = signal<NavMode>(stored(MODE_KEY) === 'classic' ? 'classic' : 'app');
+  /**
+   * The app whose menu the sidebar is showing, under app navigation. Workspace
+   * to begin with: a first run should open on home with a menu, not on the
+   * launcher with an empty rail.
+   */
+  private readonly _activeApp = signal<string | null>(stored(APP_KEY) ?? 'Workspace');
 
   readonly collapsed = this._collapsed.asReadonly();
   readonly mobileOpen = this._mobileOpen.asReadonly();

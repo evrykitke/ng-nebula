@@ -168,7 +168,7 @@ export class Topbar {
   setNav(mode: NavMode): void {
     this.layout.setNavMode(mode);
     if (mode === 'app' && !appForUrl(this.router.url)) {
-      void this.router.navigateByUrl('/workspace/apps');
+      void this.router.navigateByUrl('/apps');
     }
   }
 

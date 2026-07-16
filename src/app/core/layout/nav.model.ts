@@ -25,12 +25,12 @@ export interface NavItem {
    */
   permission?: string | string[];
   /**
-   * This section is an app — a business module with a life of its own.
+   * This section is an app — a body of work with a life of its own.
    *
    * Classic navigation lists every app at once. App navigation shows one at a
    * time, so the sidebar carries the pages of the work in hand rather than
-   * every page in the product. What is an app is a judgement, not a shape:
-   * Workspace has children too, and is never one of them — it is home.
+   * every page in the product. Workspace is one too: what is cross-cutting to
+   * the business is still somewhere you go, not a frame around everywhere else.
    */
   app?: boolean;
   /**
@@ -39,6 +39,22 @@ export interface NavItem {
    * sidebar full of colours is a sidebar you have to read anyway.
    */
   tone?: AppTone;
+  /**
+   * What an app is for, in a line. Shown on its launcher card.
+   *
+   * A name is not a description: "Procurement" tells someone who already knows
+   * what it holds, and nobody else. This says what the work is, so the launcher
+   * can be read by someone on their first day.
+   */
+  description?: string;
+  /**
+   * The app that adopts the top-level pages belonging to no app — the
+   * dashboard.
+   *
+   * Classic navigation pins those at the top of the sidebar; app navigation has
+   * no top to pin them to, and they are not nothing. Home takes them in.
+   */
+  home?: boolean;
 }
 
 /** The launcher's palette. One per app, and each app keeps its own. */
@@ -56,6 +72,8 @@ export const NAV_ITEMS: NavItem[] = [
     exact: false,
     app: true,
     tone: 'indigo',
+    description:
+      "The books — accounts, journals, tax, and the statements they add up to.",
     children: [
       { label: 'Dashboard', icon: 'lucideChartColumn', route: '/accounting/dashboard' },
       {
@@ -114,6 +132,8 @@ export const NAV_ITEMS: NavItem[] = [
     exact: false,
     app: true,
     tone: 'amber',
+    description:
+      "What you hold and what it is worth: items, stock, movements and valuation.",
     children: [
       { label: 'Dashboard', icon: 'lucideChartColumn', route: '/inventory/dashboard' },
       {
@@ -166,6 +186,8 @@ export const NAV_ITEMS: NavItem[] = [
     exact: false,
     app: true,
     tone: 'violet',
+    description:
+      "Buying — from a requisition, through orders and receipts, to the supplier's bill.",
     children: [
       { label: 'Dashboard', icon: 'lucideChartColumn', route: '/procurement/dashboard' },
       {
@@ -242,6 +264,8 @@ export const NAV_ITEMS: NavItem[] = [
     exact: false,
     app: true,
     tone: 'emerald',
+    description:
+      "Selling — from a quotation, through orders and delivery, to the customer's payment.",
     children: [
       { label: 'Dashboard', icon: 'lucideChartColumn', route: '/sales/dashboard' },
       {
@@ -304,6 +328,11 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Workspace',
     icon: 'lucideLayoutGrid',
     exact: false,
+    app: true,
+    home: true,
+    tone: 'sky',
+    description:
+      "Work that spans the business: the dashboard and the report catalogue.",
     children: [
       { label: 'Reports', icon: 'lucideFileText', route: '/workspace/reports' },
     ],
@@ -361,21 +390,38 @@ export const ADMIN_NAV_ITEM: NavItem = {
 };
 
 /**
- * The apps launcher, pinned at the top of the sidebar beside Dashboard under
- * app navigation. Changing app is the most common move in that mode, so it is
- * a link, not something inside a section you open first.
+ * The apps launcher, pinned at the top of the sidebar under app navigation.
+ * Changing app is the most common move in that mode, so it is a link, not
+ * something inside a section you open first.
+ *
+ * At `/apps`, deliberately outside every app's prefix: under `/workspace` it
+ * belonged to the Workspace app, so opening the launcher from Sales quietly
+ * moved you into Workspace — and going back left you somewhere you never chose.
  *
  * Classic navigation lists every app already, so it does not appear there.
  */
 export const APPS_NAV_ITEM: NavItem = {
   label: 'Apps',
   icon: 'lucideLayoutGrid',
-  route: '/workspace/apps',
+  route: '/apps',
 };
 
 /** The business modules, in the order the sidebar lists them. */
 export function apps(items: NavItem[] = NAV_ITEMS): NavItem[] {
   return items.filter((i) => i.app);
+}
+
+/**
+ * An app's pages under app navigation — its own, plus the loose top-level ones
+ * that home adopts.
+ *
+ * One definition, because two would drift: the sidebar showed the dashboard
+ * under Workspace while the launcher counted its pages without it, and the card
+ * said "1 page" over a menu of two.
+ */
+export function appPages(app: NavItem, items: NavItem[] = NAV_ITEMS): NavItem[] {
+  const adopted = app.home ? items.filter((i) => !i.app && !i.children?.length) : [];
+  return [...adopted, ...(app.children ?? [])];
 }
 
 /** Every route under an item, however deep. */
