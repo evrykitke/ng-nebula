@@ -6,7 +6,13 @@ import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { fmtMoney, invoiceStatusTones, settlementTones, statusLabel } from '../../shared/scm-format';
+import {
+  filterSummary,
+  fmtMoney,
+  invoiceStatusTones,
+  settlementTones,
+  statusLabel,
+} from '../../shared/scm-format';
 import {
   InvoiceHeader,
   InvoiceStatus,
@@ -63,6 +69,14 @@ export class InvoicesPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number, supplier no. or supplier…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Purchase Invoices',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Status', statusLabel(this.statusFilter)],
+        ['Supplier', this.suppliers().find((s) => s.id === this.supplierFilter)?.name],
+      ]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No purchase invoices match.',
   }));

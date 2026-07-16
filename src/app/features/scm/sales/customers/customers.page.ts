@@ -56,6 +56,8 @@ export class CustomersPage {
     search: true,
     searchPlaceholder: 'Search code, name or contact…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Customers',
     actions: [
       { key: 'view', label: 'View' },
       ...(this.canEdit() ? [{ key: 'edit', label: 'Edit' }] : []),

@@ -5,7 +5,7 @@ import { lucideChevronDown, lucideFileChartColumn, lucideFileText } from '@ng-ic
 import { PageHeader } from '../../core/layout/page-header/page-header';
 import { NotificationService } from '../../core/services/notification.service';
 import { apiErrorInfo } from '../../shared/api/api-error';
-import { ReportGroup, ReportInfo, ReportService } from './report.service';
+import { ReportGroup, ReportInfo, ReportService } from '../../shared/reporting/report.service';
 
 /**
  * Workspace → Reports: the report catalogue, organised into one collapsible

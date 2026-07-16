@@ -54,6 +54,9 @@ export class WarehousesPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search code or name…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Warehouses',
     actions: this.canManage() ? [{ key: 'edit', label: 'Edit' }] : [],
     emptyText: 'No warehouses yet.',
   }));

@@ -10,7 +10,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { rfqStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, rfqStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   ProcurementServiceProxy,
   RfqHeader,
@@ -54,6 +54,10 @@ export class RfqsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number or title…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Requests for Quotation',
+    exportSubtitle: () => filterSummary([['Status', statusLabel(this.statusFilter)]]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No RFQs match.',
   }));

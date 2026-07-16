@@ -10,7 +10,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { moveStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, moveStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   InventoryServiceProxy,
   InventoryWarehouse,
@@ -79,6 +79,14 @@ export class MovementsPage {
     search: true,
     searchPlaceholder: 'Search number, reference or memo…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Stock Movements',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Type', statusLabel(this.typeFilter)],
+        ['Status', statusLabel(this.statusFilter)],
+        ['Warehouse', this.warehouses().find((w) => w.id === this.warehouseFilter)?.name],
+      ]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No movements match.',
   }));

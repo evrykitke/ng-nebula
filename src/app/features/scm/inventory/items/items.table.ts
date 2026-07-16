@@ -56,6 +56,8 @@ export function itemsTable(opts: {
     search: true,
     searchPlaceholder: 'Search SKU, name or barcode…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Items',
     actions: [
       { key: 'view', label: 'View' },
       ...(opts.canEdit ? [{ key: 'edit', label: 'Edit' }] : []),

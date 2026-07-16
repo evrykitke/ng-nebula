@@ -10,7 +10,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { requisitionStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, requisitionStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   InventoryServiceProxy,
   InventoryWarehouse,
@@ -60,6 +60,14 @@ export class RequisitionsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Purchase Requisitions',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Status', statusLabel(this.statusFilter)],
+        ['Warehouse', this.warehouses().find((w) => w.id === this.warehouseFilter)?.name],
+      ]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No requisitions match.',
   }));

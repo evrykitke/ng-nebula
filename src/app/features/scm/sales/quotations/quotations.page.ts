@@ -58,6 +58,9 @@ export class QuotationsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number or customer…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Quotations',
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No quotations yet.',
   }));

@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { receiptStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, receiptStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   ProcurementServiceProxy,
   ReceiptHeader,
@@ -48,6 +48,10 @@ export class ReceiptsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number, order or delivery note…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Goods Receipts',
+    exportSubtitle: () => filterSummary([['Status', statusLabel(this.statusFilter)]]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No goods receipts match.',
   }));

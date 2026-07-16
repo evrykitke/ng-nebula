@@ -8,8 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "generate-proxies": "node scripts/fetch-openapi.mjs && nswag run nswag.json /runtime:Net100 && node scripts/fix-proxies.mjs",
-    "e2e": "npm run e2e:pages && npm run e2e:o2c",
+    "e2e": "npm run e2e:pages && npm run e2e:export && npm run e2e:o2c",
     "e2e:pages": "node e2e/sales-pages.e2e.mjs",
+    "e2e:export": "node e2e/list-export.e2e.mjs",
     "e2e:o2c": "node e2e/sales-order-to-cash.e2e.mjs"
   },
   "private": true,

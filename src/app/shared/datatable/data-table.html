@@ -44,6 +44,17 @@
         <ng-icon name="lucideColumns3" size="16" /> Columns
       </button>
     }
+    @if (config().exportPdf) {
+      <button
+        cdkMenuItem
+        class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent disabled:opacity-60"
+        [disabled]="exporting()"
+        (click)="exportPdf()"
+      >
+        <ng-icon name="lucideFileText" size="16" />
+        {{ exporting() ? 'Preparing…' : 'Export PDF' }}
+      </button>
+    }
     @if (config().exportCsv) {
       <button cdkMenuItem class="flex w-full items-center gap-2 rounded px-2 py-1.5 hover:bg-accent" (click)="exportCsv.emit()">
         <ng-icon name="lucideDownload" size="16" /> Export CSV

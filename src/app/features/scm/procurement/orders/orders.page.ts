@@ -10,7 +10,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { orderStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, orderStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   OrderHeader,
   OrderStatus,
@@ -64,6 +64,13 @@ export class OrdersPage {
     search: true,
     searchPlaceholder: 'Search number or supplier…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Purchase Orders',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Status', statusLabel(this.statusFilter)],
+        ['Supplier', this.suppliers().find((s) => s.id === this.supplierFilter)?.name],
+      ]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No purchase orders match.',
   }));

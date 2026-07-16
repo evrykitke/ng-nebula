@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { fmtCost, fmtMoney, fmtQty, num } from '../../shared/scm-format';
+import { filterSummary, fmtCost, fmtMoney, fmtQty, num } from '../../shared/scm-format';
 import {
   InventoryServiceProxy,
   InventoryWarehouse,
@@ -88,6 +88,12 @@ export class StockLevelsPage {
     search: true,
     searchPlaceholder: 'Search SKU, item or warehouse…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Stock Levels',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Warehouse', this.warehouses().find((w) => w.id === this.warehouseFilter)?.name],
+      ]),
     actions: [{ key: 'item', label: 'View item' }],
     emptyText: 'No stock positions match.',
   }));

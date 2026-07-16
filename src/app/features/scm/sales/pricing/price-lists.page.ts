@@ -56,6 +56,9 @@ export class PriceListsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search name…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Price Lists',
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No price lists yet.',
   }));

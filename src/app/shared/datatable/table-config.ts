@@ -90,6 +90,24 @@ export interface TableConfig<T = unknown> {
   searchPlaceholder?: string;
   /** Show the column-visibility toggle in the tools menu. */
   columnToggle?: boolean;
+  /**
+   * Offer "Export PDF" in the tools menu. The table renders itself through
+   * the server's reporting engine: every row the current search and filters
+   * select (not just the page on screen), in the columns left visible by the
+   * column toggle. So the toggle doubles as the export's column picker.
+   */
+  exportPdf?: boolean;
+  /** The exported document's title. Defaults to a prettified `id`. */
+  exportTitle?: string;
+  /**
+   * The exported document's subtitle — a function so it reads the page's
+   * current filters at export time. The row count and search term are
+   * appended automatically, so this should describe the filters only
+   * (e.g. `'Status: confirmed'`).
+   */
+  exportSubtitle?: () => string;
+  /** Page orientation. Defaults to landscape once a list is wide. */
+  exportOrientation?: 'portrait' | 'landscape';
   /** Offer "Export CSV" in the tools menu (emits `exportCsv`). */
   exportCsv?: boolean;
   /** Offer "Import CSV" in the tools menu (emits `importCsv`). */

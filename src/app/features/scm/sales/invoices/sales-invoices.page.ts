@@ -57,6 +57,8 @@ export class SalesInvoicesPage {
     search: true,
     searchPlaceholder: 'Search number or customer…',
     columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Sales Invoices',
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No invoices yet.',
   }));

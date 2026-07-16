@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { returnStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, returnStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   ProcurementServiceProxy,
   ReturnHeader,
@@ -48,6 +48,10 @@ export class ReturnsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number or order…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Purchase Returns',
+    exportSubtitle: () => filterSummary([['Status', statusLabel(this.statusFilter)]]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No returns match.',
   }));

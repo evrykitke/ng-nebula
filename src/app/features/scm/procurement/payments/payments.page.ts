@@ -10,7 +10,7 @@ import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/
 import { clientSideSource } from '../../../../shared/datatable/client-side';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
-import { fmtMoney, paymentStatusTones, statusLabel } from '../../shared/scm-format';
+import { filterSummary, fmtMoney, paymentStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   PaymentHeader,
   PaymentStatus,
@@ -61,6 +61,14 @@ export class PaymentsPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number, supplier or reference…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Supplier Payments',
+    exportSubtitle: () =>
+      filterSummary([
+        ['Status', statusLabel(this.statusFilter)],
+        ['Supplier', this.suppliers().find((s) => s.id === this.supplierFilter)?.name],
+      ]),
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No supplier payments match.',
   }));

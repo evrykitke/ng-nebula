@@ -152,3 +152,15 @@ export const priceListStatusTones: Record<string, BadgeTone> = {
 export function statusLabel(s: string | null | undefined): string {
   return (s ?? '').replaceAll('_', ' ');
 }
+
+/**
+ * The active toolbar filters as one line for a table's PDF export subtitle,
+ * e.g. `Status: confirmed · Supplier: Acme Ltd`. Pairs whose value is empty
+ * are dropped, so an unfiltered list says nothing rather than "Status: all".
+ */
+export function filterSummary(parts: Array<[string, string | null | undefined]>): string {
+  return parts
+    .filter(([, value]) => !!value?.trim())
+    .map(([label, value]) => `${label}: ${value!.trim()}`)
+    .join(' · ');
+}

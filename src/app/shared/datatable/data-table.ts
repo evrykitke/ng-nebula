@@ -4,6 +4,7 @@ import {
   TemplateRef,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -17,10 +18,15 @@ import {
   lucideDownload,
   lucideEllipsisVertical,
   lucideFileDown,
+  lucideFileText,
   lucideUpload,
 } from '@ng-icons/lucide';
 import { DateTime } from 'luxon';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from '../../core/services/notification.service';
+import { apiErrorInfo } from '../api/api-error';
+import { saveBlob, slugify } from '../reporting/download';
+import { ExportColumn, ListExport, ReportService } from '../reporting/report.service';
 import {
   BadgeTone,
   ColumnDef,
@@ -51,12 +57,16 @@ import {
       lucideDownload,
       lucideUpload,
       lucideFileDown,
+      lucideFileText,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './data-table.html',
 })
 export class DataTable<T = unknown> {
+  private readonly reports = inject(ReportService);
+  private readonly notify = inject(NotificationService);
+
   /** The declarative configuration for this table. */
   readonly config = input.required<TableConfig<T>>();
   /** Turns a query into a page of rows (the parent owns the proxy call). */
@@ -87,7 +97,7 @@ export class DataTable<T = unknown> {
   /** Whether the kebab tools menu has any items to show. */
   readonly hasTools = computed(() => {
     const cfg = this.config();
-    return !!(cfg.columnToggle || cfg.exportCsv || cfg.importCsv);
+    return !!(cfg.columnToggle || cfg.exportPdf || cfg.exportCsv || cfg.importCsv);
   });
 
   // Data + query state.
@@ -104,6 +114,8 @@ export class DataTable<T = unknown> {
   readonly selected = signal<Set<string>>(new Set());
   readonly showColumns = signal(false);
   readonly expanded = signal<Set<string>>(new Set());
+  /** True while an export is being fetched and rendered. */
+  readonly exporting = signal(false);
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.size())));
   readonly allSelected = computed(() => {
@@ -127,6 +139,8 @@ export class DataTable<T = unknown> {
   private initialized = false;
   /** Minimum characters before a search hits the server. */
   private static readonly MIN_SEARCH = 3;
+  /** Rows one export may carry — the server rejects more than this. */
+  private static readonly EXPORT_MAX = 20_000;
   /** The last effective search term actually queried (to skip no-op requests). */
   private lastSearch = '';
 
@@ -301,6 +315,94 @@ export class DataTable<T = unknown> {
     this.hidden.set(next);
   }
 
+  // ---- PDF export ----
+  /**
+   * The columns an export carries: those left visible by the column toggle,
+   * minus images (a thumbnail's cell text is a URL, which is noise on paper).
+   */
+  private exportColumns(): ColumnDef<T>[] {
+    return this.visibleColumns().filter((c) => c.type !== 'image');
+  }
+
+  /**
+   * Export every row the current search and filters select — not just the page
+   * on screen — as a PDF rendered by the server's reporting engine, so it
+   * carries the same letterhead as the rest of the report catalogue.
+   *
+   * The rows are re-fetched rather than taken from `rows()`, which holds one
+   * page; the query is otherwise identical, so the document says what the
+   * screen says.
+   */
+  exportPdf(): void {
+    if (this.exporting()) return;
+    const cfg = this.config();
+    const columns = this.exportColumns();
+    if (!columns.length) {
+      this.notify.warn('Nothing to export', 'Every column is hidden.');
+      return;
+    }
+
+    this.exporting.set(true);
+    const search = this.effectiveSearch(this.search());
+    const query: TableQuery = {
+      page: 0,
+      size: DataTable.EXPORT_MAX,
+      search,
+      sort: this.sort(),
+      sortDir: this.sortDir(),
+    };
+
+    this.dataSource()(query).subscribe({
+      next: (res) => {
+        if (!res.rows.length) {
+          this.exporting.set(false);
+          this.notify.warn('Nothing to export', 'No rows match the current filters.');
+          return;
+        }
+        const title = cfg.exportTitle ?? prettify(cfg.id);
+        const list: ListExport = {
+          title,
+          subtitle: this.exportSubtitle(res.rows.length, res.total, search),
+          orientation: cfg.exportOrientation ?? (columns.length > 6 ? 'landscape' : 'portrait'),
+          columns: columns.map((c) => ({ label: c.label, align: exportAlign(c.align) })),
+          rows: res.rows.map((row) => columns.map((c) => this.cellText(row, c))),
+        };
+        this.reports.exportList(list).subscribe({
+          next: (blob) => {
+            saveBlob(blob, `${slugify(title)}-${DateTime.now().toFormat('yyyy-LL-dd')}.pdf`);
+            this.exporting.set(false);
+          },
+          error: (err) => {
+            this.exporting.set(false);
+            const { message } = apiErrorInfo(err);
+            this.notify.error('Export failed', message);
+          },
+        });
+      },
+      error: (err) => {
+        this.exporting.set(false);
+        const { message } = apiErrorInfo(err);
+        this.notify.error('Export failed', message);
+      },
+    });
+  }
+
+  /**
+   * The line under the title: what the page filtered to, then how many rows
+   * that came to — so a printed list says what it is, months later, without
+   * the screen it came from.
+   */
+  private exportSubtitle(rows: number, total: number, search: string): string {
+    const bits: string[] = [];
+    const filters = this.config().exportSubtitle?.();
+    if (filters?.trim()) bits.push(filters.trim());
+    if (search) bits.push(`Search: “${search}”`);
+    // `rows` is what the document holds; it falls short of `total` only when
+    // the list is longer than one export, which the reader deserves to know.
+    bits.push(rows < total ? `${rows} of ${total} records` : `${rows} records`);
+    return bits.join(' · ');
+  }
+
   // ---- Expandable rows ----
   isExpanded(row: T): boolean {
     return this.expanded().has(this.key(row));
@@ -374,6 +476,24 @@ export class DataTable<T = unknown> {
           : null;
     return dt?.isValid ? dt.toFormat(fmt) : String(value);
   }
+}
+
+/** A column's alignment in the terms the reporting engine uses. */
+function exportAlign(align: ColumnDef['align']): ExportColumn['align'] {
+  switch (align) {
+    case 'right':
+      return 'end';
+    case 'center':
+      return 'center';
+    default:
+      return 'start';
+  }
+}
+
+/** A table id as a document title, e.g. `procurement-orders` → `Procurement orders`. */
+function prettify(id: string): string {
+  const words = id.replace(/[-_]+/g, ' ').trim();
+  return words ? words[0].toUpperCase() + words.slice(1) : 'Export';
 }
 
 const TONE_CLASSES: Record<BadgeTone, string> = {

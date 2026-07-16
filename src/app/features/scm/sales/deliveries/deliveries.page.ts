@@ -47,6 +47,9 @@ export class DeliveriesPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number or order…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Delivery Notes',
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No deliveries yet.',
   }));

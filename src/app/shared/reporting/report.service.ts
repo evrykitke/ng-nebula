@@ -76,6 +76,26 @@ export interface ReportJob {
 
 export const REPORT_FORMATS: readonly ReportFormat[] = ['modern', 'compact', 'corporate'];
 
+/** A column of a {@link ListExport}: its heading and how its cells align. */
+export interface ExportColumn {
+  label: string;
+  align: 'start' | 'center' | 'end';
+}
+
+/**
+ * A list handed to the server to render. The rows are already formatted —
+ * exactly the strings the table showed — so the document matches the screen.
+ */
+export interface ListExport {
+  title: string;
+  subtitle?: string;
+  /** Landscape suits wide lists; the server defaults to portrait. */
+  orientation?: 'portrait' | 'landscape';
+  columns: ExportColumn[];
+  rows: string[][];
+  totals?: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   private readonly http = inject(HttpClient);
@@ -104,6 +124,24 @@ export class ReportService {
     const params = new URLSearchParams({ output });
     if (format) params.set('format', format);
     return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
+      responseType: 'blob',
+    });
+  }
+
+  /**
+   * Render an on-screen list as a document. No report definition backs this:
+   * the table sends the columns and rows it is showing and the server dresses
+   * them in the tenant's letterhead, so an export matches both the screen and
+   * the rest of the report catalogue.
+   */
+  exportList(
+    list: ListExport,
+    output: Exclude<ReportOutput, 'table'> = 'pdf',
+    format: ReportFormat | null = null,
+  ): Observable<Blob> {
+    const params = new URLSearchParams({ output });
+    if (format) params.set('format', format);
+    return this.http.post(`${this.base}/reports/list-export?${params.toString()}`, list, {
       responseType: 'blob',
     });
   }

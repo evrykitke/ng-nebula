@@ -46,7 +46,8 @@ import {
   ReportService,
   ReportSettings,
   ReportTables,
-} from './report.service';
+} from '../../shared/reporting/report.service';
+import { saveBlob } from '../../shared/reporting/download';
 
 type ViewMode = 'document' | 'table';
 interface SortState {
@@ -377,12 +378,3 @@ function num(s: string): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
-/** Trigger a browser download of a rendered blob. */
-function saveBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}

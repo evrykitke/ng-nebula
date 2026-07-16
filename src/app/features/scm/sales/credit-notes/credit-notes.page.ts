@@ -48,6 +48,9 @@ export class CreditNotesPage {
     pageSize: 25,
     search: true,
     searchPlaceholder: 'Search number, customer or invoice…',
+    columnToggle: true,
+    exportPdf: true,
+    exportTitle: 'Credit Notes',
     actions: [{ key: 'view', label: 'View' }],
     emptyText: 'No credit notes yet.',
   }));
