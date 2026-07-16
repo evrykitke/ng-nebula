@@ -152,8 +152,13 @@ export class ReportService {
    * after the document's own number, so the response is taken whole rather
    * than picked apart here.
    */
-  renderDocument(name: string, id: string): Observable<HttpResponse<Blob>> {
+  renderDocument(
+    name: string,
+    id: string,
+    format: ReportFormat | null = null,
+  ): Observable<HttpResponse<Blob>> {
     const params = new URLSearchParams({ output: 'pdf', id });
+    if (format) params.set('format', format);
     return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
       responseType: 'blob',
       observe: 'response',
