@@ -85,7 +85,25 @@
 <!-- Table -->
 <div class="overflow-hidden rounded-xl border border-border bg-card">
   <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+    <!-- Fixed layout: columns are sized here, once, rather than by whatever
+         happens to be in the first row. That is what lets a cell clip instead
+         of stretching its column, and it keeps the columns still while paging
+         through records of different lengths. -->
+    <table class="w-full table-fixed text-sm">
+      <colgroup>
+        @if (rowDetail()) {
+          <col class="w-8" />
+        }
+        @if (config().multiSelect) {
+          <col class="w-8" />
+        }
+        @for (c of visibleColumns(); track c.field) {
+          <col [style.width]="colWidth(c)" />
+        }
+        @if (config().actions?.length) {
+          <col [style.width]="actionsWidth()" />
+        }
+      </colgroup>
       <thead>
         <tr class="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
           @if (rowDetail()) {
@@ -98,8 +116,7 @@
           }
           @for (c of visibleColumns(); track c.field) {
             <th
-              class="whitespace-nowrap px-4 py-2.5 font-medium"
-              [style.width]="c.width"
+              class="truncate px-4 py-2.5 font-medium"
               [class.text-right]="c.align === 'right'"
               [class.text-center]="c.align === 'center'"
               [class.cursor-pointer]="c.sortable"
@@ -182,7 +199,7 @@
               }
               @for (c of visibleColumns(); track c.field) {
                 <td
-                  class="whitespace-nowrap px-4 py-1.5"
+                  class="truncate px-4 py-1.5"
                   [class.text-right]="c.align === 'right'"
                   [class.text-center]="c.align === 'center'"
                 >
@@ -221,7 +238,7 @@
                 </td>
               }
               @if (config().actions?.length) {
-                <td class="whitespace-nowrap px-4 py-1.5 text-right">
+                <td class="truncate px-4 py-1.5 text-right">
                   @for (a of visibleActions(row); track a.key) {
                     <button
                       type="button"

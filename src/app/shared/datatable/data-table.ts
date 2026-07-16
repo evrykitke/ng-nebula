@@ -33,6 +33,7 @@ import { Criterion, FilterField, applyFilters, filterFields, summarize } from '.
 import {
   BadgeTone,
   ColumnDef,
+  ColumnType,
   RowAction,
   TableConfig,
   TableDataSource,
@@ -143,6 +144,25 @@ export class DataTable<T = unknown> {
       (this.config().actions?.length ? 1 : 0) +
       (this.rowDetail() ? 1 : 0),
   );
+
+  /**
+   * How wide a column sits, under fixed layout.
+   *
+   * A column's own `width` wins. Otherwise the type decides: a date, a
+   * currency code or a status is a known size, and giving it an equal share of
+   * the table — which is what fixed layout does with columns that say nothing —
+   * would starve the names and descriptions people actually read. Text columns
+   * return nothing and split whatever is left.
+   */
+  colWidth(c: ColumnDef<T>): string | null {
+    if (c.width) return c.width;
+    return TYPE_WIDTHS[c.type] ?? null;
+  }
+
+  /** The actions column: sized to its buttons, which are words, not content. */
+  actionsWidth(): string {
+    return `${5.5 + 3 * ((this.config().actions?.length ?? 1) - 1)}rem`;
+  }
 
   /** Placeholder rows for the skeleton shown on the first (empty) load. */
   readonly skeletonRows = Array.from({ length: 8 });
@@ -530,6 +550,23 @@ export class DataTable<T = unknown> {
     return dt?.isValid ? dt.toFormat(fmt) : String(value);
   }
 }
+
+/**
+ * What each kind of column is worth, when it does not say for itself.
+ *
+ * Only the predictable ones are here. Text and email are deliberately absent:
+ * they hold the names and descriptions a reader is actually scanning, so they
+ * take whatever the fixed layout has left over.
+ */
+const TYPE_WIDTHS: Partial<Record<ColumnType, string>> = {
+  date: '7.5rem',
+  datetime: '10rem',
+  number: '7rem',
+  currency: '8rem',
+  badge: '9rem',
+  boolean: '6rem',
+  image: '4rem',
+};
 
 /** A column's alignment in the terms the reporting engine uses. */
 function exportAlign(align: ColumnDef['align']): ExportColumn['align'] {
