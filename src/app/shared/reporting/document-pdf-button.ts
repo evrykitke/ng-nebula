@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideFileText } from '@ng-icons/lucide';
-import { DocumentViewer } from './document-viewer';
+import { ReportDrawer } from './report-drawer';
 import { UiButton } from '../ui/button';
 
 /**
@@ -20,7 +20,7 @@ import { UiButton } from '../ui/button';
 @Component({
   selector: 'app-document-pdf',
   standalone: true,
-  imports: [NgIcon, UiButton, DocumentViewer],
+  imports: [NgIcon, UiButton, ReportDrawer],
   providers: [provideIcons({ lucideFileText })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -29,7 +29,7 @@ import { UiButton } from '../ui/button';
       {{ label() }}
     </button>
 
-    <app-document-viewer
+    <app-report-drawer
       [report]="report()"
       [id]="id()"
       [open]="viewing()"

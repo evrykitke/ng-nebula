@@ -20,6 +20,12 @@ export interface ReportInfo {
   outputs: ReportOutput[];
   default_format: ReportFormat;
   requires_permission?: string;
+  /**
+   * True when the report draws one record and answers `?id=` — a purchase
+   * order, an invoice. It cannot be run from the catalogue, only from the
+   * record it belongs to.
+   */
+  requires_record?: boolean;
 }
 
 export interface ReportGroup {
@@ -147,17 +153,20 @@ export class ReportService {
   }
 
   /**
-   * Render one record's document — the purchase order, invoice or delivery
-   * note behind a detail page. The server owns the layout and names the file
+   * Render a report to PDF, for a record (`id`) or on its own — a purchase
+   * order, or a trial balance. The server owns the layout and names the file
    * after the document's own number, so the response is taken whole rather
    * than picked apart here.
    */
-  renderDocument(
+  renderPdf(
     name: string,
-    id: string,
+    id: string | null = null,
     format: ReportFormat | null = null,
   ): Observable<HttpResponse<Blob>> {
-    const params = new URLSearchParams({ output: 'pdf', id });
+    const params = new URLSearchParams({ output: 'pdf' });
+    // A document names its record; a report that stands on its own has none to
+    // name, and sending an empty `id` would fail its parameter check.
+    if (id) params.set('id', id);
     if (format) params.set('format', format);
     return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
       responseType: 'blob',

@@ -1,13 +1,13 @@
 <app-page-header
   title="Reports"
-  subtitle="Generate and view your workspace documents"
+  subtitle="Everything this workspace can draw"
   [breadcrumbs]="[{ label: 'Workspace' }, { label: 'Reports' }]"
 />
 
 @if (loading()) {
-  <div class="space-y-3">
-    @for (i of [1, 2]; track i) {
-      <div class="h-14 animate-pulse rounded-xl border border-border bg-card"></div>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      <div class="h-20 animate-pulse rounded-xl border border-border bg-card"></div>
     }
   </div>
 } @else if (total() === 0) {
@@ -19,62 +19,169 @@
     <p class="mt-3 text-sm">No reports are available yet.</p>
   </div>
 } @else {
-  <div class="space-y-3">
-    @for (group of groups(); track group.name) {
-      <div class="overflow-hidden rounded-xl border border-border bg-card">
-        <!-- Accordion header -->
+  <!-- Search + group filter -->
+  <div class="mb-5 flex flex-wrap items-center gap-2">
+    <div class="relative min-w-56 flex-1">
+      <ng-icon
+        name="lucideSearch"
+        size="15"
+        class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+      />
+      <input
+        #searchBox
+        type="search"
+        placeholder="Search reports…"
+        aria-label="Search reports"
+        class="h-9 w-full rounded-md border border-border bg-background pl-8 pr-9 text-sm
+               outline-none focus:border-primary"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+      @if (!search()) {
+        <kbd
+          class="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border
+                 border-border px-1.5 text-[11px] text-muted-foreground sm:block"
+        >
+          /
+        </kbd>
+      }
+    </div>
+
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        class="rounded-full border px-3 py-1 text-xs font-medium transition"
+        [class]="
+          !group()
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-border text-muted-foreground hover:bg-accent'
+        "
+        (click)="group.set(null)"
+      >
+        All {{ total() }}
+      </button>
+      @for (g of groups(); track g.name) {
         <button
           type="button"
-          (click)="toggle(group.name)"
-          class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-muted/40"
+          class="rounded-full border px-3 py-1 text-xs font-medium transition"
+          [class]="
+            group() === g.name
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border text-muted-foreground hover:bg-accent'
+          "
+          (click)="group.set(g.name)"
         >
-          <span class="flex items-center gap-2 text-sm font-semibold text-foreground">
-            {{ group.name }}
-            <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {{ group.reports.length }}
-            </span>
-          </span>
-          <ng-icon
-            name="lucideChevronDown"
-            size="18"
-            class="text-muted-foreground transition"
-            [style.transform]="isOpen(group.name) ? 'rotate(180deg)' : 'none'"
-          />
+          {{ g.name }} {{ g.count }}
         </button>
+      }
+      @if (filtered()) {
+        <button
+          type="button"
+          class="ml-1 flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground
+                 hover:bg-accent hover:text-foreground"
+          (click)="clear()"
+        >
+          <ng-icon name="lucideX" size="13" /> Clear
+        </button>
+      }
+    </div>
+  </div>
 
-        <!-- Accordion body -->
-        @if (isOpen(group.name)) {
-          <ul class="divide-y divide-border border-t border-border">
-            @for (report of group.reports; track report.name) {
-              <li>
-                <a
-                  [routerLink]="['/workspace/reports', report.name]"
-                  class="flex items-center gap-3 px-4 py-3 transition hover:bg-muted/40"
-                >
-                  <span
-                    class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"
-                  >
-                    <ng-icon name="lucideFileText" size="16" />
-                  </span>
-                  <span class="min-w-0 flex-1 text-sm font-medium text-foreground">
-                    {{ report.title }}
-                  </span>
-                  <span class="flex gap-1.5">
-                    @for (out of report.outputs; track out) {
-                      <span
-                        class="rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium
-                               uppercase tracking-wide text-muted-foreground"
-                      >
-                        {{ out }}
-                      </span>
-                    }
-                  </span>
-                </a>
-              </li>
-            }
-          </ul>
+  @if (showing() === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border
+             py-14 text-center text-muted-foreground"
+    >
+      <ng-icon name="lucideSearch" size="28" />
+      <p class="mt-3 text-sm">Nothing matches “{{ search() }}”.</p>
+      <button uiBtn variant="outline" class="mt-3" (click)="clear()">Clear filters</button>
+    </div>
+  }
+
+  <!-- The reports you can run from here -->
+  @for (section of sections(); track section.name) {
+    <section class="mb-6">
+      <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {{ section.name }}
+      </h2>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        @for (report of section.reports; track report.name) {
+          <div
+            class="group flex flex-col rounded-xl border border-border bg-card p-3.5 transition
+                   hover:border-primary/40 hover:shadow-sm"
+          >
+            <div class="flex items-start gap-3">
+              <span
+                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"
+              >
+                <ng-icon [name]="report.outputs.includes('table') ? 'lucideTable' : 'lucideFileText'" size="16" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-foreground">{{ report.title }}</p>
+                <p class="mt-0.5 flex gap-1">
+                  @for (out of report.outputs; track out) {
+                    <span
+                      class="rounded border border-border px-1 text-[10px] font-medium uppercase
+                             tracking-wide text-muted-foreground"
+                    >
+                      {{ out }}
+                    </span>
+                  }
+                </p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+              <button uiBtn variant="outline" class="flex-1" (click)="viewing.set(report)">
+                Preview
+              </button>
+              <a
+                [routerLink]="['/workspace/reports', report.name]"
+                uiBtn
+                variant="ghost"
+                title="Open the full view — tables, Excel and scheduling"
+                aria-label="Open full view"
+              >
+                <ng-icon name="lucideMaximize2" size="15" />
+              </a>
+            </div>
+          </div>
         }
       </div>
-    }
-  </div>
+    </section>
+  }
+
+  <!-- The ones that draw a single record, and so are opened from it -->
+  @if (documents().length) {
+    <section class="mb-6">
+      <h2 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Documents
+      </h2>
+      <p class="mb-2 text-xs text-muted-foreground">
+        Each of these draws one record, so it opens from that record — the PDF action on a purchase
+        order, an invoice, a receipt.
+      </p>
+      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        @for (report of documents(); track report.name) {
+          <div class="flex items-center gap-2.5 rounded-lg border border-dashed border-border px-3 py-2">
+            <ng-icon name="lucideFileText" size="15" class="shrink-0 text-muted-foreground" />
+            <span class="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {{ report.title }}
+            </span>
+            <span class="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+              {{ report.group }}
+            </span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+}
+
+@if (viewing(); as report) {
+  <app-report-drawer
+    [report]="report.name"
+    [open]="true"
+    [heading]="report.title"
+    (close)="viewing.set(null)"
+  />
 }

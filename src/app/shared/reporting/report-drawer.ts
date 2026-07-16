@@ -36,9 +36,14 @@ import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 
 /**
- * A record's document, shown before it goes anywhere: a panel over the page
- * holding the rendered PDF, with the things one actually does with a trade
- * document — read it, file it, send it.
+ * Anything the reporting engine draws, shown before it goes anywhere: a panel
+ * over the page holding the rendered PDF, with the things one actually does
+ * with it — read it, file it, send it.
+ *
+ * Takes a record's `id` for a document (a purchase order, an invoice) and
+ * nothing for a report that stands on its own (a trial balance). The two differ
+ * only in whether a record is named, so they share one panel rather than one
+ * each.
  *
  * The pages are drawn by pdf.js into our own chrome rather than handed to the
  * browser's PDF plugin: the plugin cannot be themed, titles the document with
@@ -47,7 +52,7 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
  * only of the toolbar around it.
  */
 @Component({
-  selector: 'app-document-viewer',
+  selector: 'app-report-drawer',
   standalone: true,
   imports: [FormsModule, NgIcon, UiButton],
   providers: [
@@ -228,7 +233,7 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
     }
   `,
 })
-export class DocumentViewer {
+export class ReportDrawer {
   private readonly reports = inject(ReportService);
   private readonly layout = inject(LayoutService);
 
@@ -241,9 +246,9 @@ export class DocumentViewer {
     this.layout.isMobile() ? 0 : this.layout.collapsed() ? SIDEBAR_RAIL : SIDEBAR_WIDTH,
   );
 
-  /** The report that draws this document, e.g. `sales-invoice`. */
+  /** The report to draw, e.g. `sales-invoice` or `trial-balance`. */
   readonly report = input.required<string>();
-  /** The record to draw. */
+  /** The record to draw. Absent for a report that needs no record. */
   readonly id = input<string | null | undefined>(null);
   readonly open = input(false);
   /** Heading for the panel; defaults to the report's name, prettified. */
@@ -280,13 +285,15 @@ export class DocumentViewer {
   private fileName = '';
 
   constructor() {
-    // Render on opening, and again whenever the letterhead is switched.
+    // Render on opening, and again whenever the letterhead is switched. Note
+    // `id` is read so a document re-renders once its record arrives, but is not
+    // required: a report that stands on its own has none.
     effect(() => {
       const open = this.open();
       const format = this.format();
-      const id = this.id();
-      if (open && id) queueMicrotask(() => this.load(format));
-      else if (!open) queueMicrotask(() => this.release());
+      this.id();
+      if (open) queueMicrotask(() => this.load(format));
+      else queueMicrotask(() => this.release());
     });
     // Zoom redraws the pages already in hand — no need to ask the server again.
     effect(() => {
@@ -302,11 +309,9 @@ export class DocumentViewer {
   }
 
   load(format: ReportFormat = this.format()): void {
-    const id = this.id();
-    if (!id) return;
     this.loading.set(true);
     this.error.set(null);
-    this.reports.renderDocument(this.report(), id, format).subscribe({
+    this.reports.renderPdf(this.report(), this.id() ?? null, format).subscribe({
       next: async (res) => {
         if (!res.body) {
           this.loading.set(false);
