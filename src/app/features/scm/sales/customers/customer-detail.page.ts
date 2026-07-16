@@ -7,6 +7,7 @@ import { DateTime } from 'luxon';
 import { UiButton } from '../../../../shared/ui/button';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
+import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
@@ -20,7 +21,7 @@ import {
 /** One customer: master details plus an on-demand account statement. */
 @Component({
   selector: 'app-customer-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, PageHeader],
+  imports: [FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-detail.page.html',
 })
@@ -38,8 +39,17 @@ export class CustomerDetailPage {
 
   readonly statement = signal<StatementView | null>(null);
   readonly statementLoading = signal(false);
-  from: DateTime | undefined = DateTime.now().startOf('month');
-  to: DateTime | undefined = DateTime.now();
+  // Signals, not plain fields: the statement's PDF is parameterised by these,
+  // and a bound object rebuilt on every check would re-render the drawer on
+  // every check.
+  readonly from = signal<DateTime | undefined>(DateTime.now().startOf('month'));
+  readonly to = signal<DateTime | undefined>(DateTime.now());
+
+  /** The period the statement PDF draws — the one on screen. */
+  readonly statementParams = computed(() => ({
+    from: this.from()?.toFormat('yyyy-LL-dd') ?? '',
+    to: this.to()?.toFormat('yyyy-LL-dd') ?? '',
+  }));
 
   private id = '';
 
@@ -74,9 +84,11 @@ export class CustomerDetailPage {
   }
 
   runStatement(): void {
-    if (!this.from || !this.to) return;
+    const from = this.from();
+    const to = this.to();
+    if (!from || !to) return;
     this.statementLoading.set(true);
-    this.proxy.statement_json(this.id, asDateString(this.from), asDateString(this.to)).subscribe({
+    this.proxy.statement_json(this.id, asDateString(from), asDateString(to)).subscribe({
       next: (s) => {
         this.statement.set(s);
         this.statementLoading.set(false);

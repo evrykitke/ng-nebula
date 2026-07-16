@@ -162,12 +162,19 @@ export class ReportService {
     name: string,
     id: string | null = null,
     format: ReportFormat | null = null,
+    extra: Record<string, string> = {},
   ): Observable<HttpResponse<Blob>> {
     const params = new URLSearchParams({ output: 'pdf' });
     // A document names its record; a report that stands on its own has none to
     // name, and sending an empty `id` would fail its parameter check.
     if (id) params.set('id', id);
     if (format) params.set('format', format);
+    // Whatever else the report asks for — a statement's period, a register's
+    // dates. Blank values are dropped rather than sent as empty, which the
+    // server would read as "set, but to nothing".
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) params.set(key, value);
+    }
     return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
       responseType: 'blob',
       observe: 'response',

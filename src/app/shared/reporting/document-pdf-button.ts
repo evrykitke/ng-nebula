@@ -35,6 +35,7 @@ import { UiButton } from '../ui/button';
       [open]="viewing()"
       [heading]="heading()"
       [number]="number()"
+      [params]="params()"
       (close)="viewing.set(false)"
     />
   `,
@@ -49,6 +50,8 @@ export class DocumentPdfButton {
   readonly heading = input<string>('');
   /** The document's own number, shown under the heading. */
   readonly number = input<string>('');
+  /** Anything else the report asks for, e.g. a statement's `from`/`to`. */
+  readonly params = input<Record<string, string>>({});
 
   readonly viewing = signal(false);
 }

@@ -94,6 +94,14 @@
       <button uiBtn variant="outline" size="sm" [disabled]="statementLoading()" (click)="runStatement()">
         {{ statementLoading() ? 'Loading…' : 'Run' }}
       </button>
+      <!-- Beside the dates it prints, not up in the header away from them. -->
+      <app-document-pdf
+        report="customer-statement"
+        label="Statement PDF"
+        [id]="customer()?.id"
+        [params]="statementParams()"
+        [heading]="'Statement — ' + (customer()?.name ?? '')"
+      />
     </div>
 
     @if (statement(); as s) {

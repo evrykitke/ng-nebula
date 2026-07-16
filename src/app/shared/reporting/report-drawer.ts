@@ -255,6 +255,12 @@ export class ReportDrawer {
   readonly heading = input<string>('');
   /** The document's own number, shown under the heading. */
   readonly number = input<string>('');
+  /**
+   * Anything else the report asks for — a statement's `from`/`to`. Kept open
+   * rather than typed per report: the engine takes whatever parameters a
+   * report declares, and the drawer does not need to know which.
+   */
+  readonly params = input<Record<string, string>>({});
 
   readonly close = output<void>();
 
@@ -292,6 +298,7 @@ export class ReportDrawer {
       const open = this.open();
       const format = this.format();
       this.id();
+      this.params();
       if (open) queueMicrotask(() => this.load(format));
       else queueMicrotask(() => this.release());
     });
@@ -311,7 +318,7 @@ export class ReportDrawer {
   load(format: ReportFormat = this.format()): void {
     this.loading.set(true);
     this.error.set(null);
-    this.reports.renderPdf(this.report(), this.id() ?? null, format).subscribe({
+    this.reports.renderPdf(this.report(), this.id() ?? null, format, this.params()).subscribe({
       next: async (res) => {
         if (!res.body) {
           this.loading.set(false);

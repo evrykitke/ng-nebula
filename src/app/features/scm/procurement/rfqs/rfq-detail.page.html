@@ -7,6 +7,7 @@
     { label: rfq()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="request-for-quotation" [id]="rfq()?.id" />
   @if (canCreate() && rfq()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
       <ng-icon name="lucidePencil" size="16" /> Edit
