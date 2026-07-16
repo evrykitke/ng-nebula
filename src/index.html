@@ -10,7 +10,13 @@
     // Prevent FOUC - apply persisted theme + light/dark before first paint.
     (function () {
       var root = document.documentElement;
-      var theme = localStorage.getItem('app-theme') || 'professional';
+      // Keep in step with APP_THEMES/DEFAULT_THEME in theme.model.ts. A stored
+      // theme that is no longer enabled must not be honoured here: its palette
+      // is commented out of themes.css, so the page would paint with no colours
+      // at all until Angular booted and corrected it.
+      var enabled = ['winformz'];
+      var saved = localStorage.getItem('app-theme');
+      var theme = enabled.indexOf(saved) >= 0 ? saved : 'winformz';
       var mode = localStorage.getItem('app-mode') || 'system';
       var dark = mode === 'dark' ||
         (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);

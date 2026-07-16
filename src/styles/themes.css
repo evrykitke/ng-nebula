@@ -19,8 +19,8 @@
   /* =========================================================
      CORPORATE — Classic Enterprise
      ========================================================= */
-  :root,
-  [data-theme='corporate'] {
+  /*
+[data-theme='corporate'] {
     --radius: 0.375rem;
     --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
 
@@ -55,8 +55,10 @@
     --sidebar-border: rgba(255, 255, 255, 0.08);
     --sidebar-ring: #2563eb;
   }
+*/
 
-  .dark[data-theme='corporate'] {
+  /*
+.dark[data-theme='corporate'] {
     --background: #0b1120;
     --foreground: #e2e8f0;
     --card: #111a2e;
@@ -88,11 +90,13 @@
     --sidebar-border: rgba(255, 255, 255, 0.06);
     --sidebar-ring: #3b82f6;
   }
+*/
 
   /* =========================================================
      PROFESSIONAL — Modern Minimalist
      ========================================================= */
-  [data-theme='professional'] {
+  /*
+[data-theme='professional'] {
     --radius: 0.625rem;
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
@@ -127,8 +131,10 @@
     --sidebar-border: #e7e5e4;
     --sidebar-ring: #0d9488;
   }
+*/
 
-  .dark[data-theme='professional'] {
+  /*
+.dark[data-theme='professional'] {
     --background: #0c0a09;
     --foreground: #e7e5e4;
     --card: #1c1917;
@@ -160,11 +166,13 @@
     --sidebar-border: rgba(255, 255, 255, 0.06);
     --sidebar-ring: #2dd4bf;
   }
+*/
 
   /* =========================================================
      RUSTY — Warm Industrial
      ========================================================= */
-  [data-theme='rusty'] {
+  /*
+[data-theme='rusty'] {
     --radius: 1rem;
     --font-sans: 'Trebuchet MS', ui-rounded, 'Segoe UI', system-ui, sans-serif;
 
@@ -199,8 +207,10 @@
     --sidebar-border: rgba(255, 255, 255, 0.08);
     --sidebar-ring: #ea580c;
   }
+*/
 
-  .dark[data-theme='rusty'] {
+  /*
+.dark[data-theme='rusty'] {
     --background: #1c1917;
     --foreground: #f5f5f4;
     --card: #262321;
@@ -232,6 +242,7 @@
     --sidebar-border: rgba(255, 255, 255, 0.06);
     --sidebar-ring: #fb923c;
   }
+*/
 
   /* =========================================================
      TECHY — SaaS Startup
@@ -239,7 +250,8 @@
      electric blurple, cool zinc neutrals, soft 10px corners,
      near-black dark mode with a glowing accent.
      ========================================================= */
-  [data-theme='techy'] {
+  /*
+[data-theme='techy'] {
     --radius: 0.625rem;
     --font-sans: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
 
@@ -274,8 +286,10 @@
     --sidebar-border: rgba(255, 255, 255, 0.07);
     --sidebar-ring: #7b74ff;
   }
+*/
 
-  .dark[data-theme='techy'] {
+  /*
+.dark[data-theme='techy'] {
     --background: #0e0e11;
     --foreground: #ececee;
     --card: #16161a;
@@ -307,6 +321,7 @@
     --sidebar-border: rgba(255, 255, 255, 0.06);
     --sidebar-ring: #7b74ff;
   }
+*/
 
   /* =========================================================
      WINFORMZ — Classic Windows Desktop, done professionally
@@ -314,6 +329,7 @@
      silver neutrals, Windows accent blue. The desktop feel
      comes from density and precision, not retro bevels.
      ========================================================= */
+  :root,
   [data-theme='winformz'] {
     --radius: 0.125rem;
     --font-sans: 'Segoe UI', 'Segoe UI Variable Text', Tahoma, Arial, sans-serif;
@@ -409,6 +425,7 @@
 /* Techy: SaaS product polish — primary buttons get a subtle top-light gradient
    and a soft accent glow (stronger in dark mode). Kept outside @layer base so
    it overrides component utility classes. */
+/*
 [data-theme='techy'] button[uibtn],
 [data-theme='techy'] a[uibtn] {
   background-image: linear-gradient(
@@ -426,3 +443,4 @@
 .dark[data-theme='techy'] a[uibtn] {
   box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 28%, transparent);
 }
+*/

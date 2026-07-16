@@ -326,7 +326,9 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'Workspace',
-    icon: 'lucideLayoutGrid',
+    // A house, not the launcher's grid: the two sit one above the other in the
+    // sidebar, and the same glyph twice tells you nothing about either.
+    icon: 'lucideHouse',
     exact: false,
     app: true,
     home: true,
