@@ -57,7 +57,7 @@ const TONES: Record<AppTone, string> = {
 
     @if (available().length === 0) {
       <div
-        class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border
+        class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border
                py-16 text-center text-muted-foreground"
       >
         <ng-icon name="lucideLayoutGrid" size="40" />
@@ -68,14 +68,14 @@ const TONES: Record<AppTone, string> = {
         @for (app of available(); track app.label) {
           <button
             type="button"
-            class="group flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-6
+            class="group flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6
                    text-left transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
             [class.border-primary]="app.label === active()"
             (click)="open(app)"
           >
             <span class="flex w-full items-start justify-between gap-3">
               <span
-                class="flex size-14 shrink-0 items-center justify-center rounded-xl transition group-hover:scale-105"
+                class="flex size-14 shrink-0 items-center justify-center rounded-md transition group-hover:scale-105"
                 [class]="toneClass(app)"
               >
                 <ng-icon [name]="app.icon ?? 'lucideLayoutGrid'" size="28" />

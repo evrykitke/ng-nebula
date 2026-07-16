@@ -350,7 +350,7 @@
     --accent-foreground: #0b3d6b;
     --destructive: #c42b1c;
     --destructive-foreground: #ffffff;
-    --border: #d5dae0;
+    --border: #c3cad3;
     --input: #aab2bd;
     --ring: #0067c0;
     --success: #107c10;
@@ -383,7 +383,7 @@
     --accent-foreground: #d9e7f7;
     --destructive: #f85149;
     --destructive-foreground: #ffffff;
-    --border: #3d4147;
+    --border: #454a51;
     --input: #565c64;
     --ring: #479ef5;
     --success: #3fb950;
@@ -414,11 +414,23 @@
   select:focus-visible {
     border-bottom-color: var(--primary);
   }
-  button[uibtn] {
+  /* Anchors too, not just buttons: two dozen actions in the app are links
+     wearing uiBtn ("New order", "New invoice"), and they sat beside real
+     buttons without the border or the press. */
+  button[uibtn],
+  a[uibtn] {
     border: 1px solid color-mix(in srgb, var(--primary) 80%, #000 20%);
   }
-  button[uibtn]:active {
+  button[uibtn]:active,
+  a[uibtn]:active {
     filter: brightness(0.92);
+  }
+
+  /* Banded rows, as a DataGridView had. `:not(:hover)` so the row's own hover
+     still wins — this rule sits outside @layer base and would otherwise
+     outrank the utility class it is painted with. */
+  tbody tr:nth-child(even):not(:hover) {
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
   }
 }
 

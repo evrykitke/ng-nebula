@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-const badgeVariants = cva(
+/**
+ * Exported so anything drawing a status pill without this component — the
+ * datatable renders thousands of cells and wants a class, not a component
+ * instance — still draws *this* pill. One definition of what a badge looks
+ * like, or the lists and the detail pages drift apart.
+ */
+export const badgeVariants = cva(
   'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium',
   {
     variants: {

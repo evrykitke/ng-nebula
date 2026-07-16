@@ -7,12 +7,12 @@
 @if (loading()) {
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
     @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-      <div class="h-20 animate-pulse rounded-xl border border-border bg-card"></div>
+      <div class="h-20 animate-pulse rounded-lg border border-border bg-card"></div>
     }
   </div>
 } @else if (total() === 0) {
   <div
-    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border
+    class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border
            py-16 text-center text-muted-foreground"
   >
     <ng-icon name="lucideFileChartColumn" size="40" />
@@ -89,7 +89,7 @@
 
   @if (showing() === 0) {
     <div
-      class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border
+      class="flex flex-col items-center justify-center rounded-lg border border-dashed border-border
              py-14 text-center text-muted-foreground"
     >
       <ng-icon name="lucideSearch" size="28" />
@@ -107,7 +107,7 @@
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @for (report of section.reports; track report.name) {
           <div
-            class="group flex flex-col rounded-xl border border-border bg-card p-3.5 transition
+            class="group flex flex-col rounded-lg border border-border bg-card p-3.5 transition
                    hover:border-primary/40 hover:shadow-sm"
           >
             <div class="flex items-start gap-3">

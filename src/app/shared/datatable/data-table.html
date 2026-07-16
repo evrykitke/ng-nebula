@@ -188,12 +188,12 @@
                 >
                   @switch (c.type) {
                     @case ('badge') {
-                      <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium" [class]="toneClass(row, c)">
+                      <span [class]="toneClass(row, c)">
                         {{ cellText(row, c) }}
                       </span>
                     }
                     @case ('boolean') {
-                      <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium" [class]="toneClass(row, c)">
+                      <span [class]="toneClass(row, c)">
                         {{ cellText(row, c) }}
                       </span>
                     }

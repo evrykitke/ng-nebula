@@ -25,6 +25,7 @@ import { DateTime } from 'luxon';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { apiErrorInfo } from '../api/api-error';
+import { badgeVariants } from '../ui/badge';
 import { saveBlob, slugify } from '../reporting/download';
 import { ExportColumn, ListExport, ReportService } from '../reporting/report.service';
 import { ReportFilterModal } from './report-filter-modal';
@@ -548,10 +549,20 @@ function prettify(id: string): string {
   return words ? words[0].toUpperCase() + words.slice(1) : 'Export';
 }
 
+/**
+ * The tones a cell badge can take, drawn by the shared badge.
+ *
+ * These were Tailwind's own greens and reds, pinned shade by shade with a dark
+ * variant each. That made the busiest surface in the app the one thing that
+ * ignored the active theme: it kept a modern pill — fully round, pastel — in a
+ * theme whose radius is 2px, and left `--success`/`--destructive`/`--warning`
+ * defined but unused. A badge now looks the same in a list as on a detail page,
+ * and follows whatever theme is on.
+ */
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  success: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-  danger: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  muted: 'bg-muted text-muted-foreground',
+  success: badgeVariants({ variant: 'success' }),
+  danger: badgeVariants({ variant: 'danger' }),
+  warning: badgeVariants({ variant: 'warning' }),
+  info: badgeVariants({ variant: 'info' }),
+  muted: badgeVariants({ variant: 'default' }),
 };
