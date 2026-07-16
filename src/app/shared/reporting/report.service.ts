@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -143,6 +143,20 @@ export class ReportService {
     if (format) params.set('format', format);
     return this.http.post(`${this.base}/reports/list-export?${params.toString()}`, list, {
       responseType: 'blob',
+    });
+  }
+
+  /**
+   * Render one record's document — the purchase order, invoice or delivery
+   * note behind a detail page. The server owns the layout and names the file
+   * after the document's own number, so the response is taken whole rather
+   * than picked apart here.
+   */
+  renderDocument(name: string, id: string): Observable<HttpResponse<Blob>> {
+    const params = new URLSearchParams({ output: 'pdf', id });
+    return this.http.get(`${this.base}/reports/${encodeURIComponent(name)}?${params.toString()}`, {
+      responseType: 'blob',
+      observe: 'response',
     });
   }
 
