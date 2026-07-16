@@ -24,7 +24,25 @@ export interface NavItem {
    * child survives filtering.
    */
   permission?: string | string[];
+  /**
+   * This section is an app — a business module with a life of its own.
+   *
+   * Classic navigation lists every app at once. App navigation shows one at a
+   * time, so the sidebar carries the pages of the work in hand rather than
+   * every page in the product. What is an app is a judgement, not a shape:
+   * Workspace has children too, and is never one of them — it is home.
+   */
+  app?: boolean;
+  /**
+   * An app's colour in the launcher. Apps are told apart at a glance by colour
+   * before the label is read, so each owns one — but only in the launcher: a
+   * sidebar full of colours is a sidebar you have to read anyway.
+   */
+  tone?: AppTone;
 }
+
+/** The launcher's palette. One per app, and each app keeps its own. */
+export type AppTone = 'indigo' | 'amber' | 'violet' | 'emerald' | 'sky' | 'rose';
 
 /**
  * Primary application navigation. Items are filtered by permission at render.
@@ -36,7 +54,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Accounting',
     icon: 'lucideCalculator',
     exact: false,
+    app: true,
+    tone: 'indigo',
     children: [
+      { label: 'Dashboard', icon: 'lucideChartColumn', route: '/accounting/dashboard' },
       {
         label: 'Chart of Accounts',
         icon: 'lucideListTree',
@@ -91,7 +112,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Inventory',
     icon: 'lucideBoxes',
     exact: false,
+    app: true,
+    tone: 'amber',
     children: [
+      { label: 'Dashboard', icon: 'lucideChartColumn', route: '/inventory/dashboard' },
       {
         label: 'Items',
         icon: 'lucidePackage',
@@ -140,7 +164,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Procurement',
     icon: 'lucideShoppingCart',
     exact: false,
+    app: true,
+    tone: 'violet',
     children: [
+      { label: 'Dashboard', icon: 'lucideChartColumn', route: '/procurement/dashboard' },
       {
         label: 'Suppliers',
         icon: 'lucideTruck',
@@ -213,7 +240,10 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Sales',
     icon: 'lucideTrendingUp',
     exact: false,
+    app: true,
+    tone: 'emerald',
     children: [
+      { label: 'Dashboard', icon: 'lucideChartColumn', route: '/sales/dashboard' },
       {
         label: 'Customers',
         icon: 'lucideUsers',
@@ -329,6 +359,60 @@ export const ADMIN_NAV_ITEM: NavItem = {
     ),
   ],
 };
+
+/**
+ * The apps launcher, pinned at the top of the sidebar beside Dashboard under
+ * app navigation. Changing app is the most common move in that mode, so it is
+ * a link, not something inside a section you open first.
+ *
+ * Classic navigation lists every app already, so it does not appear there.
+ */
+export const APPS_NAV_ITEM: NavItem = {
+  label: 'Apps',
+  icon: 'lucideLayoutGrid',
+  route: '/workspace/apps',
+};
+
+/** The business modules, in the order the sidebar lists them. */
+export function apps(items: NavItem[] = NAV_ITEMS): NavItem[] {
+  return items.filter((i) => i.app);
+}
+
+/** Every route under an item, however deep. */
+function routes(item: NavItem): string[] {
+  const own = item.route ? [item.route] : [];
+  return [...own, ...(item.children ?? []).flatMap(routes)];
+}
+
+/**
+ * The first path segment an app owns, e.g. `/sales`.
+ *
+ * Read off its pages rather than declared beside them: the segment is already
+ * stated by every route in the section, and a second copy would be one more
+ * thing to keep in step.
+ */
+export function appPrefix(item: NavItem): string | null {
+  const first = routes(item)[0];
+  const segment = first?.split('/').filter(Boolean)[0];
+  return segment ? `/${segment}` : null;
+}
+
+/**
+ * The app a URL belongs to, if any.
+ *
+ * This is what stops app navigation from lying: follow a link from a report to
+ * a purchase order and the sidebar has to arrive in Procurement, whether or not
+ * that is the app you last picked.
+ */
+export function appForUrl(url: string, items: NavItem[] = NAV_ITEMS): NavItem | null {
+  const path = url.split(/[?#]/)[0];
+  return (
+    apps(items).find((a) => {
+      const prefix = appPrefix(a);
+      return !!prefix && (path === prefix || path.startsWith(`${prefix}/`));
+    }) ?? null
+  );
+}
 
 /**
  * Filter a nav tree by permission. A leaf survives when its `permission` is

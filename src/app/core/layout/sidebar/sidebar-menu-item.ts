@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
-  OnInit,
   signal,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
@@ -189,7 +189,7 @@ import { SidebarMenuService } from './sidebar-menu.service';
     }
   `,
 })
-export class SidebarMenuItem implements OnInit {
+export class SidebarMenuItem {
   private readonly router = inject(Router);
   private readonly menu = inject(SidebarMenuService);
 
@@ -237,10 +237,18 @@ export class SidebarMenuItem implements OnInit {
     { originX: 'end', originY: 'bottom', overlayX: 'start', overlayY: 'bottom', offsetX: 6 },
   ];
 
-  ngOnInit(): void {
-    if (this.childActive()) {
-      this.menu.openBranch(this.path());
-    }
+  constructor() {
+    // Open the branch the current route is in, and keep doing so — not once at
+    // construction. The item may exist long before its app is entered (classic
+    // navigation builds them all up front), and under app navigation it is
+    // built the moment an app is picked, which is before that app's first page
+    // has finished loading. Either way a once-only check misses.
+    //
+    // Collapsing by hand survives: this runs when the active trail changes, and
+    // closing a branch does not change where you are.
+    effect(() => {
+      if (this.childActive()) this.menu.openBranch(this.path());
+    });
   }
 
   toggle(): void {

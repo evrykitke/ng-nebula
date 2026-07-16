@@ -3,7 +3,7 @@ import { QuickNav } from './quick-nav';
 import { SidebarMenuItem } from './sidebar-menu-item';
 import { SidebarMenuService } from './sidebar-menu.service';
 import { LayoutService, SIDEBAR_RAIL, SIDEBAR_WIDTH } from '../layout.service';
-import { ADMIN_NAV_ITEM, NAV_ITEMS, filterNav } from '../nav.model';
+import { ADMIN_NAV_ITEM, APPS_NAV_ITEM, NAV_ITEMS, NavItem, filterNav } from '../nav.model';
 import { AuthService } from '../../auth/auth.service';
 
 /**
@@ -75,9 +75,32 @@ export class Sidebar {
   private readonly auth = inject(AuthService);
 
   /** Nav filtered to the items the current user is permitted to see. */
-  readonly navItems = computed(() =>
+  private readonly permitted = computed(() =>
     filterNav(NAV_ITEMS, (names) => this.auth.hasAnyPermission(names)),
   );
+
+  /**
+   * What the sidebar shows.
+   *
+   * Classic is every app at once. App navigation is home — Dashboard and
+   * Workspace, which is where you always are — plus the one app in hand.
+   *
+   * The launcher sits at the top beside Dashboard, not inside Workspace:
+   * changing app is the most common thing this sidebar does, and it should not
+   * be a section to open first.
+   */
+  readonly navItems = computed<NavItem[]>(() => {
+    const items = this.permitted();
+    if (this.layout.navMode() === 'classic') return items;
+
+    const home = items.filter((i) => !i.app);
+    const dashboard = home.filter((i) => !i.children?.length);
+    const rest = home.filter((i) => i.children?.length);
+    // The app opens itself: the menu item expands the branch its active route
+    // is in, and in app mode you are always in the app being shown.
+    const active = items.find((i) => i.app && i.label === this.layout.activeApp());
+    return [...dashboard, APPS_NAV_ITEM, ...(active ? [active] : []), ...rest];
+  });
 
   /** The pinned Administration link, or null when the user holds no admin permission. */
   readonly adminItem = computed(

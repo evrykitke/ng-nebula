@@ -6,7 +6,8 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { NgIcon } from '@ng-icons/core';
 import { UiTooltip } from '../../../shared/ui/tooltip';
 import { Avatar } from '../../../shared/ui/avatar';
-import { LayoutService } from '../layout.service';
+import { LayoutService, NavMode } from '../layout.service';
+import { appForUrl } from '../nav.model';
 import { ThemeService } from '../../theme/theme.service';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeModal } from '../../theme/theme-modal';
@@ -79,6 +80,26 @@ import { ThemeModal } from '../../theme/theme-modal';
           <button cdkMenuItem routerLink="/profile" class="menu-item">
             <ng-icon name="lucideUser" size="16" /> Profile
           </button>
+
+          <!-- How the sidebar presents the product. Here rather than in
+               settings because it is a preference you try, dislike and undo. -->
+          <div class="my-1 h-px bg-border"></div>
+          <p class="px-2 pb-1 pt-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Navigation
+          </p>
+          <button cdkMenuItem class="menu-item" (cdkMenuItemTriggered)="setNav('classic')">
+            <ng-icon name="lucideList" size="16" /> Classic
+            @if (layout.navMode() === 'classic') {
+              <ng-icon name="lucideCheck" size="14" class="ml-auto text-primary" />
+            }
+          </button>
+          <button cdkMenuItem class="menu-item" (cdkMenuItemTriggered)="setNav('app')">
+            <ng-icon name="lucideLayoutGrid" size="16" /> Apps
+            @if (layout.navMode() === 'app') {
+              <ng-icon name="lucideCheck" size="14" class="ml-auto text-primary" />
+            }
+          </button>
+
           <div class="my-1 h-px bg-border"></div>
           <button cdkMenuItem (cdkMenuItemTriggered)="signOut()" class="menu-item">
             <ng-icon name="lucideLogOut" size="16" /> Sign out
@@ -137,6 +158,18 @@ export class Topbar {
   signOut(): void {
     this.auth.logout();
     this.router.navigateByUrl('/login');
+  }
+
+  /**
+   * Switch how the sidebar presents the product. Turning app navigation on from
+   * a page that belongs to no app leaves the sidebar with only home, so the
+   * launcher is the honest place to land.
+   */
+  setNav(mode: NavMode): void {
+    this.layout.setNavMode(mode);
+    if (mode === 'app' && !appForUrl(this.router.url)) {
+      void this.router.navigateByUrl('/workspace/apps');
+    }
   }
 
   private titleFromUrl(url: string): string {

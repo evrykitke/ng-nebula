@@ -35,6 +35,18 @@ export const routes: Routes = [
           import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        path: 'workspace/apps',
+        loadComponent: () => import('./features/workspace/apps.page').then((m) => m.AppsPage),
+      },
+      // Each app is getting its own landing page. The sidebar links to them
+      // already, so they resolve to a placeholder that names what is coming
+      // rather than 404ing.
+      ...['accounting', 'inventory', 'procurement', 'sales'].map((app) => ({
+        path: `${app}/dashboard`,
+        loadComponent: () =>
+          import('./features/shared/module-dashboard.page').then((m) => m.ModuleDashboardPage),
+      })),
+      {
         path: 'workspace/reports',
         loadComponent: () =>
           import('./features/workspace/reports.page').then((m) => m.ReportsPage),
