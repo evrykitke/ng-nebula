@@ -84,6 +84,15 @@ export const invoiceStatusTones: Record<string, BadgeTone> = {
   cancelled: 'danger',
 };
 
+export const paymentStatusTones: Record<string, BadgeTone> = moveStatusTones;
+
+/** How much of a bill is settled by payments. */
+export const settlementTones: Record<string, BadgeTone> = {
+  unpaid: 'muted',
+  partially_paid: 'warning',
+  paid: 'success',
+};
+
 export const requisitionStatusTones: Record<string, BadgeTone> = {
   draft: 'muted',
   submitted: 'info',
@@ -105,6 +114,38 @@ export const serialStatusTones: Record<string, BadgeTone> = {
   in_stock: 'success',
   issued: 'info',
   scrapped: 'danger',
+};
+
+// --- Sales (order-to-cash) lifecycles ---
+
+export const quotationStatusTones: Record<string, BadgeTone> = {
+  draft: 'muted',
+  sent: 'info',
+  accepted: 'success',
+  declined: 'danger',
+  expired: 'warning',
+  converted: 'success',
+};
+
+export const salesOrderStatusTones: Record<string, BadgeTone> = {
+  draft: 'muted',
+  confirmed: 'info',
+  partially_delivered: 'warning',
+  delivered: 'success',
+  closed: 'muted',
+  cancelled: 'danger',
+};
+
+export const deliveryStatusTones: Record<string, BadgeTone> = moveStatusTones;
+export const salesInvoiceStatusTones: Record<string, BadgeTone> = invoiceStatusTones;
+export const creditNoteStatusTones: Record<string, BadgeTone> = invoiceStatusTones;
+export const salesPaymentStatusTones: Record<string, BadgeTone> = moveStatusTones;
+
+/** A price list's activation lifecycle. */
+export const priceListStatusTones: Record<string, BadgeTone> = {
+  draft: 'muted',
+  active: 'success',
+  archived: 'muted',
 };
 
 /** Human labels for the underscored statuses ('partially_received' → 'partially received'). */

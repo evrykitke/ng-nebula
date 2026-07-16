@@ -1,0 +1,148 @@
+<app-page-header
+  title="New invoice"
+  subtitle="Bill a customer against a delivered sales order"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Sales invoices', route: '/sales/invoices' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/sales/invoices"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to sales invoices
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Sales order</label>
+        <app-lookup [config]="orderLookup" [value]="orderId" [display]="orderLabel"
+          (valueChange)="onOrderCleared($event)" (selected)="onOrderSelected($event)" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Customer PO no.</label>
+        <input [(ngModel)]="form.customer_po_no" name="customer_po_no" placeholder="From order"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Invoice date</label>
+        <app-datepicker [(date)]="form.invoice_date" placeholder="Invoice date" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Due date</label>
+        <app-datepicker [(date)]="form.due_date" placeholder="Optional" />
+      </div>
+    </div>
+  </div>
+
+  @if (order(); as o) {
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Lines</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-2 py-2 font-medium">Item</th>
+              <th class="px-2 py-2 text-right font-medium">Delivered</th>
+              <th class="px-2 py-2 text-right font-medium">Billed</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 100px">Bill qty</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 120px">Unit price</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 90px">Disc %</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 110px">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lines(); track l.order_line_id) {
+              <tr class="border-b border-border/50 align-top last:border-0">
+                <td class="px-2 py-2">
+                  <span class="font-medium">{{ l.sku }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+                </td>
+                <td class="px-2 py-2 text-right">{{ fmtQty(l.delivered) }}</td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.billed) }}</td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.001" [(ngModel)]="l.qty" [name]="'qty_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border bg-background px-2 text-right text-sm"
+                    [class.border-destructive]="overBilled(l)" [class.border-input]="!overBilled(l)" />
+                </td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.0001" [(ngModel)]="l.unit_price" [name]="'price_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+                </td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.01" [(ngModel)]="l.discount_pct" [name]="'disc_' + l.order_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+                </td>
+                <td class="px-2 py-2 text-right text-muted-foreground">
+                  {{ fmtMoney(num(l.qty) * num(l.unit_price) * (1 - num(l.discount_pct) / 100)) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Adjustments</h2>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Header discount %</label>
+            <input type="number" min="0" step="0.01" [(ngModel)]="form.discount_pct" name="header_discount"
+              (ngModelChange)="recompute()" placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Other charges</label>
+            <input type="number" min="0" step="0.01" [(ngModel)]="form.other_charges" name="other_charges"
+              (ngModelChange)="recompute()" placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium">Memo</label>
+            <input [(ngModel)]="form.memo" name="memo" placeholder="Optional"
+              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+          </div>
+        </div>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <h2 class="mb-3 text-sm font-semibold">Totals</h2>
+        <dl class="space-y-2 text-sm">
+          <div class="flex items-center justify-between border-t border-border pt-2">
+            <dt class="font-medium">Total before tax</dt>
+            <dd class="text-lg font-semibold">{{ fmtMoney(total()) }} {{ o.currency }}</dd>
+          </div>
+        </dl>
+        <p class="mt-2 text-xs text-muted-foreground">Tax is computed on the server from each line's tax code.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      Select a sales order to load its billable lines.
+    </div>
+  }
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/sales/invoices">Cancel</a>
+  </div>
+</form>

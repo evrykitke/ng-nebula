@@ -6,7 +6,7 @@ import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DataTable } from '../../../../shared/datatable/data-table';
 import { TableConfig, TableDataSource, col } from '../../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../../shared/datatable/client-side';
-import { invoiceStatusTones, statusLabel } from '../../shared/scm-format';
+import { fmtMoney, invoiceStatusTones, settlementTones, statusLabel } from '../../shared/scm-format';
 import {
   InvoiceHeader,
   InvoiceStatus,
@@ -48,6 +48,15 @@ export class InvoicesPage {
         .badge<InvoiceHeader>('status', 'Status')
         .value((i) => statusLabel(i.status))
         .badgeColors(invoiceStatusTones as Record<string, 'success' | 'danger' | 'muted'>),
+      col
+        .text<InvoiceHeader>('outstanding', 'Outstanding')
+        .value((i) => fmtMoney(i.outstanding))
+        .align('right')
+        .width('120px'),
+      col
+        .badge<InvoiceHeader>('settlement', 'Settled')
+        .value((i) => statusLabel(i.settlement))
+        .badgeColors(settlementTones as Record<string, 'success' | 'warning' | 'muted'>),
     ],
     defaultSort: 'invoice_date',
     defaultSortDir: 'desc',

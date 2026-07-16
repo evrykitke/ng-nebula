@@ -1,0 +1,141 @@
+<app-page-header
+  title="New credit note"
+  subtitle="Credit a posted invoice — refund and optionally restock returned goods"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Credit notes', route: '/sales/credit-notes' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/sales/credit-notes"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to credit notes
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Invoice</label>
+        <select [(ngModel)]="form.invoice_id" name="invoice_id" (ngModelChange)="onInvoiceChange()"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+          <option value="">Select a posted invoice…</option>
+          @for (i of invoices(); track i.id) {
+            <option [value]="i.id">
+              {{ i.number ?? '(draft)' }} — {{ i.customer_name }} ({{ fmtMoney(i.total) }} {{ i.currency }})
+            </option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Credit date</label>
+        <app-datepicker [(date)]="form.credit_date" placeholder="Credit date" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Reason *</label>
+        <input [(ngModel)]="form.reason" name="reason" placeholder="e.g. Returned goods"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Restock warehouse</label>
+        <app-lookup [config]="warehouseLookup" [value]="form.restock_warehouse_id" [display]="form.restock_warehouse_label"
+          [disabled]="!anyRestock()"
+          (valueChange)="form.restock_warehouse_id = $event ?? ''"
+          (selected)="form.restock_warehouse_label = $event.code + ' — ' + $event.name" />
+      </div>
+    </div>
+  </div>
+
+  @if (lines().length) {
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Lines</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-2 py-2 font-medium">Item</th>
+              <th class="px-2 py-2 text-right font-medium">Invoiced</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 100px">Credit qty</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 120px">Unit price</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 90px">Disc %</th>
+              <th class="px-2 py-2 text-center font-medium" style="width: 80px">Restock</th>
+              <th class="px-2 py-2 font-medium" style="width: 120px">Batch</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 110px">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lines(); track l.invoice_line_id) {
+              <tr class="border-b border-border/50 align-top last:border-0">
+                <td class="px-2 py-2">
+                  <span class="font-medium">{{ l.sku }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.description }}</span>
+                </td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.invoiced) }}</td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.001" [(ngModel)]="l.qty" [name]="'qty_' + l.invoice_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+                </td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.0001" [(ngModel)]="l.unit_price" [name]="'price_' + l.invoice_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+                </td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.01" [(ngModel)]="l.discount_pct" [name]="'disc_' + l.invoice_line_id"
+                    (ngModelChange)="recompute()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+                </td>
+                <td class="px-2 py-2 text-center">
+                  <input type="checkbox" [(ngModel)]="l.restock" [name]="'restock_' + l.invoice_line_id" (ngModelChange)="recompute()" />
+                </td>
+                <td class="px-2 py-2">
+                  <input [(ngModel)]="l.batch_no" [name]="'batch_' + l.invoice_line_id" placeholder="Optional" [disabled]="!l.restock"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" />
+                </td>
+                <td class="px-2 py-2 text-right text-muted-foreground">
+                  {{ fmtMoney(num(l.qty) * num(l.unit_price) * (1 - num(l.discount_pct) / 100)) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="border-t border-border font-semibold">
+              <td class="px-2 py-2 text-xs text-muted-foreground" colspan="7">Total before tax</td>
+              <td class="px-2 py-2 text-right">{{ fmtMoney(total()) }} {{ invoiceCurrency() }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      Select a posted invoice to load its lines.
+    </div>
+  }
+
+  <div class="rounded-lg border border-border bg-card p-4">
+    <label class="mb-1.5 block text-sm font-medium">Memo</label>
+    <input [(ngModel)]="form.memo" name="memo" placeholder="Optional"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/sales/credit-notes">Cancel</a>
+  </div>
+</form>

@@ -1,0 +1,14 @@
+<app-page-header
+  title="Customers"
+  subtitle="The customer master — who quotations, orders and invoices are raised for"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Customers' }]"
+>
+  <a uiBtn actions variant="outline" routerLink="/sales/customer-groups">Groups</a>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newCustomer()">
+      <ng-icon name="lucidePlus" size="16" /> New customer
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

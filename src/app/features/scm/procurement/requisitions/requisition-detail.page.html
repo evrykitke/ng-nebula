@@ -7,36 +7,34 @@
     { label: req()?.number ?? '…' },
   ]"
 >
-  @if (req(); as r) {
-    @if (canCreate() && r.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
-        <ng-icon name="lucidePencil" size="16" /> Edit
-      </button>
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canSubmit() && r.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="submit()">
-        <ng-icon name="lucideSend" size="16" /> Submit
-      </button>
-    }
-    @if (canApprove() && r.status === 'submitted') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openReject()">
-        <ng-icon name="lucideBan" size="16" /> Reject
-      </button>
-      <button uiBtn actions [disabled]="busy()" (click)="approve()">
-        <ng-icon name="lucideCircleCheck" size="16" /> Approve
-      </button>
-    }
-    @if (canConvert() && r.status === 'approved') {
-      <button uiBtn actions [disabled]="busy()" (click)="openConvert()">
-        <ng-icon name="lucideShoppingCart" size="16" /> Convert to PO
-      </button>
-    }
-    @if (canSubmit() && (r.status === 'draft' || r.status === 'submitted' || r.status === 'approved')) {
-      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
-    }
+  @if (canCreate() && req()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canSubmit() && req()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="submit()">
+      <ng-icon name="lucideSend" size="16" /> Submit
+    </button>
+  }
+  @if (canApprove() && req()?.status === 'submitted') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openReject()">
+      <ng-icon name="lucideBan" size="16" /> Reject
+    </button>
+    <button uiBtn actions [disabled]="busy()" (click)="approve()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Approve
+    </button>
+  }
+  @if (canConvert() && req()?.status === 'approved') {
+    <button uiBtn actions [disabled]="busy()" (click)="openConvert()">
+      <ng-icon name="lucideShoppingCart" size="16" /> Convert to PO
+    </button>
+  }
+  @if (canSubmit() && (req()?.status === 'draft' || req()?.status === 'submitted' || req()?.status === 'approved')) {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
   }
 </app-page-header>
 
@@ -110,6 +108,7 @@
           <th class="px-4 py-2 font-medium">Item</th>
           <th class="px-4 py-2 font-medium">Memo</th>
           <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 font-medium">Unit</th>
         </tr>
       </thead>
       <tbody>
@@ -122,6 +121,7 @@
             </td>
             <td class="px-4 py-2 text-muted-foreground">{{ l.memo || '—' }}</td>
             <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-muted-foreground">{{ l.uom_code || '—' }}</td>
           </tr>
         }
       </tbody>

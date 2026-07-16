@@ -7,22 +7,25 @@
     { label: invoice()?.number ?? '…' },
   ]"
 >
-  @if (invoice(); as i) {
-    @if (canCreate() && i.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canPost() && i.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="post()">
-        <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
-      </button>
-    }
-    @if (canCancel() && i.status === 'posted') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openCancel()">
-        <ng-icon name="lucideBan" size="16" /> Cancel
-      </button>
-    }
+  @if (canCreate() && invoice()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && invoice()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+    </button>
+  }
+  @if (canPay() && invoice()?.status === 'posted' && invoice()?.settlement !== 'paid') {
+    <button uiBtn actions (click)="pay()">
+      <ng-icon name="lucideBanknote" size="16" /> Pay
+    </button>
+  }
+  @if (canCancel() && invoice()?.status === 'posted' && invoice()?.settlement === 'unpaid') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openCancel()">
+      <ng-icon name="lucideBan" size="16" /> Cancel
+    </button>
   }
 </app-page-header>
 
@@ -85,6 +88,27 @@
         <p class="text-xs text-muted-foreground">Posted at</p>
         <p class="mt-0.5 font-medium">{{ fmtDateTime(i.posted_at) }}</p>
       </div>
+      @if (i.status === 'posted') {
+        <div>
+          <p class="text-xs text-muted-foreground">Settlement</p>
+          <p class="mt-0.5">
+            <span
+              class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+              [class]="settlementToneClass(i.settlement)"
+            >
+              {{ statusLabel(i.settlement) }}
+            </span>
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground">Paid</p>
+          <p class="mt-0.5 font-medium">{{ fmtMoney(i.paid_amount) }} {{ i.currency }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground">Outstanding</p>
+          <p class="mt-0.5 font-semibold">{{ fmtMoney(i.outstanding) }} {{ i.currency }}</p>
+        </div>
+      }
       @if (i.memo) {
         <div class="col-span-2">
           <p class="text-xs text-muted-foreground">Memo</p>

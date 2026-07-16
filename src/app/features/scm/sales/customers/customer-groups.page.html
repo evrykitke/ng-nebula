@@ -1,0 +1,137 @@
+<app-page-header
+  title="Customer groups"
+  subtitle="Shared pricing and discount defaults applied across a set of customers"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Customers', route: '/sales/customers' },
+    { label: 'Groups' },
+  ]"
+>
+  @if (canManage()) {
+    <button uiBtn actions (click)="openNew()">
+      <ng-icon name="lucidePlus" size="16" /> New group
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/customers"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to customers
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else {
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Name</th>
+          <th class="px-4 py-2 font-medium">Description</th>
+          <th class="px-4 py-2 text-right font-medium">Default discount</th>
+          <th class="px-4 py-2 font-medium">Active</th>
+          @if (canManage()) {
+            <th class="px-4 py-2 text-right font-medium"></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (g of groups(); track g.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 font-medium">{{ g.name }}</td>
+            <td class="px-4 py-2 text-muted-foreground">{{ g.description ?? '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtPct(g.default_discount_pct) }}</td>
+            <td class="px-4 py-2">{{ g.is_active ? 'Yes' : 'No' }}</td>
+            @if (canManage()) {
+              <td class="px-4 py-2 text-right">
+                <button
+                  type="button"
+                  class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  (click)="openEdit(g)"
+                  aria-label="Edit group"
+                >
+                  <ng-icon name="lucidePencil" size="16" />
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                  (click)="remove(g)"
+                  aria-label="Delete group"
+                >
+                  <ng-icon name="lucideTrash2" size="16" />
+                </button>
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="px-4 py-6 text-center text-muted-foreground">No groups yet.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-modal
+  [open]="modal()"
+  size="sm"
+  [title]="editId() ? 'Edit group' : 'New group'"
+  (closed)="modal.set(false)"
+>
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Name *</label>
+      <input
+        [(ngModel)]="form.name"
+        name="group_name"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Description</label>
+      <input
+        [(ngModel)]="form.description"
+        name="group_desc"
+        placeholder="Optional"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Default discount %</label>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        [(ngModel)]="form.default_discount_pct"
+        name="group_disc"
+        placeholder="Optional"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Price list</label>
+      <app-lookup
+        [config]="priceListLookup"
+        [value]="form.price_list_id"
+        [display]="form.price_list_label"
+        (valueChange)="form.price_list_id = $event ?? ''"
+        (selected)="form.price_list_label = $event.name"
+      />
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" [(ngModel)]="form.is_active" name="group_active" /> Active
+    </label>
+    @if (formError()) {
+      <p class="text-sm text-destructive">{{ formError() }}</p>
+    }
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="modal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

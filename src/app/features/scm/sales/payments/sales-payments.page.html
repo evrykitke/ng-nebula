@@ -1,0 +1,13 @@
+<app-page-header
+  title="Customer payments"
+  subtitle="Receipts from customers, allocated across their open invoices"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Customer payments' }]"
+>
+  @if (canCreate()) {
+    <a uiBtn actions routerLink="/sales/payments/new">
+      <ng-icon name="lucidePlus" size="16" /> Record payment
+    </a>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

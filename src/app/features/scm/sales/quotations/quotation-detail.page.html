@@ -1,0 +1,185 @@
+<app-page-header
+  [title]="quotation()?.number ?? 'Quotation'"
+  [subtitle]="quotation()?.customer_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Quotations', route: '/sales/quotations' },
+    { label: quotation()?.number ?? '…' },
+  ]"
+>
+  @if (canCreate() && quotation()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+  }
+  @if (canCreate() && quotation()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canSend() && quotation()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="send()">
+      <ng-icon name="lucideSend" size="16" /> Send
+    </button>
+  }
+  @if (canSend() && quotation()?.status === 'sent') {
+    <button uiBtn actions [disabled]="busy()" (click)="accept()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Accept
+    </button>
+  }
+  @if (canSend() && quotation()?.status === 'sent') {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openDecline()">Decline</button>
+  }
+  @if (canConvert() && quotation()?.status === 'accepted') {
+    <button uiBtn actions [disabled]="busy()" (click)="openConvert()">
+      <ng-icon name="lucideClipboardList" size="16" /> Convert to order
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/quotations"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to quotations
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (quotation(); as q) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(q.status)">{{ statusLabel(q.status) }}</span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Quote date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(q.quote_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Valid until</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(q.valid_until) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ q.currency }}</p>
+      </div>
+      @if (q.reference) {
+        <div>
+          <p class="text-xs text-muted-foreground">Reference</p>
+          <p class="mt-0.5 font-medium">{{ q.reference }}</p>
+        </div>
+      }
+      @if (q.converted_to_id) {
+        <div>
+          <p class="text-xs text-muted-foreground">Converted to</p>
+          <a [routerLink]="['/sales/orders', q.converted_to_id]" class="mt-0.5 block font-medium text-primary">
+            View sales order →
+          </a>
+        </div>
+      }
+      @if (q.decline_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Decline reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ q.decline_reason }}</p>
+        </div>
+      }
+      @if (q.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ q.memo }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Lines -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 text-right font-medium">Price</th>
+          <th class="px-4 py-2 text-right font-medium">Disc %</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of q.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="block text-xs text-muted-foreground">{{ l.description || l.item_name }}</span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.effective_price) }}</td>
+            <td class="px-4 py-2 text-right">{{ l.discount_pct ? l.discount_pct + '%' : '—' }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.net) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-medium">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Subtotal</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(q.subtotal) }}</td>
+        </tr>
+        <tr class="font-semibold">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Total before tax</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(q.total) }} {{ q.currency }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<!-- Convert modal -->
+<app-modal [open]="convertModal()" size="sm" title="Convert to sales order" (closed)="convertModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Fulfil from warehouse</label>
+      <app-lookup
+        [config]="warehouseLookup"
+        [value]="convertWarehouseId"
+        [display]="convertWarehouseLabel"
+        (valueChange)="convertWarehouseId = $event ?? ''"
+        (selected)="convertWarehouseLabel = $event.code + ' — ' + $event.name"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Expected date</label>
+      <app-datepicker [(date)]="convertExpected" placeholder="Optional" />
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="convertModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="busy()" (click)="confirmConvert()">
+        {{ busy() ? 'Working…' : 'Convert' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Decline modal -->
+<app-modal [open]="declineModal()" size="sm" title="Decline quotation" (closed)="declineModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea [(ngModel)]="declineReason" name="declineReason" rows="3" placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="declineModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmDecline()">
+        {{ busy() ? 'Working…' : 'Decline' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

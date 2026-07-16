@@ -1,0 +1,277 @@
+<app-page-header
+  title="Sales reports"
+  subtitle="Receivables, reconciliation, unbilled deliveries, margins and the invoice register"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Reports' }]"
+/>
+
+<div class="mb-4 flex flex-wrap gap-1 border-b border-border">
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'aging'" [class.text-foreground]="tab() === 'aging'"
+    [class.border-transparent]="tab() !== 'aging'" [class.text-muted-foreground]="tab() !== 'aging'"
+    (click)="select('aging')">AR aging</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'recon'" [class.text-foreground]="tab() === 'recon'"
+    [class.border-transparent]="tab() !== 'recon'" [class.text-muted-foreground]="tab() !== 'recon'"
+    (click)="select('recon')">Reconciliation</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'dnb'" [class.text-foreground]="tab() === 'dnb'"
+    [class.border-transparent]="tab() !== 'dnb'" [class.text-muted-foreground]="tab() !== 'dnb'"
+    (click)="select('dnb')">Delivered not billed</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'margins'" [class.text-foreground]="tab() === 'margins'"
+    [class.border-transparent]="tab() !== 'margins'" [class.text-muted-foreground]="tab() !== 'margins'"
+    (click)="select('margins')">Margins</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'register'" [class.text-foreground]="tab() === 'register'"
+    [class.border-transparent]="tab() !== 'register'" [class.text-muted-foreground]="tab() !== 'register'"
+    (click)="select('register')">Register</button>
+</div>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+}
+
+<!-- AR aging -->
+@if (tab() === 'aging') {
+  <div class="mb-4 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="mb-1.5 block text-xs text-muted-foreground">As of</label>
+      <app-datepicker [(date)]="asOf" placeholder="As of" />
+    </div>
+    <button uiBtn variant="outline" size="sm" (click)="loadAging()">Run</button>
+  </div>
+  @if (aging(); as v) {
+    <div class="overflow-x-auto rounded-lg border border-border bg-card">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Customer</th>
+            <th class="px-4 py-2 text-right font-medium">Current</th>
+            <th class="px-4 py-2 text-right font-medium">1–30</th>
+            <th class="px-4 py-2 text-right font-medium">31–60</th>
+            <th class="px-4 py-2 text-right font-medium">61–90</th>
+            <th class="px-4 py-2 text-right font-medium">90+</th>
+            <th class="px-4 py-2 text-right font-medium">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of v.rows; track r.customer_id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2">
+                <span class="font-medium">{{ r.code }}</span>
+                <span class="block text-xs text-muted-foreground">{{ r.name }}</span>
+              </td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.current) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.d1_30) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.d31_60) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.d61_90) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.d90_plus) }}</td>
+              <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.total) }} {{ r.currency }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="px-4 py-6 text-center text-muted-foreground">Nothing outstanding.</td></tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border font-semibold">
+            <td class="px-4 py-2" colspan="6">Total receivable</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.total) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+}
+
+<!-- Reconciliation -->
+@if (tab() === 'recon') {
+  @if (recon(); as v) {
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Open AR (subledger)</p>
+        <p class="mt-1 text-lg font-semibold">{{ fmtMoney(v.ar_open) }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">AR account (ledger)</p>
+        <p class="mt-1 text-lg font-semibold">{{ v.ar_account_balance ? fmtMoney(v.ar_account_balance) : '—' }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Gap</p>
+        <p class="mt-1 text-lg font-semibold" [class.text-destructive]="v.ar_gap && fmtMoney(v.ar_gap) !== '0.00'">
+          {{ v.ar_gap ? fmtMoney(v.ar_gap) : '—' }}
+        </p>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Pending GL postings</p>
+        <p class="mt-1 text-lg font-semibold" [class.text-amber-600]="v.pending_outbox > 0">{{ v.pending_outbox }}</p>
+      </div>
+    </div>
+    <p class="mt-3 text-xs text-muted-foreground">
+      A non-zero gap with pending postings usually clears once the GL outbox drains.
+    </p>
+  }
+}
+
+<!-- Delivered not billed -->
+@if (tab() === 'dnb') {
+  @if (dnb(); as v) {
+    <div class="overflow-x-auto rounded-lg border border-border bg-card">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Order</th>
+            <th class="px-4 py-2 font-medium">Customer</th>
+            <th class="px-4 py-2 font-medium">Item</th>
+            <th class="px-4 py-2 text-right font-medium">Qty</th>
+            <th class="px-4 py-2 text-right font-medium">Unit price</th>
+            <th class="px-4 py-2 text-right font-medium">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of v.rows; track r.order_id + r.item_id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2">
+                <a [routerLink]="['/sales/orders', r.order_id]" class="font-medium text-primary">
+                  {{ r.order_number ?? '(draft)' }}
+                </a>
+              </td>
+              <td class="px-4 py-2">{{ r.customer_name }}</td>
+              <td class="px-4 py-2">
+                <span class="font-medium">{{ r.sku }}</span>
+                <span class="block text-xs text-muted-foreground">{{ r.item_name }}</span>
+              </td>
+              <td class="px-4 py-2 text-right">{{ fmtQty(r.qty) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.unit_price) }}</td>
+              <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.value) }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">Everything delivered has been billed.</td></tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border font-semibold">
+            <td class="px-4 py-2" colspan="5">Total unbilled</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.total) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+}
+
+<!-- Margins -->
+@if (tab() === 'margins') {
+  <div class="mb-4 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="mb-1.5 block text-xs text-muted-foreground">From</label>
+      <app-datepicker [(date)]="periodFrom" placeholder="From" />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-xs text-muted-foreground">To</label>
+      <app-datepicker [(date)]="periodTo" placeholder="To" />
+    </div>
+    <button uiBtn variant="outline" size="sm" (click)="loadMargins()">Run</button>
+  </div>
+  @if (margins(); as v) {
+    <div class="mb-4 grid gap-4 sm:grid-cols-3">
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Revenue</p>
+        <p class="mt-1 text-lg font-semibold">{{ fmtMoney(v.revenue) }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">COGS</p>
+        <p class="mt-1 text-lg font-semibold">{{ fmtMoney(v.cogs) }}</p>
+      </div>
+      <div class="rounded-lg border border-border bg-card p-4">
+        <p class="text-xs text-muted-foreground">Margin</p>
+        <p class="mt-1 text-lg font-semibold">{{ fmtMoney(v.margin) }}</p>
+      </div>
+    </div>
+    <div class="overflow-x-auto rounded-lg border border-border bg-card">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Item</th>
+            <th class="px-4 py-2 text-right font-medium">Revenue</th>
+            <th class="px-4 py-2 text-right font-medium">COGS</th>
+            <th class="px-4 py-2 text-right font-medium">Margin</th>
+            <th class="px-4 py-2 text-right font-medium">Margin %</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of v.rows; track r.item_id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2">
+                <span class="font-medium">{{ r.sku }}</span>
+                <span class="block text-xs text-muted-foreground">{{ r.item_name }}</span>
+              </td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.revenue) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.cogs) }}</td>
+              <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.margin) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtPct(r.margin_pct) }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="px-4 py-6 text-center text-muted-foreground">No sales in this period.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Register -->
+@if (tab() === 'register') {
+  <div class="mb-4 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="mb-1.5 block text-xs text-muted-foreground">From</label>
+      <app-datepicker [(date)]="periodFrom" placeholder="From" />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-xs text-muted-foreground">To</label>
+      <app-datepicker [(date)]="periodTo" placeholder="To" />
+    </div>
+    <button uiBtn variant="outline" size="sm" (click)="loadRegister()">Run</button>
+  </div>
+  @if (register(); as v) {
+    <div class="overflow-x-auto rounded-lg border border-border bg-card">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-4 py-2 font-medium">Invoice</th>
+            <th class="px-4 py-2 font-medium">Date</th>
+            <th class="px-4 py-2 font-medium">Customer</th>
+            <th class="px-4 py-2 text-right font-medium">Net</th>
+            <th class="px-4 py-2 text-right font-medium">Tax</th>
+            <th class="px-4 py-2 text-right font-medium">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of v.rows; track r.invoice_id) {
+            <tr class="border-b border-border/50 last:border-0">
+              <td class="px-4 py-2">
+                <a [routerLink]="['/sales/invoices', r.invoice_id]" class="font-medium text-primary">
+                  {{ r.number ?? '(draft)' }}
+                </a>
+              </td>
+              <td class="px-4 py-2">{{ fmtDate(r.invoice_date) }}</td>
+              <td class="px-4 py-2">{{ r.customer_name }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.net) }}</td>
+              <td class="px-4 py-2 text-right">{{ fmtMoney(r.tax) }}</td>
+              <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.total) }} {{ r.currency }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">No invoices in this period.</td></tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="border-t border-border font-semibold">
+            <td class="px-4 py-2" colspan="3">Totals</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.net) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.tax) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.total) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+}

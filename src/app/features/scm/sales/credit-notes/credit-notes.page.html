@@ -1,0 +1,13 @@
+<app-page-header
+  title="Credit notes"
+  subtitle="Reversals of posted invoices — refunds and returns, optionally restocking"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Credit notes' }]"
+>
+  @if (canCreate()) {
+    <a uiBtn actions routerLink="/sales/credit-notes/new">
+      <ng-icon name="lucidePlus" size="16" /> New credit note
+    </a>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

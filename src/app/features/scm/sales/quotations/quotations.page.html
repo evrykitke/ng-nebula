@@ -1,0 +1,13 @@
+<app-page-header
+  title="Quotations"
+  subtitle="Offers extended to customers, ready to convert into a sales order"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Quotations' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newQuotation()">
+      <ng-icon name="lucidePlus" size="16" /> New quotation
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

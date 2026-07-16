@@ -1,0 +1,13 @@
+<app-page-header
+  title="Deliveries"
+  subtitle="Goods issued to customers, posting stock movements against sales orders"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Deliveries' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newDelivery()">
+      <ng-icon name="lucidePlus" size="16" /> New delivery
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

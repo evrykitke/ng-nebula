@@ -1,0 +1,162 @@
+<app-page-header
+  [title]="delivery()?.number ?? 'Delivery'"
+  [subtitle]="delivery()?.customer_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Deliveries', route: '/sales/deliveries' },
+    { label: delivery()?.number ?? '…' },
+  ]"
+>
+  @if (canCreate() && delivery()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && delivery()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Post
+    </button>
+  }
+  @if (canReverse() && delivery()?.status === 'posted') {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openReverse()">
+      <ng-icon name="lucideUndo2" size="16" /> Reverse
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/deliveries"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to deliveries
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (delivery(); as d) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(d.status)">{{ statusLabel(d.status) }}</span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Delivery date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(d.delivery_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Sales order</p>
+        <a [routerLink]="['/sales/orders', d.order_id]" class="mt-0.5 block font-medium text-primary">
+          {{ d.order_number ?? 'View order' }} →
+        </a>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(d.posted_at) }}</p>
+      </div>
+      @if (d.carrier) {
+        <div>
+          <p class="text-xs text-muted-foreground">Carrier</p>
+          <p class="mt-0.5 font-medium">{{ d.carrier }}</p>
+        </div>
+      }
+      @if (d.driver_name) {
+        <div>
+          <p class="text-xs text-muted-foreground">Driver</p>
+          <p class="mt-0.5 font-medium">{{ d.driver_name }}</p>
+        </div>
+      }
+      @if (d.vehicle_reg) {
+        <div>
+          <p class="text-xs text-muted-foreground">Vehicle</p>
+          <p class="mt-0.5 font-medium">{{ d.vehicle_reg }}</p>
+        </div>
+      }
+      @if (d.tracking_no) {
+        <div>
+          <p class="text-xs text-muted-foreground">Tracking</p>
+          <p class="mt-0.5 font-medium">{{ d.tracking_no }}</p>
+        </div>
+      }
+      @if (d.received_by_name) {
+        <div>
+          <p class="text-xs text-muted-foreground">Received by</p>
+          <p class="mt-0.5 font-medium">{{ d.received_by_name }}</p>
+        </div>
+      }
+      @if (d.shipping_address) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Shipping address</p>
+          <p class="mt-0.5 font-medium">{{ d.shipping_address }}</p>
+        </div>
+      }
+      @if (d.move_id) {
+        <div>
+          <p class="text-xs text-muted-foreground">Stock movement</p>
+          <a [routerLink]="['/inventory/movements', d.move_id]" class="mt-0.5 block font-medium text-primary">View →</a>
+        </div>
+      }
+      @if (d.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ d.memo }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 font-medium">Batch</th>
+          <th class="px-4 py-2 font-medium">Serials</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of d.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-muted-foreground">{{ l.batch_no ?? '—' }}</td>
+            <td class="px-4 py-2 text-muted-foreground">
+              {{ l.serial_nos.length ? l.serial_nos.join(', ') : '—' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Reverse modal -->
+<app-modal [open]="reverseModal()" size="sm" title="Reverse delivery" (closed)="reverseModal.set(false)">
+  <div class="space-y-3">
+    <p class="text-sm text-muted-foreground">
+      Reversing books a compensating stock movement and re-opens the order lines.
+    </p>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea [(ngModel)]="reverseReason" name="reverseReason" rows="3" placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="reverseModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmReverse()">
+        {{ busy() ? 'Working…' : 'Reverse' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -25,6 +25,7 @@ interface QuoteEntry {
   sku: string;
   item_name: string;
   qty: string;
+  uom_code: string;
   unit_price: string;
   min_qty: string;
   lead_time_days: string;
@@ -233,6 +234,7 @@ export class RfqDetailPage {
           sku: l.sku,
           item_name: l.item_name,
           qty: l.qty,
+          uom_code: l.uom_code,
           unit_price: existing ? String(num(existing.unit_price)) : '',
           min_qty: existing?.min_qty ? String(num(existing.min_qty)) : '',
           lead_time_days: existing?.lead_time_days != null ? String(existing.lead_time_days) : '',

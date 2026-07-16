@@ -7,25 +7,23 @@
     { label: move()?.number ?? '…' },
   ]"
 >
-  @if (move(); as m) {
-    @if (canCreate() && m.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
-        <ng-icon name="lucidePencil" size="16" /> Edit
-      </button>
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canPost() && m.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="post()">
-        <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
-      </button>
-    }
-    @if (canReverse() && m.status === 'posted' && !m.reversed_by_id && !systemGenerated()) {
-      <button uiBtn actions [disabled]="busy()" (click)="reverse()">
-        <ng-icon name="lucideUndo2" size="16" /> {{ busy() ? 'Reversing…' : 'Reverse' }}
-      </button>
-    }
+  @if (canCreate() && move()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && move()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+    </button>
+  }
+  @if (canReverse() && move()?.status === 'posted' && !move()?.reversed_by_id && !systemGenerated()) {
+    <button uiBtn actions [disabled]="busy()" (click)="reverse()">
+      <ng-icon name="lucideUndo2" size="16" /> {{ busy() ? 'Reversing…' : 'Reverse' }}
+    </button>
   }
 </app-page-header>
 

@@ -11,6 +11,11 @@ import {
   OrderStatus,
   ProcurementServiceProxy,
   ProcurementSupplier,
+  SalesCustomer,
+  SalesOrderHeader,
+  SalesOrderStatus,
+  SalesPriceList,
+  SalesServiceProxy,
   TaxDirection,
 } from '../../../shared/service-proxies/service-proxies';
 
@@ -135,6 +140,101 @@ export function supplierLookup(
     placeholder: 'Select supplier…',
     searchPlaceholder: 'Search code or name…',
     emptyText: 'No suppliers match.',
+  };
+}
+
+/** Customer picker. Pass a predicate to restrict (e.g. not on hold). */
+export function customerLookup(
+  proxy: SalesServiceProxy,
+  filter?: (c: SalesCustomer) => boolean,
+): LookupConfig<SalesCustomer> {
+  return {
+    dataSource: (q) =>
+      proxy.list_customers().pipe(
+        map((all) => {
+          const s = q.search.trim().toLowerCase();
+          const rows = (all ?? []).filter(
+            (r) =>
+              (!filter || filter(r)) &&
+              (!s || r.code.toLowerCase().includes(s) || r.name.toLowerCase().includes(s)),
+          );
+          return { rows: rows.slice(0, q.size), total: rows.length };
+        }),
+      ),
+    columns: [
+      { label: 'Code', value: (r) => r.code, width: '100px' },
+      { label: 'Name', value: (r) => r.name },
+      { label: 'Currency', value: (r) => r.currency, width: '80px' },
+    ],
+    key: (r) => r.id,
+    display: (r) => `${r.code} — ${r.name}`,
+    pageSize: 10,
+    placeholder: 'Select customer…',
+    searchPlaceholder: 'Search code or name…',
+    emptyText: 'No customers match.',
+  };
+}
+
+/** Active price-list picker (for assigning to customers and groups). */
+export function priceListLookup(proxy: SalesServiceProxy): LookupConfig<SalesPriceList> {
+  return {
+    dataSource: (q) =>
+      proxy.list_lists().pipe(
+        map((all) => {
+          const s = q.search.trim().toLowerCase();
+          const rows = (all ?? []).filter(
+            (l) => l.status === 'active' && (!s || l.name.toLowerCase().includes(s)),
+          );
+          return { rows: rows.slice(0, q.size), total: rows.length };
+        }),
+      ),
+    columns: [
+      { label: 'Name', value: (l) => l.name },
+      { label: 'Currency', value: (l) => l.currency, width: '80px' },
+      { label: 'Scope', value: (l) => l.scope, width: '90px' },
+    ],
+    key: (l) => l.id,
+    display: (l) => l.name,
+    placeholder: 'Select price list…',
+    searchPlaceholder: 'Search name…',
+    emptyText: 'No active price lists.',
+  };
+}
+
+/**
+ * Sales-order picker for the documents that hang off an order (deliveries,
+ * invoices). Restricted by status set.
+ */
+export function salesOrderLookup(
+  proxy: SalesServiceProxy,
+  statuses: SalesOrderStatus[],
+): LookupConfig<SalesOrderHeader> {
+  return {
+    dataSource: (q) =>
+      proxy.list_orders2(null, null, null, null).pipe(
+        map((all) => {
+          const s = q.search.trim().toLowerCase();
+          const rows = (all ?? []).filter(
+            (o) =>
+              statuses.includes(o.status) &&
+              (!s ||
+                (o.number ?? '').toLowerCase().includes(s) ||
+                o.customer_name.toLowerCase().includes(s)),
+          );
+          return { rows: rows.slice(0, q.size), total: rows.length };
+        }),
+      ),
+    columns: [
+      { label: 'Number', value: (o) => o.number ?? '(draft)', width: '130px' },
+      { label: 'Customer', value: (o) => o.customer_name },
+      { label: 'Status', value: (o) => o.status.replaceAll('_', ' '), width: '130px' },
+    ],
+    key: (o) => o.id,
+    display: (o) => `${o.number ?? '(draft)'} — ${o.customer_name}`,
+    pageSize: 10,
+    placeholder: 'Select sales order…',
+    searchPlaceholder: 'Search number or customer…',
+    emptyText: 'No matching orders.',
   };
 }
 

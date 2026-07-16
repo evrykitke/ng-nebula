@@ -1,0 +1,13 @@
+<app-page-header
+  title="Price lists"
+  subtitle="Catalogue prices resolved onto quotations and orders, by scope and priority"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Price lists' }]"
+>
+  @if (canManage()) {
+    <button uiBtn actions (click)="newList()">
+      <ng-icon name="lucidePlus" size="16" /> New price list
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

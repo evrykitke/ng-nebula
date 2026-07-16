@@ -457,6 +457,38 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'procurement/grni',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.procurementReportsView },
+        loadComponent: () =>
+          import('./features/scm/procurement/grni/grni.page').then((m) => m.GrniPage),
+      },
+      {
+        path: 'procurement/payments',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.paymentsView },
+        loadComponent: () =>
+          import('./features/scm/procurement/payments/payments.page').then((m) => m.PaymentsPage),
+      },
+      {
+        path: 'procurement/payments/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.paymentsCreate },
+        loadComponent: () =>
+          import('./features/scm/procurement/payments/payment-new.page').then(
+            (m) => m.PaymentNewPage,
+          ),
+      },
+      {
+        path: 'procurement/payments/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.paymentsView },
+        loadComponent: () =>
+          import('./features/scm/procurement/payments/payment-detail.page').then(
+            (m) => m.PaymentDetailPage,
+          ),
+      },
+      {
         path: 'procurement/reorder',
         canActivate: [permissionGuard],
         data: { permission: Permissions.ordersCreate },
@@ -471,6 +503,241 @@ export const routes: Routes = [
           import('./features/scm/procurement/reports/procurement-reports.page').then(
             (m) => m.ProcurementReportsPage,
           ),
+      },
+      // --- Sales (order-to-cash) ---
+      {
+        path: 'sales/customers',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.customersView },
+        loadComponent: () =>
+          import('./features/scm/sales/customers/customers.page').then((m) => m.CustomersPage),
+      },
+      {
+        path: 'sales/customers/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.customersCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/customers/customer-form.page').then((m) => m.CustomerFormPage),
+      },
+      {
+        path: 'sales/customers/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.customersEdit },
+        loadComponent: () =>
+          import('./features/scm/sales/customers/customer-form.page').then((m) => m.CustomerFormPage),
+      },
+      {
+        path: 'sales/customers/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.customersView },
+        loadComponent: () =>
+          import('./features/scm/sales/customers/customer-detail.page').then(
+            (m) => m.CustomerDetailPage,
+          ),
+      },
+      {
+        path: 'sales/customer-groups',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.customersView },
+        loadComponent: () =>
+          import('./features/scm/sales/customers/customer-groups.page').then(
+            (m) => m.CustomerGroupsPage,
+          ),
+      },
+      {
+        path: 'sales/price-lists',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.pricingView },
+        loadComponent: () =>
+          import('./features/scm/sales/pricing/price-lists.page').then((m) => m.PriceListsPage),
+      },
+      {
+        path: 'sales/price-lists/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.pricingManage },
+        loadComponent: () =>
+          import('./features/scm/sales/pricing/price-list-form.page').then((m) => m.PriceListFormPage),
+      },
+      {
+        path: 'sales/price-lists/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.pricingManage },
+        loadComponent: () =>
+          import('./features/scm/sales/pricing/price-list-form.page').then((m) => m.PriceListFormPage),
+      },
+      {
+        path: 'sales/price-lists/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.pricingView },
+        loadComponent: () =>
+          import('./features/scm/sales/pricing/price-list-detail.page').then(
+            (m) => m.PriceListDetailPage,
+          ),
+      },
+      {
+        path: 'sales/quotations',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.quotationsView },
+        loadComponent: () =>
+          import('./features/scm/sales/quotations/quotations.page').then((m) => m.QuotationsPage),
+      },
+      {
+        path: 'sales/quotations/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.quotationsCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/quotations/quotation-form.page').then((m) => m.QuotationFormPage),
+      },
+      {
+        path: 'sales/quotations/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.quotationsCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/quotations/quotation-form.page').then((m) => m.QuotationFormPage),
+      },
+      {
+        path: 'sales/quotations/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.quotationsView },
+        loadComponent: () =>
+          import('./features/scm/sales/quotations/quotation-detail.page').then(
+            (m) => m.QuotationDetailPage,
+          ),
+      },
+      {
+        path: 'sales/orders',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesOrdersView },
+        loadComponent: () =>
+          import('./features/scm/sales/orders/sales-orders.page').then((m) => m.SalesOrdersPage),
+      },
+      {
+        path: 'sales/orders/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesOrdersCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/orders/sales-order-form.page').then((m) => m.SalesOrderFormPage),
+      },
+      {
+        path: 'sales/orders/:id/edit',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesOrdersCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/orders/sales-order-form.page').then((m) => m.SalesOrderFormPage),
+      },
+      {
+        path: 'sales/orders/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesOrdersView },
+        loadComponent: () =>
+          import('./features/scm/sales/orders/sales-order-detail.page').then(
+            (m) => m.SalesOrderDetailPage,
+          ),
+      },
+      {
+        path: 'sales/deliveries',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.deliveriesView },
+        loadComponent: () =>
+          import('./features/scm/sales/deliveries/deliveries.page').then((m) => m.DeliveriesPage),
+      },
+      {
+        path: 'sales/deliveries/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.deliveriesCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/deliveries/delivery-new.page').then((m) => m.DeliveryNewPage),
+      },
+      {
+        path: 'sales/deliveries/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.deliveriesView },
+        loadComponent: () =>
+          import('./features/scm/sales/deliveries/delivery-detail.page').then(
+            (m) => m.DeliveryDetailPage,
+          ),
+      },
+      {
+        path: 'sales/invoices',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesInvoicesView },
+        loadComponent: () =>
+          import('./features/scm/sales/invoices/sales-invoices.page').then((m) => m.SalesInvoicesPage),
+      },
+      {
+        path: 'sales/invoices/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesInvoicesCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/invoices/sales-invoice-new.page').then(
+            (m) => m.SalesInvoiceNewPage,
+          ),
+      },
+      {
+        path: 'sales/invoices/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesInvoicesView },
+        loadComponent: () =>
+          import('./features/scm/sales/invoices/sales-invoice-detail.page').then(
+            (m) => m.SalesInvoiceDetailPage,
+          ),
+      },
+      {
+        path: 'sales/credit-notes',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.creditNotesView },
+        loadComponent: () =>
+          import('./features/scm/sales/credit-notes/credit-notes.page').then((m) => m.CreditNotesPage),
+      },
+      {
+        path: 'sales/credit-notes/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.creditNotesCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/credit-notes/credit-note-new.page').then(
+            (m) => m.CreditNoteNewPage,
+          ),
+      },
+      {
+        path: 'sales/credit-notes/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.creditNotesView },
+        loadComponent: () =>
+          import('./features/scm/sales/credit-notes/credit-note-detail.page').then(
+            (m) => m.CreditNoteDetailPage,
+          ),
+      },
+      {
+        path: 'sales/payments',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesPaymentsView },
+        loadComponent: () =>
+          import('./features/scm/sales/payments/sales-payments.page').then((m) => m.SalesPaymentsPage),
+      },
+      {
+        path: 'sales/payments/new',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesPaymentsCreate },
+        loadComponent: () =>
+          import('./features/scm/sales/payments/sales-payment-new.page').then(
+            (m) => m.SalesPaymentNewPage,
+          ),
+      },
+      {
+        path: 'sales/payments/:id',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesPaymentsView },
+        loadComponent: () =>
+          import('./features/scm/sales/payments/sales-payment-detail.page').then(
+            (m) => m.SalesPaymentDetailPage,
+          ),
+      },
+      {
+        path: 'sales/reports',
+        canActivate: [permissionGuard],
+        data: { permission: Permissions.salesReportsView },
+        loadComponent: () =>
+          import('./features/scm/sales/reports/sales-reports.page').then((m) => m.SalesReportsPage),
       },
       {
         path: 'administration',

@@ -52,6 +52,7 @@
           <tr class="border-b border-border text-left text-xs text-muted-foreground">
             <th class="px-2 py-2 font-medium" style="min-width: 260px">Item</th>
             <th class="px-2 py-2 text-right font-medium" style="width: 120px">Qty</th>
+            <th class="px-2 py-2 font-medium" style="width: 90px">Unit</th>
             <th class="px-2 py-2 font-medium">Memo</th>
             <th class="px-2 py-2"></th>
           </tr>
@@ -78,6 +79,7 @@
                   class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
                 />
               </td>
+              <td class="px-2 py-2 text-muted-foreground">{{ l.uom || '—' }}</td>
               <td class="px-2 py-2">
                 <input
                   [(ngModel)]="l.memo"

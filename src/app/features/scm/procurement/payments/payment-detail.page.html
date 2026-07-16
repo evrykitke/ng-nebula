@@ -1,0 +1,160 @@
+<app-page-header
+  [title]="payment()?.number ?? 'Supplier payment'"
+  [subtitle]="payment()?.supplier_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Supplier payments', route: '/procurement/payments' },
+    { label: payment()?.number ?? '…' },
+  ]"
+>
+  @if (canCreate() && payment()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && payment()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+    </button>
+  }
+  @if (canReverse() && payment()?.status === 'posted') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openReverse()">
+      <ng-icon name="lucideUndo2" size="16" /> Reverse
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/procurement/payments"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to payments
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (payment(); as p) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span
+            class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(p.status)"
+          >
+            {{ statusLabel(p.status) }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Payment date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(p.payment_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Method</p>
+        <p class="mt-0.5 font-medium capitalize">{{ statusLabel(p.method) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Reference</p>
+        <p class="mt-0.5 font-medium">{{ p.reference || '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Amount</p>
+        <p class="mt-0.5 font-semibold">{{ fmtMoney(p.amount) }} {{ p.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ p.currency }} &middot; rate {{ p.exchange_rate }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted at</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(p.posted_at) }}</p>
+      </div>
+      @if (p.status === 'reversed') {
+        <div>
+          <p class="text-xs text-muted-foreground">Reversed at</p>
+          <p class="mt-0.5 font-medium">{{ fmtDateTime(p.reversed_at) }}</p>
+        </div>
+      }
+      @if (p.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ p.memo }}</p>
+        </div>
+      }
+      @if (p.reverse_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Reverse reason</p>
+          <p class="mt-0.5 font-medium text-amber-600 dark:text-amber-400">{{ p.reverse_reason }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Invoice</th>
+          <th class="px-4 py-2 font-medium">Supplier no.</th>
+          <th class="px-4 py-2 text-right font-medium">Invoice total</th>
+          <th class="px-4 py-2 text-right font-medium">Allocated</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of p.allocations; track a.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <a
+                [routerLink]="['/procurement/invoices', a.invoice_id]"
+                class="font-medium text-primary hover:underline"
+              >
+                {{ a.invoice_number ?? 'view' }}
+              </a>
+            </td>
+            <td class="px-4 py-2 text-muted-foreground">{{ a.supplier_invoice_no }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(a.invoice_total) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(a.amount) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-semibold">
+          <td class="px-4 py-2" colspan="3">Total paid</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(p.amount) }} {{ p.currency }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<!-- Reverse modal -->
+<app-modal [open]="reverseModal()" size="sm" title="Reverse payment" (closed)="reverseModal.set(false)">
+  <div class="space-y-3">
+    <p class="text-sm text-muted-foreground">
+      Reversing books the mirror entry (Dr Bank/Cash, Cr Accounts payable); the invoices it settled
+      fall back open.
+    </p>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea
+        [(ngModel)]="reverseReason"
+        name="reverseReason"
+        rows="3"
+        placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      ></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="reverseModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmReverse()">
+        {{ busy() ? 'Working…' : 'Reverse payment' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

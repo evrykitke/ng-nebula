@@ -35,6 +35,7 @@ export class InvoiceDetailPage {
   readonly canCreate = computed(() => this.auth.hasPermission(Permissions.purchaseInvoicesCreate));
   readonly canPost = computed(() => this.auth.hasPermission(Permissions.purchaseInvoicesPost));
   readonly canCancel = computed(() => this.auth.hasPermission(Permissions.purchaseInvoicesCancel));
+  readonly canPay = computed(() => this.auth.hasPermission(Permissions.paymentsCreate));
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -120,6 +121,18 @@ export class InvoiceDetailPage {
         this.notify.error(apiErrorInfo(err).message || 'Could not delete the draft.');
       },
     });
+  }
+
+  pay(): void {
+    void this.router.navigate(['/procurement/payments/new']);
+  }
+
+  settlementToneClass(settlement: string): string {
+    return settlement === 'paid'
+      ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+      : settlement === 'partially_paid'
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+        : 'bg-muted text-muted-foreground';
   }
 
   openCancel(): void {

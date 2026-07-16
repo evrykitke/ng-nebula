@@ -62,6 +62,18 @@ export class OrderDetailPage {
     return o.lines.every((l) => num(l.received_qty) >= num(l.qty) - 0.0001);
   });
 
+  /**
+   * True when some line has been received but not yet billed. Both billing
+   * and returning draw from this pool, so once it is empty (everything
+   * received has been invoiced) neither action applies — the backend
+   * rejects them too.
+   */
+  readonly hasReceivedNotBilled = computed(() => {
+    const o = this.order();
+    if (!o) return false;
+    return o.lines.some((l) => num(l.received_qty) - num(l.billed_qty) > 0.0001);
+  });
+
   // approve modal (captures an exchange rate for foreign-currency orders)
   readonly approveModal = signal(false);
   approveRate = '';

@@ -1,0 +1,81 @@
+<app-page-header
+  title="Goods received, not invoiced"
+  subtitle="Received against purchase orders but not yet billed — the GRNI accrual to clear"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'GRNI' }]"
+>
+  <button uiBtn actions variant="outline" (click)="load()">
+    <ng-icon name="lucideRefreshCw" size="16" /> Refresh
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (groups().length === 0) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+    Nothing outstanding — every received line has been billed.
+  </div>
+} @else {
+  <div class="mb-4 flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+    <span class="text-sm text-muted-foreground">Total GRNI exposure (base currency)</span>
+    <span class="text-lg font-semibold">{{ fmtMoney(total()) }}</span>
+  </div>
+
+  <div class="space-y-4">
+    @for (g of groups(); track g.order_id) {
+      <div class="overflow-hidden rounded-lg border border-border bg-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <a
+              [routerLink]="['/procurement/orders', g.order_id]"
+              class="font-semibold text-primary hover:underline"
+            >
+              {{ g.order_number }}
+            </a>
+            <span class="ml-2 text-sm text-muted-foreground">{{ g.supplier_name }}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium">{{ fmtMoney(g.total) }}</span>
+            <a uiBtn size="sm" variant="outline" [routerLink]="['/procurement/orders', g.order_id]">
+              <ng-icon name="lucideShoppingCart" size="14" /> Order
+            </a>
+            @if (canBill()) {
+              <a
+                uiBtn
+                size="sm"
+                [routerLink]="['/procurement/invoices/new']"
+                [queryParams]="{ order: g.order_id }"
+              >
+                <ng-icon name="lucideReceiptText" size="14" /> Bill
+              </a>
+            }
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border text-left text-xs text-muted-foreground">
+                <th class="px-4 py-2 font-medium">Item</th>
+                <th class="px-4 py-2 text-right font-medium">Qty to bill</th>
+                <th class="px-4 py-2 text-right font-medium">Unit value</th>
+                <th class="px-4 py-2 text-right font-medium">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of g.rows; track r.item_id) {
+                <tr class="border-b border-border/50 last:border-0">
+                  <td class="px-4 py-2">
+                    <span class="font-medium">{{ r.sku }}</span>
+                    <span class="text-muted-foreground"> — {{ r.item_name }}</span>
+                  </td>
+                  <td class="px-4 py-2 text-right">{{ fmtQty(r.qty) }}</td>
+                  <td class="px-4 py-2 text-right">{{ fmtMoney(r.unit_value) }}</td>
+                  <td class="px-4 py-2 text-right">{{ fmtMoney(r.value) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+}

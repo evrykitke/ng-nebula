@@ -26,6 +26,7 @@ import {
 interface ReqLine {
   item_id: string;
   item_label: string;
+  uom: string;
   qty: string;
   memo: string;
 }
@@ -54,6 +55,9 @@ export class RequisitionFormPage {
   readonly itemLookup = itemLookup(this.inventory, (i) => i.is_purchasable);
   readonly warehouseLookup = warehouseLookup(this.inventory);
 
+  /** uom_id → code, so a picked item can show its stocking unit. */
+  private readonly uomCodes = new Map<string, string>();
+
   form = {
     warehouse_id: '',
     warehouse_label: '',
@@ -66,6 +70,9 @@ export class RequisitionFormPage {
   readonly title = computed(() => (this.editId() ? 'Edit requisition' : 'New requisition'));
 
   constructor() {
+    this.inventory.list_uoms().subscribe((uoms) => {
+      for (const u of uoms ?? []) this.uomCodes.set(u.id, u.code);
+    });
     const id = this.route.snapshot.paramMap.get('id');
     this.editId.set(id);
     if (id) this.loadDraft(id);
@@ -89,6 +96,7 @@ export class RequisitionFormPage {
           r.lines.map((l) => ({
             item_id: l.item_id,
             item_label: `${l.sku} — ${l.item_name}`,
+            uom: l.uom_code,
             qty: String(Number(l.qty)),
             memo: l.memo ?? '',
           })),
@@ -102,7 +110,7 @@ export class RequisitionFormPage {
   }
 
   private blank(): ReqLine {
-    return { item_id: '', item_label: '', qty: '', memo: '' };
+    return { item_id: '', item_label: '', uom: '', qty: '', memo: '' };
   }
 
   addLine(): void {
@@ -116,11 +124,15 @@ export class RequisitionFormPage {
   onItemSelected(line: ReqLine, item: InventoryItem): void {
     line.item_id = item.id;
     line.item_label = `${item.sku} — ${item.name}`;
+    line.uom = this.uomCodes.get(item.uom_id) ?? '';
   }
 
   onItemValue(line: ReqLine, value: string | null): void {
     line.item_id = value ?? '';
-    if (!value) line.item_label = '';
+    if (!value) {
+      line.item_label = '';
+      line.uom = '';
+    }
   }
 
   saveDraft(): void {

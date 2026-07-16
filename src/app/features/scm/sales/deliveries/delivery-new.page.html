@@ -1,0 +1,136 @@
+<app-page-header
+  title="New delivery"
+  subtitle="Issue goods against a confirmed sales order"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Deliveries', route: '/sales/deliveries' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/sales/deliveries"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to deliveries
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Sales order</label>
+        <app-lookup [config]="orderLookup" [value]="orderId" [display]="orderLabel"
+          (valueChange)="onOrderCleared($event)" (selected)="onOrderSelected($event)" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Delivery date</label>
+        <app-datepicker [(date)]="form.delivery_date" placeholder="Delivery date" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Carrier</label>
+        <input [(ngModel)]="form.carrier" name="carrier" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Driver</label>
+        <input [(ngModel)]="form.driver_name" name="driver_name" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Vehicle reg.</label>
+        <input [(ngModel)]="form.vehicle_reg" name="vehicle_reg" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Tracking no.</label>
+        <input [(ngModel)]="form.tracking_no" name="tracking_no" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Received by</label>
+        <input [(ngModel)]="form.received_by_name" name="received_by_name" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div class="md:col-span-3">
+        <label class="mb-1.5 block text-sm font-medium">Shipping address</label>
+        <input [(ngModel)]="form.shipping_address" name="shipping_address" placeholder="From order"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+    </div>
+  </div>
+
+  @if (order(); as o) {
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Lines</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-2 py-2 font-medium">Item</th>
+              <th class="px-2 py-2 text-right font-medium">Ordered</th>
+              <th class="px-2 py-2 text-right font-medium">Delivered</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 110px">Deliver now</th>
+              <th class="px-2 py-2 font-medium" style="width: 130px">Batch</th>
+              <th class="px-2 py-2 font-medium" style="min-width: 160px">Serial nos.</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lines(); track l.order_line_id) {
+              <tr class="border-b border-border/50 align-top last:border-0">
+                <td class="px-2 py-2">
+                  <span class="font-medium">{{ l.sku }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
+                </td>
+                <td class="px-2 py-2 text-right">{{ fmtQty(l.ordered) }}</td>
+                <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(l.delivered) }}</td>
+                <td class="px-2 py-2">
+                  <input type="number" min="0" step="0.001" [(ngModel)]="l.qty" [name]="'qty_' + l.order_line_id"
+                    class="h-9 w-full rounded-md border bg-background px-2 text-right text-sm"
+                    [class.border-destructive]="overDeliver(l)" [class.border-input]="!overDeliver(l)" />
+                </td>
+                <td class="px-2 py-2">
+                  <input [(ngModel)]="l.batch_no" [name]="'batch_' + l.order_line_id" placeholder="Optional"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" />
+                </td>
+                <td class="px-2 py-2">
+                  <input [(ngModel)]="l.serial_nos" [name]="'serials_' + l.order_line_id" placeholder="Comma / space separated"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-muted-foreground">
+        Leave a quantity at zero to skip that line. Batches and serials apply only to tracked items.
+      </p>
+    </div>
+  } @else {
+    <div class="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+      Select a sales order to load its lines.
+    </div>
+  }
+
+  <div class="rounded-lg border border-border bg-card p-4">
+    <label class="mb-1.5 block text-sm font-medium">Memo</label>
+    <input [(ngModel)]="form.memo" name="memo" placeholder="Optional"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="savePost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/sales/deliveries">Cancel</a>
+  </div>
+</form>

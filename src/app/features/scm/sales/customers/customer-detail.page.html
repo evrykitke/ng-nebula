@@ -1,0 +1,143 @@
+<app-page-header
+  [title]="customer()?.name ?? 'Customer'"
+  [subtitle]="customer()?.code ?? ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Customers', route: '/sales/customers' },
+    { label: customer()?.code ?? '…' },
+  ]"
+>
+  @if (canEdit()) {
+    <button uiBtn actions variant="outline" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/customers"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to customers
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (customer(); as c) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Type</p>
+        <p class="mt-0.5 font-medium capitalize">{{ c.customer_type }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ c.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Payment terms</p>
+        <p class="mt-0.5 font-medium">{{ c.payment_terms_days }} days</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Credit limit</p>
+        <p class="mt-0.5 font-medium">{{ c.credit_limit ? fmtMoney(c.credit_limit) : '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Contact</p>
+        <p class="mt-0.5 font-medium">{{ c.contact_name ?? '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Email</p>
+        <p class="mt-0.5 font-medium">{{ c.email ?? '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Phone</p>
+        <p class="mt-0.5 font-medium">{{ c.phone ?? '—' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5 font-medium">
+          {{ c.on_hold ? 'On hold' : c.is_active ? 'Active' : 'Inactive' }}
+        </p>
+      </div>
+      @if (c.tax_exempt) {
+        <div>
+          <p class="text-xs text-muted-foreground">Tax</p>
+          <p class="mt-0.5 font-medium">Exempt {{ c.tax_exemption_no ? '(' + c.tax_exemption_no + ')' : '' }}</p>
+        </div>
+      }
+      @if (c.notes) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Notes</p>
+          <p class="mt-0.5 font-medium">{{ c.notes }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Statement -->
+  <div class="mt-4 rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Account statement</h2>
+    <div class="flex flex-wrap items-end gap-3">
+      <div>
+        <label class="mb-1.5 block text-xs text-muted-foreground">From</label>
+        <app-datepicker [(date)]="from" placeholder="From" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-xs text-muted-foreground">To</label>
+        <app-datepicker [(date)]="to" placeholder="To" />
+      </div>
+      <button uiBtn variant="outline" size="sm" [disabled]="statementLoading()" (click)="runStatement()">
+        {{ statementLoading() ? 'Loading…' : 'Run' }}
+      </button>
+    </div>
+
+    @if (statement(); as s) {
+      <div class="mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        <div>
+          <p class="text-xs text-muted-foreground">Opening balance</p>
+          <p class="mt-0.5 font-medium">{{ fmtMoney(s.opening_balance) }} {{ s.currency }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground">Closing balance</p>
+          <p class="mt-0.5 font-semibold">{{ fmtMoney(s.closing_balance) }} {{ s.currency }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-muted-foreground">Period</p>
+          <p class="mt-0.5 font-medium">{{ fmtDate(s.from) }} → {{ fmtDate(s.to) }}</p>
+        </div>
+      </div>
+      <div class="mt-4 overflow-x-auto rounded-lg border border-border">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2 font-medium">Account</th>
+              <th class="px-4 py-2 text-right font-medium">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of s.lines; track l.account_id) {
+              <tr class="border-b border-border/50 last:border-0">
+                <td class="px-4 py-2">
+                  <span class="font-medium">{{ l.code }}</span>
+                  <span class="block text-xs text-muted-foreground">{{ l.name }}</span>
+                </td>
+                <td class="px-4 py-2 text-right">{{ fmtMoney(l.amount) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2" class="px-4 py-4 text-center text-muted-foreground">
+                  No movement in this period.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

@@ -7,46 +7,44 @@
     { label: order()?.number ?? '…' },
   ]"
 >
-  @if (order(); as o) {
-    @if (canCreate() && o.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
-        <ng-icon name="lucidePencil" size="16" /> Edit
-      </button>
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canSubmit() && o.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="submit()">
-        <ng-icon name="lucideSend" size="16" /> Submit
-      </button>
-    }
-    @if (canApprove() && o.status === 'submitted') {
-      <button uiBtn actions [disabled]="busy()" (click)="openApprove()">
-        <ng-icon name="lucideCircleCheck" size="16" /> Approve
-      </button>
-    }
-    @if (canReceive() && (o.status === 'approved' || o.status === 'partially_received')) {
-      <button uiBtn actions [disabled]="busy()" (click)="newReceipt()">
-        <ng-icon name="lucidePackageCheck" size="16" /> Receive
-      </button>
-    }
-    @if (canBill() && o.status !== 'draft' && o.status !== 'cancelled') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newInvoice()">
-        <ng-icon name="lucideReceiptText" size="16" /> Bill
-      </button>
-    }
-    @if (canReturn() && (o.status === 'partially_received' || o.status === 'received' || o.status === 'closed')) {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newReturn()">
-        <ng-icon name="lucidePackageX" size="16" /> Return
-      </button>
-    }
-    @if (fullyReceived() && o.status === 'received') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">Close</button>
-    }
-    @if (canCancel() && (o.status === 'submitted' || o.status === 'approved')) {
-      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openCancel()">Cancel</button>
-    }
+  @if (canCreate() && order()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canSubmit() && order()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="submit()">
+      <ng-icon name="lucideSend" size="16" /> Submit
+    </button>
+  }
+  @if (canApprove() && order()?.status === 'submitted') {
+    <button uiBtn actions [disabled]="busy()" (click)="openApprove()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Approve
+    </button>
+  }
+  @if (canReceive() && (order()?.status === 'approved' || order()?.status === 'partially_received')) {
+    <button uiBtn actions [disabled]="busy()" (click)="newReceipt()">
+      <ng-icon name="lucidePackageCheck" size="16" /> Receive
+    </button>
+  }
+  @if (canBill() && order()?.status !== 'cancelled' && hasReceivedNotBilled()) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newInvoice()">
+      <ng-icon name="lucideReceiptText" size="16" /> Bill
+    </button>
+  }
+  @if (canReturn() && hasReceivedNotBilled()) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newReturn()">
+      <ng-icon name="lucidePackageX" size="16" /> Return
+    </button>
+  }
+  @if (fullyReceived() && order()?.status === 'received') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">Close</button>
+  }
+  @if (canCancel() && (order()?.status === 'submitted' || order()?.status === 'approved')) {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openCancel()">Cancel</button>
   }
 </app-page-header>
 

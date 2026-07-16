@@ -1,0 +1,34 @@
+<app-page-header
+  title="Supplier payments"
+  subtitle="Money paid out to suppliers, allocated against their posted invoices"
+  [breadcrumbs]="[{ label: 'Procurement' }, { label: 'Supplier payments' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newPayment()">
+      <ng-icon name="lucidePlus" size="16" /> New payment
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)">
+  <div toolbar class="flex items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="applyFilters()">
+        <option value="">All</option>
+        <option value="draft">Draft</option>
+        <option value="posted">Posted</option>
+        <option value="reversed">Reversed</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-muted-foreground">Supplier</label>
+      <select [(ngModel)]="supplierFilter" name="supplierFilter" (ngModelChange)="applyFilters()">
+        <option value="">All suppliers</option>
+        @for (s of suppliers(); track s.id) {
+          <option [value]="s.id">{{ s.code }} — {{ s.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</app-data-table>

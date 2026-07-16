@@ -1,0 +1,146 @@
+<app-page-header
+  [title]="payment()?.number ?? 'Payment'"
+  [subtitle]="payment()?.customer_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Customer payments', route: '/sales/payments' },
+    { label: payment()?.number ?? '…' },
+  ]"
+>
+  @if (canCreate() && payment()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && payment()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Post
+    </button>
+  }
+  @if (canReverse() && payment()?.status === 'posted') {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openReverse()">
+      <ng-icon name="lucideUndo2" size="16" /> Reverse
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/payments"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to payments
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (payment(); as p) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(p.status)">{{ statusLabel(p.status) }}</span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Payment date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(p.payment_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Method</p>
+        <p class="mt-0.5 font-medium capitalize">{{ statusLabel(p.method) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Amount</p>
+        <p class="mt-0.5 font-semibold">{{ fmtMoney(p.amount) }} {{ p.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Unallocated</p>
+        <p class="mt-0.5 font-medium">{{ fmtMoney(p.unallocated) }} {{ p.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Posted</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(p.posted_at) }}</p>
+      </div>
+      @if (p.reference) {
+        <div>
+          <p class="text-xs text-muted-foreground">Reference</p>
+          <p class="mt-0.5 font-medium">{{ p.reference }}</p>
+        </div>
+      }
+      @if (p.reverse_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Reverse reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ p.reverse_reason }}</p>
+        </div>
+      }
+      @if (p.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ p.memo }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+      Allocations ({{ p.allocations.length }})
+    </div>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Invoice</th>
+          <th class="px-4 py-2 text-right font-medium">Invoice total</th>
+          <th class="px-4 py-2 text-right font-medium">Allocated</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of p.allocations; track a.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              @if (a.invoice_id) {
+                <a [routerLink]="['/sales/invoices', a.invoice_id]" class="font-medium text-primary">
+                  {{ a.invoice_number ?? 'View invoice' }}
+                </a>
+              } @else {
+                <span class="text-muted-foreground">—</span>
+              }
+            </td>
+            <td class="px-4 py-2 text-right text-muted-foreground">{{ fmtMoney(a.invoice_total) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(a.amount) }} {{ p.currency }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="px-4 py-4 text-center text-muted-foreground">No allocations.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Reverse modal -->
+<app-modal [open]="reverseModal()" size="sm" title="Reverse payment" (closed)="reverseModal.set(false)">
+  <div class="space-y-3">
+    <p class="text-sm text-muted-foreground">
+      Reversing books a compensating entry and re-opens the settled invoices.
+    </p>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea [(ngModel)]="reverseReason" name="reverseReason" rows="3" placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="reverseModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmReverse()">
+        {{ busy() ? 'Working…' : 'Reverse' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -1,0 +1,155 @@
+<app-page-header
+  title="New payment"
+  subtitle="Pay a supplier and allocate it across their open invoices"
+  [breadcrumbs]="[
+    { label: 'Procurement' },
+    { label: 'Supplier payments', route: '/procurement/payments' },
+    { label: 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/procurement/payments"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to payments
+</a>
+
+<form (ngSubmit)="saveDraft()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Supplier</label>
+        <select
+          [(ngModel)]="form.supplier_id"
+          name="supplier"
+          (ngModelChange)="onSupplierChange()"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">Select supplier…</option>
+          @for (s of suppliers(); track s.id) {
+            <option [value]="s.id">{{ s.code }} — {{ s.name }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Payment date</label>
+        <app-datepicker [(date)]="form.payment_date" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Method</label>
+        <select
+          [(ngModel)]="form.method"
+          name="method"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm capitalize"
+        >
+          @for (m of methods; track m) {
+            <option [value]="m">{{ m.replaceAll('_', ' ') }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Reference</label>
+        <input
+          [(ngModel)]="form.reference"
+          name="reference"
+          placeholder="Cheque / transfer no."
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1.5 block text-sm font-medium">Memo</label>
+        <input
+          [(ngModel)]="form.memo"
+          name="memo"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Open invoices</h2>
+
+    @if (!form.supplier_id) {
+      <p class="text-sm text-muted-foreground">Pick a supplier to see their unpaid invoices.</p>
+    } @else if (loadingInvoices()) {
+      <p class="text-sm text-muted-foreground">Loading…</p>
+    } @else if (rows().length === 0) {
+      <p class="text-sm text-muted-foreground">
+        This supplier has no posted invoices with an outstanding balance.
+      </p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-2 py-2 font-medium" style="width: 40px"></th>
+              <th class="px-2 py-2 font-medium">Invoice</th>
+              <th class="px-2 py-2 font-medium">Supplier no.</th>
+              <th class="px-2 py-2 text-right font-medium">Outstanding</th>
+              <th class="px-2 py-2 text-right font-medium" style="width: 160px">Pay amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows(); track r.invoice_id) {
+              <tr class="border-b border-border/50 last:border-0" [class.opacity-50]="!r.selected">
+                <td class="px-2 py-2">
+                  <input type="checkbox" [checked]="r.selected" (change)="toggle(r)" />
+                </td>
+                <td class="px-2 py-2 font-medium">{{ r.number }}</td>
+                <td class="px-2 py-2 text-muted-foreground">{{ r.supplier_invoice_no }}</td>
+                <td class="px-2 py-2 text-right">
+                  <button
+                    type="button"
+                    class="text-muted-foreground hover:text-foreground hover:underline"
+                    (click)="payFull(r)"
+                    title="Pay in full"
+                  >
+                    {{ fmtMoney(r.outstanding) }}
+                  </button>
+                </td>
+                <td class="px-2 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [(ngModel)]="r.amount"
+                    [name]="'amt_' + r.invoice_id"
+                    [disabled]="!r.selected"
+                    (ngModelChange)="onAmountChange()"
+                    class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="border-t border-border font-semibold">
+              <td class="px-2 py-2" colspan="3">Total payment</td>
+              <td class="px-2 py-2"></td>
+              <td class="px-2 py-2 text-right">{{ fmtMoney(total()) }} {{ currency() }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" variant="outline" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save draft' }}
+    </button>
+    @if (canPost()) {
+      <button uiBtn type="button" [disabled]="saving()" (click)="saveAndPost()">
+        {{ saving() ? 'Working…' : 'Save & post' }}
+      </button>
+    }
+    <a uiBtn variant="ghost" routerLink="/procurement/payments">Cancel</a>
+  </div>
+</form>

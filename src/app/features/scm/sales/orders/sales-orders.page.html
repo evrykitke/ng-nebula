@@ -1,0 +1,13 @@
+<app-page-header
+  title="Sales orders"
+  subtitle="Customer commitments — reserve stock, deliver and bill against them"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Sales orders' }]"
+>
+  @if (canCreate()) {
+    <button uiBtn actions (click)="newOrder()">
+      <ng-icon name="lucidePlus" size="16" /> New order
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

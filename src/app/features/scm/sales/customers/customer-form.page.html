@@ -1,0 +1,274 @@
+<app-page-header
+  [title]="title()"
+  subtitle="A customer the business sells to"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Customers', route: '/sales/customers' },
+    { label: editId() ? 'Edit' : 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/sales/customers"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to customers
+</a>
+
+<form (ngSubmit)="save()" class="space-y-4">
+  <!-- Identity -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Identity</h2>
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code *</label>
+        <input
+          [(ngModel)]="form.code"
+          name="code"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Name *</label>
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Legal name</label>
+        <input
+          [(ngModel)]="form.legal_name"
+          name="legal_name"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Type</label>
+        <select
+          [(ngModel)]="form.customer_type"
+          name="customer_type"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm capitalize"
+        >
+          @for (t of customerTypes; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Group</label>
+        <select
+          [(ngModel)]="form.group_id"
+          name="group_id"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">None</option>
+          @for (g of groups(); track g.id) {
+            <option [value]="g.id">{{ g.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="flex items-end gap-4 pb-2">
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" /> Active
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="form.on_hold" name="on_hold" /> On hold
+        </label>
+      </div>
+      @if (form.on_hold) {
+        <div class="md:col-span-3">
+          <label class="mb-1.5 block text-sm font-medium">Hold reason</label>
+          <input
+            [(ngModel)]="form.hold_reason"
+            name="hold_reason"
+            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Contact</h2>
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Contact name</label>
+        <input [(ngModel)]="form.contact_name" name="contact_name" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Email</label>
+        <input [(ngModel)]="form.email" name="email" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Phone</label>
+        <input [(ngModel)]="form.phone" name="phone" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Website</label>
+        <input [(ngModel)]="form.website" name="website" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Secondary contact</label>
+        <input [(ngModel)]="form.secondary_contact_name" name="secondary_contact_name" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Secondary email</label>
+        <input [(ngModel)]="form.secondary_email" name="secondary_email" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Commercial terms -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Commercial terms</h2>
+    <div class="grid gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Currency *</label>
+        <input [(ngModel)]="form.currency" name="currency" maxlength="3"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm uppercase" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Payment terms (days)</label>
+        <input type="number" min="0" [(ngModel)]="form.payment_terms_days" name="payment_terms_days"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Credit limit</label>
+        <input type="number" min="0" step="0.01" [(ngModel)]="form.credit_limit" name="credit_limit" placeholder="0 = cash only"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Default discount %</label>
+        <input type="number" min="0" step="0.01" [(ngModel)]="form.default_discount_pct" name="default_discount_pct" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Default tax code</label>
+        <app-lookup
+          [config]="taxLookup"
+          [value]="form.default_tax_code_id"
+          [display]="form.default_tax_label"
+          (valueChange)="form.default_tax_code_id = $event ?? ''"
+          (selected)="form.default_tax_label = $event.code + ' (' + $event.rate + '%)'"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Default warehouse</label>
+        <app-lookup
+          [config]="warehouseLookup"
+          [value]="form.default_warehouse_id"
+          [display]="form.default_warehouse_label"
+          (valueChange)="form.default_warehouse_id = $event ?? ''"
+          (selected)="form.default_warehouse_label = $event.code + ' — ' + $event.name"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Price list</label>
+        <app-lookup
+          [config]="priceListLookup"
+          [value]="form.price_list_id"
+          [display]="form.price_list_label"
+          (valueChange)="form.price_list_id = $event ?? ''"
+          (selected)="form.price_list_label = $event.name"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Incoterms</label>
+        <input [(ngModel)]="form.incoterms" name="incoterms" placeholder="e.g. EXW"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Loyalty no.</label>
+        <input [(ngModel)]="form.loyalty_no" name="loyalty_no" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Tax number</label>
+        <input [(ngModel)]="form.tax_number" name="tax_number" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Registration no.</label>
+        <input [(ngModel)]="form.registration_no" name="registration_no" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Industry</label>
+        <input [(ngModel)]="form.industry" name="industry" placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+      <label class="flex items-end gap-2 pb-2 text-sm">
+        <input type="checkbox" [(ngModel)]="form.tax_exempt" name="tax_exempt" /> Tax exempt
+      </label>
+      @if (form.tax_exempt) {
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Exemption no.</label>
+          <input [(ngModel)]="form.tax_exemption_no" name="tax_exemption_no"
+            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Addresses -->
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="rounded-lg border border-border bg-card p-4">
+      <h2 class="mb-3 text-sm font-semibold">Billing address</h2>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <input [(ngModel)]="form.billing_city" name="billing_city" placeholder="City"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.billing_region" name="billing_region" placeholder="Region"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.billing_postal_code" name="billing_postal_code" placeholder="Postal code"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.billing_country" name="billing_country" placeholder="Country"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold">Shipping address</h2>
+        <button uiBtn type="button" variant="ghost" size="sm" (click)="copyBillingToShipping()">
+          Same as billing
+        </button>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <input [(ngModel)]="form.shipping_city" name="shipping_city" placeholder="City"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.shipping_region" name="shipping_region" placeholder="Region"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.shipping_postal_code" name="shipping_postal_code" placeholder="Postal code"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        <input [(ngModel)]="form.shipping_country" name="shipping_country" placeholder="Country"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" />
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-border bg-card p-4">
+    <label class="mb-1.5 block text-sm font-medium">Notes</label>
+    <textarea [(ngModel)]="form.notes" name="notes" rows="2" placeholder="Optional"
+      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save customer' }}
+    </button>
+    <a uiBtn variant="ghost" routerLink="/sales/customers">Cancel</a>
+  </div>
+</form>

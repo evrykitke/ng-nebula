@@ -1,0 +1,263 @@
+<app-page-header
+  [title]="order()?.number ?? 'Sales order'"
+  [subtitle]="order()?.customer_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Sales orders', route: '/sales/orders' },
+    { label: order()?.number ?? '…' },
+  ]"
+>
+  @if (canCreate() && order()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+  }
+  @if (canCreate() && order()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canConfirm() && order()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="openConfirm()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Confirm
+    </button>
+  }
+  @if (canDeliver() && (order()?.status === 'confirmed' || order()?.status === 'partially_delivered')) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="reserve()">Reserve stock</button>
+  }
+  @if (canDeliver() && (order()?.status === 'confirmed' || order()?.status === 'partially_delivered')) {
+    <button uiBtn actions [disabled]="busy()" (click)="newDelivery()">
+      <ng-icon name="lucideTruck" size="16" /> Deliver
+    </button>
+  }
+  @if (canBill() && order()?.status !== 'cancelled' && hasDeliveredNotBilled()) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="newInvoice()">
+      <ng-icon name="lucideReceiptText" size="16" /> Bill
+    </button>
+  }
+  @if (canClose() && fullyDelivered() && order()?.status === 'delivered') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">Close</button>
+  }
+  @if (canCancel() && (order()?.status === 'draft' || order()?.status === 'confirmed' || order()?.status === 'partially_delivered')) {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openCancel()">Cancel</button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/orders"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to sales orders
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (order(); as o) {
+  <!-- Header -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5">
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+            [class]="statusToneClass(o.status)">{{ statusLabel(o.status) }}</span>
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Order date</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(o.order_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Expected</p>
+        <p class="mt-0.5 font-medium">{{ fmtDate(o.expected_date) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Fulfil from</p>
+        <p class="mt-0.5 font-medium">{{ o.warehouse_code }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ o.currency }} &middot; rate {{ o.exchange_rate }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Payment terms</p>
+        <p class="mt-0.5 font-medium">{{ o.payment_terms_days }} days</p>
+      </div>
+      @if (o.customer_po_no) {
+        <div>
+          <p class="text-xs text-muted-foreground">Customer PO</p>
+          <p class="mt-0.5 font-medium">{{ o.customer_po_no }}</p>
+        </div>
+      }
+      @if (o.incoterms) {
+        <div>
+          <p class="text-xs text-muted-foreground">Incoterms</p>
+          <p class="mt-0.5 font-medium">{{ o.incoterms }}</p>
+        </div>
+      }
+      @if (o.shipping_address) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Shipping address</p>
+          <p class="mt-0.5 font-medium">{{ o.shipping_address }}</p>
+        </div>
+      }
+      @if (o.memo) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Memo</p>
+          <p class="mt-0.5 font-medium">{{ o.memo }}</p>
+        </div>
+      }
+      @if (o.cancel_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Cancel reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ o.cancel_reason }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Lines with progress -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 text-right font-medium">Qty</th>
+          <th class="px-4 py-2 text-right font-medium">Price</th>
+          <th class="px-4 py-2 text-right font-medium">Reserved</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+          <th class="px-4 py-2 font-medium" style="width: 180px">Delivered</th>
+          <th class="px-4 py-2 text-right font-medium">Billed</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of o.lines; track l.id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <span class="font-medium">{{ l.sku }}</span>
+              <span class="block text-xs text-muted-foreground">{{ l.description || l.item_name }}</span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.effective_price) }}</td>
+            <td class="px-4 py-2 text-right text-muted-foreground">{{ fmtQty(l.reserved_qty) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(l.net) }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div class="h-full rounded-full bg-primary" [style.width.%]="progressPct(l.delivered_qty, l.qty)"></div>
+                </div>
+                <span class="whitespace-nowrap text-xs text-muted-foreground">
+                  {{ fmtQty(l.delivered_qty) }}/{{ fmtQty(l.qty) }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-2 text-right text-muted-foreground">
+              {{ fmtQty(l.billed_qty) }}/{{ fmtQty(l.qty) }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border font-medium">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Subtotal</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(o.subtotal) }}</td>
+          <td colspan="2"></td>
+        </tr>
+        <tr class="font-semibold">
+          <td class="px-4 py-2 text-xs text-muted-foreground" colspan="4">Total before tax</td>
+          <td class="px-4 py-2 text-right">{{ fmtMoney(o.total) }} {{ o.currency }}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Linked documents -->
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Deliveries ({{ deliveries().length }})
+      </div>
+      @if (deliveries().length) {
+        <ul class="divide-y divide-border/50">
+          @for (d of deliveries(); track d.id) {
+            <li>
+              <a [routerLink]="['/sales/deliveries', d.id]"
+                class="flex items-center justify-between px-4 py-2 text-sm hover:bg-accent/40">
+                <span class="font-medium text-primary">{{ d.number ?? '(draft)' }}</span>
+                <span class="text-muted-foreground">{{ fmtDate(d.delivery_date) }} · {{ statusLabel(d.status) }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">None yet.</p>
+      }
+    </div>
+
+    <div class="rounded-lg border border-border bg-card">
+      <div class="border-b border-border px-4 py-3 text-sm font-semibold">
+        Invoices ({{ invoices().length }})
+      </div>
+      @if (invoices().length) {
+        <ul class="divide-y divide-border/50">
+          @for (i of invoices(); track i.id) {
+            <li>
+              <a [routerLink]="['/sales/invoices', i.id]"
+                class="flex items-center justify-between px-4 py-2 text-sm hover:bg-accent/40">
+                <span class="font-medium text-primary">{{ i.number ?? '(draft)' }}</span>
+                <span class="text-muted-foreground">
+                  {{ fmtMoney(i.total) }} {{ i.currency }} · {{ statusLabel(i.status) }}
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="px-4 py-4 text-sm text-muted-foreground">None yet.</p>
+      }
+    </div>
+  </div>
+}
+
+<!-- Confirm modal -->
+<app-modal [open]="confirmModal()" size="sm" title="Confirm order" (closed)="confirmModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Exchange rate</label>
+      <input type="number" min="0" step="0.000001" [(ngModel)]="confirmRate" name="confirmRate"
+        placeholder="Leave blank for base currency / order default"
+        class="h-9 w-full rounded-md border border-input bg-background px-3 text-right text-sm" />
+      <p class="mt-1 text-xs text-muted-foreground">
+        Confirming books the customer's credit commitment. Required only for a foreign-currency order.
+      </p>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="confirmModal.set(false)">Cancel</button>
+      <button uiBtn type="button" [disabled]="busy()" (click)="doConfirm()">
+        {{ busy() ? 'Working…' : 'Confirm' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Cancel modal -->
+<app-modal [open]="cancelModal()" size="sm" title="Cancel order" (closed)="cancelModal.set(false)">
+  <div class="space-y-3">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium">Reason</label>
+      <textarea [(ngModel)]="cancelReason" name="cancelReason" rows="3" placeholder="Optional"
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button uiBtn type="button" variant="ghost" (click)="cancelModal.set(false)">Back</button>
+      <button uiBtn type="button" variant="destructive" [disabled]="busy()" (click)="confirmCancel()">
+        {{ busy() ? 'Working…' : 'Cancel order' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

@@ -7,22 +7,20 @@
     { label: ret()?.number ?? '…' },
   ]"
 >
-  @if (ret(); as r) {
-    @if (canCreate() && r.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canPost() && r.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="post()">
-        <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
-      </button>
-    }
-    @if (canReverse() && r.status === 'posted' && !r.reversed_by_id) {
-      <button uiBtn actions [disabled]="busy()" (click)="reverse()">
-        <ng-icon name="lucideUndo2" size="16" /> {{ busy() ? 'Reversing…' : 'Reverse' }}
-      </button>
-    }
+  @if (canCreate() && ret()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canPost() && ret()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="post()">
+      <ng-icon name="lucideCheck" size="16" /> {{ busy() ? 'Posting…' : 'Post' }}
+    </button>
+  }
+  @if (canReverse() && ret()?.status === 'posted' && !ret()?.reversed_by_id) {
+    <button uiBtn actions [disabled]="busy()" (click)="reverse()">
+      <ng-icon name="lucideUndo2" size="16" /> {{ busy() ? 'Reversing…' : 'Reverse' }}
+    </button>
   }
 </app-page-header>
 

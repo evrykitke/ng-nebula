@@ -1,0 +1,13 @@
+<app-page-header
+  title="Sales invoices"
+  subtitle="Customer bills — posting revenue, tax and accounts receivable"
+  [breadcrumbs]="[{ label: 'Sales' }, { label: 'Sales invoices' }]"
+>
+  @if (canCreate()) {
+    <a uiBtn actions routerLink="/sales/invoices/new">
+      <ng-icon name="lucidePlus" size="16" /> New invoice
+    </a>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

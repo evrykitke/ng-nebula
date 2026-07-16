@@ -7,33 +7,31 @@
     { label: rfq()?.number ?? '…' },
   ]"
 >
-  @if (rfq(); as r) {
-    @if (canCreate() && r.status === 'draft') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
-        <ng-icon name="lucidePencil" size="16" /> Edit
-      </button>
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
-        <ng-icon name="lucideTrash2" size="16" /> Delete
-      </button>
-    }
-    @if (canSend() && r.status === 'draft') {
-      <button uiBtn actions [disabled]="busy()" (click)="send()">
-        <ng-icon name="lucideSend" size="16" /> Send
-      </button>
-    }
-    @if (canSend() && r.status === 'sent') {
-      <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">
-        <ng-icon name="lucideBan" size="16" /> Close quoting
-      </button>
-    }
-    @if (canAward() && (r.status === 'sent' || r.status === 'closed')) {
-      <button uiBtn actions [disabled]="busy()" (click)="openAward()">
-        <ng-icon name="lucideAward" size="16" /> Award
-      </button>
-    }
-    @if (canSend() && r.status !== 'awarded' && r.status !== 'cancelled') {
-      <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
-    }
+  @if (canCreate() && rfq()?.status === 'draft') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit
+    </button>
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
+      <ng-icon name="lucideTrash2" size="16" /> Delete
+    </button>
+  }
+  @if (canSend() && rfq()?.status === 'draft') {
+    <button uiBtn actions [disabled]="busy()" (click)="send()">
+      <ng-icon name="lucideSend" size="16" /> Send
+    </button>
+  }
+  @if (canSend() && rfq()?.status === 'sent') {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="close()">
+      <ng-icon name="lucideBan" size="16" /> Close quoting
+    </button>
+  }
+  @if (canAward() && (rfq()?.status === 'sent' || rfq()?.status === 'closed')) {
+    <button uiBtn actions [disabled]="busy()" (click)="openAward()">
+      <ng-icon name="lucideAward" size="16" /> Award
+    </button>
+  }
+  @if (canSend() && rfq() && rfq()?.status !== 'awarded' && rfq()?.status !== 'cancelled') {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
   }
 </app-page-header>
 
@@ -118,6 +116,7 @@
             <tr class="border-b border-border text-left text-xs text-muted-foreground">
               <th class="px-4 py-2 font-medium">Item</th>
               <th class="px-4 py-2 text-right font-medium">Qty</th>
+              <th class="px-4 py-2 font-medium">Unit</th>
               @for (s of r.suppliers; track s.supplier_id) {
                 <th class="px-4 py-2 text-right font-medium">
                   <div class="flex items-center justify-end gap-2">
@@ -146,6 +145,7 @@
                   <span class="block text-xs text-muted-foreground">{{ l.item_name }}</span>
                 </td>
                 <td class="px-4 py-2 text-right">{{ fmtQty(l.qty) }}</td>
+                <td class="px-4 py-2 text-muted-foreground">{{ l.uom_code || '—' }}</td>
                 @for (s of r.suppliers; track s.supplier_id) {
                   @let q = quoteFor(l.id, s.supplier_id);
                   <td
@@ -174,7 +174,7 @@
           </tbody>
           <tfoot>
             <tr class="border-t border-border font-medium">
-              <td class="px-4 py-2 text-xs text-muted-foreground" colspan="2">Total quoted value</td>
+              <td class="px-4 py-2 text-xs text-muted-foreground" colspan="3">Total quoted value</td>
               @for (s of r.suppliers; track s.supplier_id) {
                 <td class="px-4 py-2 text-right">
                   {{ totalsBySupplier().get(s.supplier_id) ? fmtCost(totalsBySupplier().get(s.supplier_id)!) : '—' }}
@@ -183,7 +183,7 @@
             </tr>
             @if (canAward() && (r.status === 'sent' || r.status === 'closed')) {
               <tr>
-                <td class="px-4 py-2" colspan="2"></td>
+                <td class="px-4 py-2" colspan="3"></td>
                 @for (s of r.suppliers; track s.supplier_id) {
                   <td class="px-4 py-2 text-right">
                     <button
@@ -236,7 +236,7 @@
                 <span class="font-medium">{{ e.sku }}</span>
                 <span class="block text-xs text-muted-foreground">{{ e.item_name }}</span>
               </td>
-              <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(e.qty) }}</td>
+              <td class="px-2 py-2 text-right text-muted-foreground">{{ fmtQty(e.qty) }} {{ e.uom_code }}</td>
               <td class="px-2 py-2">
                 <input
                   type="number"

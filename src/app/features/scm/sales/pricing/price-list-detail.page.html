@@ -1,0 +1,138 @@
+<app-page-header
+  [title]="list()?.name ?? 'Price list'"
+  [subtitle]="list()?.scope ? list()!.scope + ' scope' : ''"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Price lists', route: '/sales/price-lists' },
+    { label: list()?.name ?? '…' },
+  ]"
+>
+  @if (canManage()) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
+      <ng-icon name="lucidePencil" size="16" /> Edit header
+    </button>
+  }
+  @if (canManage() && (list()?.status === 'draft' || list()?.status === 'archived')) {
+    <button uiBtn actions [disabled]="busy()" (click)="activate()">
+      <ng-icon name="lucideCircleCheck" size="16" /> Activate
+    </button>
+  }
+  @if (canManage() && list()?.status === 'active') {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="archive()">Archive</button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/sales/price-lists"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to price lists
+</a>
+
+@if (loading()) {
+  <p class="text-sm text-muted-foreground">Loading…</p>
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (list(); as l) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5 font-medium capitalize">{{ statusLabel(l.status) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Currency</p>
+        <p class="mt-0.5 font-medium">{{ l.currency }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Tax</p>
+        <p class="mt-0.5 font-medium">{{ l.tax_inclusive ? 'Inclusive' : 'Exclusive' }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Promotional</p>
+        <p class="mt-0.5 font-medium">{{ l.is_promotional ? 'Yes' : 'No' }}</p>
+      </div>
+      @if (l.description) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Description</p>
+          <p class="mt-0.5 font-medium">{{ l.description }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Item prices -->
+  <div class="mt-4 rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-3 text-sm font-semibold">Item prices</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left text-xs text-muted-foreground">
+            <th class="px-2 py-2 font-medium" style="min-width: 240px">Item</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 100px">Min qty</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 130px">Unit price</th>
+            <th class="px-2 py-2 text-right font-medium" style="width: 100px">Disc %</th>
+            @if (canManage()) {
+              <th class="px-2 py-2"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track $index) {
+            <tr class="border-b border-border/50 align-top last:border-0">
+              <td class="px-2 py-2">
+                <app-lookup
+                  [config]="itemLookup"
+                  [value]="r.item_id"
+                  [display]="r.item_label"
+                  [disabled]="!canManage()"
+                  (valueChange)="onItemValue(r, $event)"
+                  (selected)="onItemSelected(r, $event)"
+                />
+              </td>
+              <td class="px-2 py-2">
+                <input type="number" min="0" step="0.001" [(ngModel)]="r.min_qty" [name]="'minqty_' + $index" [disabled]="!canManage()"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+              </td>
+              <td class="px-2 py-2">
+                <input type="number" min="0" step="0.0001" [(ngModel)]="r.unit_price" [name]="'price_' + $index" [disabled]="!canManage()"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+              </td>
+              <td class="px-2 py-2">
+                <input type="number" min="0" step="0.01" [(ngModel)]="r.discount_pct" [name]="'disc_' + $index" [disabled]="!canManage()"
+                  class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm" />
+              </td>
+              @if (canManage()) {
+                <td class="px-2 py-2 text-right">
+                  <button type="button" class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                    (click)="removeRow($index)" aria-label="Remove line">
+                    <ng-icon name="lucideTrash2" size="16" />
+                  </button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-2 py-4 text-center text-muted-foreground">No prices yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (canManage()) {
+      <div class="mt-3 flex items-center gap-3">
+        <button uiBtn type="button" variant="outline" size="sm" (click)="addRow()">
+          <ng-icon name="lucidePlus" size="14" /> Add item
+        </button>
+        <button uiBtn type="button" size="sm" [disabled]="savingLines()" (click)="saveLines()">
+          {{ savingLines() ? 'Saving…' : 'Save prices' }}
+        </button>
+      </div>
+      <p class="mt-2 text-xs text-muted-foreground">
+        Saving replaces the entire price list with the rows above.
+      </p>
+    }
+  </div>
+}

@@ -1,0 +1,88 @@
+<app-page-header
+  [title]="title()"
+  subtitle="A named catalogue of item prices"
+  [breadcrumbs]="[
+    { label: 'Sales' },
+    { label: 'Price lists', route: '/sales/price-lists' },
+    { label: editId() ? 'Edit' : 'New' },
+  ]"
+/>
+
+<a
+  routerLink="/sales/price-lists"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to price lists
+</a>
+
+<form (ngSubmit)="save()" class="space-y-4">
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid gap-3 md:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Name *</label>
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Currency *</label>
+        <input
+          [(ngModel)]="form.currency"
+          name="currency"
+          maxlength="3"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm uppercase"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Scope</label>
+        <select
+          [(ngModel)]="form.scope"
+          name="scope"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm capitalize"
+        >
+          @for (s of scopes; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Description</label>
+        <input
+          [(ngModel)]="form.description"
+          name="description"
+          placeholder="Optional"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Valid from</label>
+        <app-datepicker [(date)]="form.valid_from" placeholder="Optional" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Valid to</label>
+        <app-datepicker [(date)]="form.valid_to" placeholder="Optional" />
+      </div>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" [(ngModel)]="form.tax_inclusive" name="tax_inclusive" />
+        Prices are tax-inclusive
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" [(ngModel)]="form.is_promotional" name="is_promotional" />
+        Promotional list
+      </label>
+    </div>
+  </div>
+
+  @if (formError()) {
+    <p class="text-sm text-destructive">{{ formError() }}</p>
+  }
+
+  <div class="flex items-center gap-3">
+    <button uiBtn type="submit" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save price list' }}
+    </button>
+    <a uiBtn variant="ghost" routerLink="/sales/price-lists">Cancel</a>
+  </div>
+</form>
