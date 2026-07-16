@@ -25,6 +25,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { LayoutService, SIDEBAR_RAIL, SIDEBAR_WIDTH } from '../../core/layout/layout.service';
 import { apiErrorInfo } from '../api/api-error';
 import { UiButton } from '../ui/button';
 import { saveBlob, slugify } from './download';
@@ -64,11 +65,14 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
-      <div class="fixed inset-0 z-50 flex justify-end">
-        <div class="absolute inset-0 bg-black/40" (click)="close.emit()"></div>
-
+      <!-- Starts where the sidebar ends: the nav stays visible and usable, and
+           the panel takes everything else rather than crossing under it. -->
+      <div
+        class="fixed inset-y-0 right-0 z-50 flex justify-end transition-[left] duration-200"
+        [style.left.px]="leftInset()"
+      >
         <section
-          class="relative flex h-full w-full flex-col border-l border-border bg-card shadow-2xl sm:w-[85%]"
+          class="relative flex h-full w-full flex-col border-l border-border bg-card shadow-2xl"
           role="dialog"
           aria-label="Document preview"
         >
@@ -226,6 +230,16 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 })
 export class DocumentViewer {
   private readonly reports = inject(ReportService);
+  private readonly layout = inject(LayoutService);
+
+  /**
+   * Where the panel's left edge sits: hard against the sidebar's right edge,
+   * tracking it as it collapses. Off-canvas on mobile, where the sidebar is
+   * itself an overlay and the panel takes the whole window.
+   */
+  readonly leftInset = computed(() =>
+    this.layout.isMobile() ? 0 : this.layout.collapsed() ? SIDEBAR_RAIL : SIDEBAR_WIDTH,
+  );
 
   /** The report that draws this document, e.g. `sales-invoice`. */
   readonly report = input.required<string>();

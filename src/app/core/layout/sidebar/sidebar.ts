@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { QuickNav } from './quick-nav';
 import { SidebarMenuItem } from './sidebar-menu-item';
 import { SidebarMenuService } from './sidebar-menu.service';
-import { LayoutService } from '../layout.service';
+import { LayoutService, SIDEBAR_RAIL, SIDEBAR_WIDTH } from '../layout.service';
 import { ADMIN_NAV_ITEM, NAV_ITEMS, filterNav } from '../nav.model';
 import { AuthService } from '../../auth/auth.service';
 
@@ -33,7 +33,7 @@ import { AuthService } from '../../auth/auth.service';
       [class.ease-in-out]="true"
       [class.-translate-x-full]="isMobile() && !mobileOpen()"
       [class.transition-[width]]="!isMobile()"
-      [style.width.px]="isMobile() ? null : iconOnly() ? 56 : 240"
+      [style.width.px]="isMobile() ? null : iconOnly() ? rail : width"
     >
       <!-- Brand -->
       <div class="flex h-14 shrink-0 items-center px-4">
@@ -89,4 +89,8 @@ export class Sidebar {
 
   /** Icon-only strip: the desktop collapsed rail (never on the mobile drawer). */
   readonly iconOnly = computed(() => !this.isMobile() && this.layout.collapsed());
+
+  /** Shared so anything laying out beside the rail measures the same edge. */
+  readonly width = SIDEBAR_WIDTH;
+  readonly rail = SIDEBAR_RAIL;
 }

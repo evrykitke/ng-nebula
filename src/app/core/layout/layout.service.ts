@@ -6,6 +6,16 @@ import { filter } from 'rxjs';
 const MOBILE_QUERY = '(max-width: 1023px)';
 
 /**
+ * The desktop sidebar's width, expanded and collapsed to its icon rail.
+ *
+ * Here rather than in the sidebar because anything that lays itself out beside
+ * the sidebar needs the same number — a full-height panel has to know where the
+ * nav ends, and a second copy of `240` is a second copy to keep in step.
+ */
+export const SIDEBAR_WIDTH = 240;
+export const SIDEBAR_RAIL = 56;
+
+/**
  * Shared layout UI state. Two distinct sidebar modes live here because both the
  * topbar's toggle button and the sidebar need them:
  *  - desktop (`lg`+): a persistent rail that collapses to an icon-only strip;
