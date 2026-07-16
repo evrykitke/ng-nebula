@@ -316,3 +316,10 @@
     </div>
   </div>
 }
+
+<app-report-filter-modal
+  [open]="showFilters()"
+  [fields]="filterFields()"
+  (apply)="renderExport($event)"
+  (cancel)="cancelExport()"
+/>

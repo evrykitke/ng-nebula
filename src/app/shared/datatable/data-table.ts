@@ -27,6 +27,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { apiErrorInfo } from '../api/api-error';
 import { saveBlob, slugify } from '../reporting/download';
 import { ExportColumn, ListExport, ReportService } from '../reporting/report.service';
+import { ReportFilterModal } from './report-filter-modal';
+import { Criterion, FilterField, applyFilters, filterFields, summarize } from './report-filter';
 import {
   BadgeTone,
   ColumnDef,
@@ -49,7 +51,15 @@ import {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet, CdkMenu, CdkMenuItem, CdkMenuTrigger, NgIcon],
+  imports: [
+    FormsModule,
+    NgTemplateOutlet,
+    CdkMenu,
+    CdkMenuItem,
+    CdkMenuTrigger,
+    NgIcon,
+    ReportFilterModal,
+  ],
   providers: [
     provideIcons({
       lucideEllipsisVertical,
@@ -116,6 +126,9 @@ export class DataTable<T = unknown> {
   readonly expanded = signal<Set<string>>(new Set());
   /** True while an export is being fetched and rendered. */
   readonly exporting = signal(false);
+  /** The criteria form, open between fetching an export's rows and rendering them. */
+  readonly showFilters = signal(false);
+  readonly filterFields = signal<FilterField<T>[]>([]);
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.size())));
   readonly allSelected = computed(() => {
@@ -141,6 +154,9 @@ export class DataTable<T = unknown> {
   private static readonly MIN_SEARCH = 3;
   /** Rows one export may carry — the server rejects more than this. */
   private static readonly EXPORT_MAX = 20_000;
+  /** The fetched rows awaiting the criteria form's verdict. */
+  private pending: { rows: T[]; total: number; search: string; columns: ColumnDef<T>[] } | null =
+    null;
   /** The last effective search term actually queried (to skip no-op requests). */
   private lastSearch = '';
 
@@ -325,17 +341,18 @@ export class DataTable<T = unknown> {
   }
 
   /**
-   * Export every row the current search and filters select — not just the page
-   * on screen — as a PDF rendered by the server's reporting engine, so it
-   * carries the same letterhead as the rest of the report catalogue.
+   * Step one of an export: fetch every row the current search and filters
+   * select — not just the page on screen — then ask which of them belong on
+   * the paper.
    *
-   * The rows are re-fetched rather than taken from `rows()`, which holds one
-   * page; the query is otherwise identical, so the document says what the
-   * screen says.
+   * The rows are fetched before the form opens so the filters can offer the
+   * values the rows actually hold, rather than every value the column could
+   * theoretically take. The rows are re-fetched rather than taken from
+   * `rows()`, which holds one page; the query is otherwise identical, so the
+   * document says what the screen says.
    */
   exportPdf(): void {
     if (this.exporting()) return;
-    const cfg = this.config();
     const columns = this.exportColumns();
     if (!columns.length) {
       this.notify.warn('Nothing to export', 'Every column is hidden.');
@@ -354,30 +371,14 @@ export class DataTable<T = unknown> {
 
     this.dataSource()(query).subscribe({
       next: (res) => {
+        this.exporting.set(false);
         if (!res.rows.length) {
-          this.exporting.set(false);
           this.notify.warn('Nothing to export', 'No rows match the current filters.');
           return;
         }
-        const title = cfg.exportTitle ?? prettify(cfg.id);
-        const list: ListExport = {
-          title,
-          subtitle: this.exportSubtitle(res.rows.length, res.total, search),
-          orientation: cfg.exportOrientation ?? (columns.length > 6 ? 'landscape' : 'portrait'),
-          columns: columns.map((c) => ({ label: c.label, align: exportAlign(c.align) })),
-          rows: res.rows.map((row) => columns.map((c) => this.cellText(row, c))),
-        };
-        this.reports.exportList(list).subscribe({
-          next: (blob) => {
-            saveBlob(blob, `${slugify(title)}-${DateTime.now().toFormat('yyyy-LL-dd')}.pdf`);
-            this.exporting.set(false);
-          },
-          error: (err) => {
-            this.exporting.set(false);
-            const { message } = apiErrorInfo(err);
-            this.notify.error('Export failed', message);
-          },
-        });
+        this.pending = { rows: res.rows, total: res.total, search, columns };
+        this.filterFields.set(filterFields(columns, res.rows, (row, c) => this.cellText(row, c)));
+        this.showFilters.set(true);
       },
       error: (err) => {
         this.exporting.set(false);
@@ -388,17 +389,68 @@ export class DataTable<T = unknown> {
   }
 
   /**
-   * The line under the title: what the page filtered to, then how many rows
-   * that came to — so a printed list says what it is, months later, without
-   * the screen it came from.
+   * Step two: narrow the fetched rows to what was asked for and render them.
+   * The criteria only ever reach this copy of the rows — the screen keeps
+   * showing what it showed.
    */
-  private exportSubtitle(rows: number, total: number, search: string): string {
+  renderExport(values: Record<string, Criterion>): void {
+    const pending = this.pending;
+    if (!pending || this.exporting()) return;
+    this.showFilters.set(false);
+    this.pending = null;
+
+    const { columns, total, search } = pending;
+    const rows = applyFilters(pending.rows, this.filterFields(), values, (row, c) =>
+      this.cellText(row, c),
+    );
+    if (!rows.length) {
+      this.notify.warn('Nothing to export', 'No rows match those filters.');
+      return;
+    }
+
+    const cfg = this.config();
+    const title = cfg.exportTitle ?? prettify(cfg.id);
+    const list: ListExport = {
+      title,
+      subtitle: this.exportSubtitle(rows.length, total, search, summarize(this.filterFields(), values)),
+      orientation: cfg.exportOrientation ?? (columns.length > 6 ? 'landscape' : 'portrait'),
+      columns: columns.map((c) => ({ label: c.label, align: exportAlign(c.align) })),
+      rows: rows.map((row) => columns.map((c) => this.cellText(row, c))),
+    };
+
+    this.exporting.set(true);
+    this.reports.exportList(list).subscribe({
+      next: (blob) => {
+        saveBlob(blob, `${slugify(title)}-${DateTime.now().toFormat('yyyy-LL-dd')}.pdf`);
+        this.exporting.set(false);
+      },
+      error: (err) => {
+        this.exporting.set(false);
+        const { message } = apiErrorInfo(err);
+        this.notify.error('Export failed', message);
+      },
+    });
+  }
+
+  cancelExport(): void {
+    this.showFilters.set(false);
+    this.pending = null;
+  }
+
+  /**
+   * The line under the title: what the page filtered to, what the export was
+   * narrowed to, then how many rows that came to — so a printed list says what
+   * it is, months later, without the screen it came from.
+   */
+  private exportSubtitle(rows: number, total: number, search: string, criteria: string[]): string {
     const bits: string[] = [];
     const filters = this.config().exportSubtitle?.();
     if (filters?.trim()) bits.push(filters.trim());
     if (search) bits.push(`Search: “${search}”`);
-    // `rows` is what the document holds; it falls short of `total` only when
-    // the list is longer than one export, which the reader deserves to know.
+    bits.push(...criteria);
+    // `rows` is what the document holds; it falls short of `total` when the
+    // export was narrowed, or when the list is longer than one export — either
+    // way the reader deserves to know it is not the whole story.
     bits.push(rows < total ? `${rows} of ${total} records` : `${rows} records`);
     return bits.join(' · ');
   }
