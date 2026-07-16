@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   HostListener,
   computed,
   effect,
@@ -9,50 +10,65 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideDownload,
   lucideExternalLink,
   lucideLock,
   lucideMail,
+  lucideMinus,
+  lucidePlus,
+  lucidePrinter,
   lucideX,
 } from '@ng-icons/lucide';
-import { NotificationService } from '../../core/services/notification.service';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { apiErrorInfo } from '../api/api-error';
 import { UiButton } from '../ui/button';
 import { saveBlob, slugify } from './download';
+import { drawPage, openPdf } from './pdf-canvas';
 import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
+
+/** The zoom steps the − / + buttons walk through. */
+const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 
 /**
  * A record's document, shown before it goes anywhere: a panel over the page
  * holding the rendered PDF, with the things one actually does with a trade
  * document — read it, file it, send it.
  *
- * The preview is the browser's own PDF viewer in an iframe. That is deliberate:
- * it already paginates, zooms, searches and prints, it is what the reader knows,
- * and the alternative — shipping pdf.js — is a megabyte of dependency to rebuild
- * what is already there. The panel's own bar carries only what the viewer has
- * no opinion about: which letterhead to draw, and where the file goes next.
+ * The pages are drawn by pdf.js into our own chrome rather than handed to the
+ * browser's PDF plugin: the plugin cannot be themed, titles the document with
+ * the blob's uuid, and behaves differently in every browser. pdf.js is the same
+ * engine Firefox ships, so "our own viewer" is not a rebuild of PDF rendering —
+ * only of the toolbar around it.
  */
 @Component({
   selector: 'app-document-viewer',
   standalone: true,
   imports: [FormsModule, NgIcon, UiButton],
   providers: [
-    provideIcons({ lucideX, lucideDownload, lucideMail, lucideExternalLink, lucideLock }),
+    provideIcons({
+      lucideX,
+      lucideDownload,
+      lucideMail,
+      lucideExternalLink,
+      lucideLock,
+      lucidePlus,
+      lucideMinus,
+      lucidePrinter,
+    }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
       <div class="fixed inset-0 z-50 flex justify-end">
-        <!-- Backdrop: dismisses, and dims the page it slides over. -->
         <div class="absolute inset-0 bg-black/40" (click)="close.emit()"></div>
 
         <section
-          class="relative flex h-full w-full flex-col border-l border-border bg-card shadow-2xl sm:w-3/4"
+          class="relative flex h-full w-full flex-col border-l border-border bg-card shadow-2xl sm:w-[85%]"
           role="dialog"
           aria-label="Document preview"
         >
@@ -74,19 +90,52 @@ import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
           </header>
 
           <div class="flex flex-wrap items-center gap-2 border-b border-border px-5 py-2.5">
-            <label class="text-xs text-muted-foreground">Letterhead</label>
             <select
               class="rounded-md border border-border bg-background px-2 py-1 text-xs capitalize"
               [ngModel]="format()"
               (ngModelChange)="format.set($event)"
+              aria-label="Letterhead"
             >
               @for (f of formats; track f) {
                 <option [value]="f">{{ f }}</option>
               }
             </select>
 
+            <div class="ml-2 flex items-center gap-1">
+              <button
+                type="button"
+                class="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-40"
+                aria-label="Zoom out"
+                [disabled]="!canZoomOut()"
+                (click)="zoomBy(-1)"
+              >
+                <ng-icon name="lucideMinus" size="15" />
+              </button>
+              <span class="w-12 text-center text-xs tabular-nums text-muted-foreground">
+                {{ zoomPercent() }}%
+              </span>
+              <button
+                type="button"
+                class="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-40"
+                aria-label="Zoom in"
+                [disabled]="!canZoomIn()"
+                (click)="zoomBy(1)"
+              >
+                <ng-icon name="lucidePlus" size="15" />
+              </button>
+            </div>
+
+            @if (pages()) {
+              <span class="text-xs text-muted-foreground">
+                {{ pages() }} {{ pages() === 1 ? 'page' : 'pages' }}
+              </span>
+            }
+
             <span class="ml-auto"></span>
 
+            <button uiBtn variant="outline" [disabled]="!blob()" (click)="print()">
+              <ng-icon name="lucidePrinter" size="15" /> Print
+            </button>
             <button uiBtn variant="outline" [disabled]="!blob()" (click)="openInTab()">
               <ng-icon name="lucideExternalLink" size="15" /> Open
             </button>
@@ -153,7 +202,7 @@ import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
             </div>
           }
 
-          <div class="relative flex-1 overflow-hidden bg-muted/40">
+          <div class="relative flex-1 overflow-auto bg-neutral-200 dark:bg-neutral-900">
             @if (loading()) {
               <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
                 Rendering…
@@ -166,9 +215,9 @@ import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
                   <button uiBtn variant="outline" class="mt-3" (click)="load()">Try again</button>
                 </div>
               </div>
-            } @else if (src()) {
-              <iframe [src]="src()" class="h-full w-full border-0" title="Document preview"></iframe>
             }
+            <!-- The pages are appended here as canvases, one per page. -->
+            <div #pageHost class="flex flex-col items-center gap-4 p-6"></div>
           </div>
         </section>
       </div>
@@ -177,8 +226,6 @@ import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
 })
 export class DocumentViewer {
   private readonly reports = inject(ReportService);
-  private readonly notify = inject(NotificationService);
-  private readonly sanitizer = inject(DomSanitizer);
 
   /** The report that draws this document, e.g. `sales-invoice`. */
   readonly report = input.required<string>();
@@ -192,13 +239,16 @@ export class DocumentViewer {
 
   readonly close = output<void>();
 
+  private readonly pageHost = viewChild<ElementRef<HTMLDivElement>>('pageHost');
+
   readonly formats = REPORT_FORMATS;
   readonly format = signal<ReportFormat>('corporate');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly blob = signal<Blob | null>(null);
-  readonly src = signal<SafeResourceUrl | null>(null);
+  readonly pages = signal(0);
   readonly composing = signal(false);
+  readonly zoom = signal(1);
 
   to = '';
   subject = '';
@@ -207,8 +257,11 @@ export class DocumentViewer {
   password = '';
 
   readonly title = computed(() => this.heading() || prettify(this.report()));
+  readonly zoomPercent = computed(() => Math.round(this.zoom() * 100));
+  readonly canZoomIn = computed(() => this.zoom() < ZOOMS[ZOOMS.length - 1]);
+  readonly canZoomOut = computed(() => this.zoom() > ZOOMS[0]);
 
-  /** The object URL behind {@link src}, kept so it can be released. */
+  private doc: PDFDocumentProxy | null = null;
   private objectUrl: string | null = null;
   private fileName = '';
 
@@ -218,11 +271,13 @@ export class DocumentViewer {
       const open = this.open();
       const format = this.format();
       const id = this.id();
-      if (open && id) {
-        queueMicrotask(() => this.load(format));
-      } else if (!open) {
-        queueMicrotask(() => this.release());
-      }
+      if (open && id) queueMicrotask(() => this.load(format));
+      else if (!open) queueMicrotask(() => this.release());
+    });
+    // Zoom redraws the pages already in hand — no need to ask the server again.
+    effect(() => {
+      const zoom = this.zoom();
+      if (this.doc) queueMicrotask(() => void this.paint(zoom));
     });
     inject(DestroyRef).onDestroy(() => this.release());
   }
@@ -238,14 +293,22 @@ export class DocumentViewer {
     this.loading.set(true);
     this.error.set(null);
     this.reports.renderDocument(this.report(), id, format).subscribe({
-      next: (res) => {
-        this.loading.set(false);
-        if (!res.body) return;
+      next: async (res) => {
+        if (!res.body) {
+          this.loading.set(false);
+          return;
+        }
         this.release();
         this.blob.set(res.body);
         this.fileName = fileNameOf(res.headers.get('content-disposition'), this.report());
-        this.objectUrl = URL.createObjectURL(res.body);
-        this.src.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl));
+        try {
+          this.doc = await openPdf(await res.body.arrayBuffer());
+          this.pages.set(this.doc.numPages);
+          await this.paint(this.zoom());
+        } catch (e) {
+          this.error.set(e instanceof Error ? e.message : 'The document could not be read.');
+        }
+        this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
@@ -254,23 +317,77 @@ export class DocumentViewer {
     });
   }
 
+  /** Draw every page into the host, replacing whatever was there. */
+  private async paint(zoom: number): Promise<void> {
+    const host = this.pageHost()?.nativeElement;
+    const doc = this.doc;
+    if (!host || !doc) return;
+    host.replaceChildren();
+    for (let n = 1; n <= doc.numPages; n++) {
+      const canvas = document.createElement('canvas');
+      canvas.className = 'bg-white shadow-lg';
+      host.append(canvas);
+      await drawPage(doc, n, canvas, zoom);
+    }
+  }
+
+  zoomBy(step: number): void {
+    const i = ZOOMS.indexOf(this.zoom());
+    const next = ZOOMS[Math.min(Math.max((i < 0 ? 2 : i) + step, 0), ZOOMS.length - 1)];
+    this.zoom.set(next);
+  }
+
   download(): void {
     const blob = this.blob();
     if (blob) saveBlob(blob, this.fileName);
   }
 
-  openInTab(): void {
-    if (this.objectUrl) window.open(this.objectUrl, '_blank');
+  /** The file's own URL, made only when something needs to point at it. */
+  private url(): string | null {
+    const blob = this.blob();
+    if (!blob) return null;
+    this.objectUrl ??= URL.createObjectURL(blob);
+    return this.objectUrl;
   }
 
-  /** Drop the rendered bytes and the URL holding them. */
+  openInTab(): void {
+    const url = this.url();
+    if (url) window.open(url, '_blank');
+  }
+
+  /**
+   * Printing goes through the browser's own PDF pipeline rather than the
+   * canvases: a canvas prints as a picture of the page, which comes out soft
+   * and cannot be searched or selected.
+   */
+  print(): void {
+    const url = this.url();
+    if (!url) return;
+    const frame = document.createElement('iframe');
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    frame.src = url;
+    frame.onload = () => frame.contentWindow?.print();
+    document.body.append(frame);
+    // Long enough for the print dialog to take its own copy of the document.
+    setTimeout(() => frame.remove(), 60_000);
+  }
+
+  /** Drop the rendered bytes, the parsed document and the URL holding them. */
   private release(): void {
     if (this.objectUrl) {
       URL.revokeObjectURL(this.objectUrl);
       this.objectUrl = null;
     }
-    this.src.set(null);
+    void this.doc?.destroy();
+    this.doc = null;
+    this.pages.set(0);
     this.blob.set(null);
+    this.pageHost()?.nativeElement.replaceChildren();
   }
 }
 

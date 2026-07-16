@@ -30,6 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "luxon": "^3.7.2",
+    "pdfjs-dist": "^4.6.82",
     "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.6.0",

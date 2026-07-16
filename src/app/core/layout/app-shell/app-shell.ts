@@ -44,5 +44,14 @@ export class AppShell {
     // Force a reflow so the animation restarts even on same-class navigations.
     void content.offsetWidth;
     content.classList.add('page-enter');
+    // Drop it once it has played. The animation fills, so it never stops
+    // applying — and an element whose transform is under animation control is
+    // the containing block for its `position: fixed` descendants. Left on, it
+    // quietly trapped every overlay (modals, the document panel) inside the
+    // content area instead of the window. The animation's end state is the
+    // element's natural state, so removing the class shows nothing.
+    content.addEventListener('animationend', () => content.classList.remove('page-enter'), {
+      once: true,
+    });
   }
 }
