@@ -1,0 +1,40 @@
+/* ============================================
+   SELF-HOSTED TYPE
+
+   Selawik — Microsoft's open, metric-compatible stand-in for Segoe UI
+   (SIL OFL 1.1; licence ships beside the files in public/fonts).
+
+   It is not the first choice anywhere. The theme asks for Segoe UI first, so
+   Windows renders the real thing and downloads nothing; every other platform
+   used to fall through to Arial and lose the theme's character entirely. This
+   is what it falls to instead — and because the metrics match Segoe, the same
+   layout holds either way.
+
+   Three weights, ~44KB in total, fetched only if a machine actually lacks
+   Segoe. 500 borrows 400 and 600 is carried outright, so the app's
+   font-medium/semibold headings hold their shape.
+   ============================================ */
+
+@font-face {
+  font-family: 'Selawik';
+  src: url('/fonts/selawik-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Selawik';
+  src: url('/fonts/selawik-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Selawik';
+  src: url('/fonts/selawik-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

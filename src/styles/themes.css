@@ -332,7 +332,10 @@
   :root,
   [data-theme='winformz'] {
     --radius: 0.125rem;
-    --font-sans: 'Segoe UI', 'Segoe UI Variable Text', Tahoma, Arial, sans-serif;
+    /* Segoe first, so Windows uses the real face and fetches nothing; Selawik
+       is the metric-compatible fallback everywhere else, and Tahoma/Arial
+       only if even that fails to load. */
+    --font-sans: 'Segoe UI', 'Segoe UI Variable Text', Selawik, Tahoma, Arial, sans-serif;
 
     --background: #f0f2f5;
     --foreground: #1b1f24;

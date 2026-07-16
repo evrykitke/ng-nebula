@@ -98,7 +98,7 @@
           }
           @for (c of visibleColumns(); track c.field) {
             <th
-              class="px-4 py-2.5 font-medium"
+              class="whitespace-nowrap px-4 py-2.5 font-medium"
               [style.width]="c.width"
               [class.text-right]="c.align === 'right'"
               [class.text-center]="c.align === 'center'"
@@ -130,18 +130,18 @@
           @for (s of skeletonRows; track $index) {
             <tr class="border-b border-border last:border-0">
               @if (rowDetail()) {
-                <td class="px-2 py-3"></td>
+                <td class="px-2 py-2"></td>
               }
               @if (config().multiSelect) {
-                <td class="px-3 py-3"></td>
+                <td class="px-3 py-2"></td>
               }
               @for (c of visibleColumns(); track c.field) {
-                <td class="px-4 py-3">
+                <td class="px-4 py-2">
                   <div class="h-4 animate-pulse rounded bg-muted" [style.width.%]="55"></div>
                 </td>
               }
               @if (config().actions?.length) {
-                <td class="px-4 py-3">
+                <td class="px-4 py-2">
                   <div class="ml-auto h-4 w-16 animate-pulse rounded bg-muted"></div>
                 </td>
               }
@@ -160,7 +160,7 @@
               (click)="onRowClick(row)"
             >
               @if (rowDetail()) {
-                <td class="px-2 py-2.5">
+                <td class="px-2 py-1.5">
                   <button
                     type="button"
                     class="text-muted-foreground hover:text-foreground"
@@ -171,7 +171,7 @@
                 </td>
               }
               @if (config().multiSelect) {
-                <td class="px-3 py-2.5">
+                <td class="px-3 py-1.5">
                   <input
                     type="checkbox"
                     [checked]="isSelected(row)"
@@ -182,7 +182,7 @@
               }
               @for (c of visibleColumns(); track c.field) {
                 <td
-                  class="px-4 py-2.5"
+                  class="whitespace-nowrap px-4 py-1.5"
                   [class.text-right]="c.align === 'right'"
                   [class.text-center]="c.align === 'center'"
                 >
@@ -221,7 +221,7 @@
                 </td>
               }
               @if (config().actions?.length) {
-                <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                <td class="whitespace-nowrap px-4 py-1.5 text-right">
                   @for (a of visibleActions(row); track a.key) {
                     <button
                       type="button"
