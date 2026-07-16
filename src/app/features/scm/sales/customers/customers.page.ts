@@ -37,7 +37,7 @@ export class CustomersPage {
       col.text<SalesCustomer>('name', 'Name').sortable(),
       col.text<SalesCustomer>('contact_name', 'Contact').value((c) => c.contact_name ?? '—'),
       col.text<SalesCustomer>('phone', 'Phone').value((c) => c.phone ?? '—').hidden(),
-      col.text<SalesCustomer>('currency', 'Currency').width('90px'),
+      col.text<SalesCustomer>('currency', 'Ccy').width('70px'),
       col
         .number<SalesCustomer>('payment_terms_days', 'Terms (days)')
         .value((c) => c.payment_terms_days),

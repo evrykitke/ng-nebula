@@ -40,7 +40,7 @@ export class SalesOrdersPage {
         .text<SalesOrderHeader>('expected_date', 'Expected')
         .value((o) => fmtDate(o.expected_date))
         .width('120px'),
-      col.text<SalesOrderHeader>('currency', 'Currency').width('90px'),
+      col.text<SalesOrderHeader>('currency', 'Ccy').width('70px'),
       col
         .badge<SalesOrderHeader>('status', 'Status')
         .value((o) => statusLabel(o.status))

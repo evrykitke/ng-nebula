@@ -45,7 +45,7 @@ export class StockLevelsPage {
     columns: [
       col.text<LevelView>('sku', 'SKU').sortable().width('130px'),
       col.text<LevelView>('item_name', 'Item').sortable(),
-      col.text<LevelView>('warehouse_code', 'Warehouse').sortable().width('110px'),
+      col.text<LevelView>('warehouse_code', 'Warehouse').sortable().width('120px'),
       col
         .number<LevelView>('on_hand', 'On hand')
         .value((l) => num(l.on_hand))

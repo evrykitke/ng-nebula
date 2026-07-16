@@ -89,7 +89,7 @@
          happens to be in the first row. That is what lets a cell clip instead
          of stretching its column, and it keeps the columns still while paging
          through records of different lengths. -->
-    <table class="w-full table-fixed text-sm">
+    <table class="w-full table-fixed text-sm" [style.min-width.px]="tableMinPx()">
       <colgroup>
         @if (rowDetail()) {
           <col class="w-8" />

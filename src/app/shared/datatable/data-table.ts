@@ -148,21 +148,75 @@ export class DataTable<T = unknown> {
   /**
    * How wide a column sits, under fixed layout.
    *
-   * A column's own `width` wins. Otherwise the type decides: a date, a
-   * currency code or a status is a known size, and giving it an equal share of
-   * the table — which is what fixed layout does with columns that say nothing —
-   * would starve the names and descriptions people actually read. Text columns
-   * return nothing and split whatever is left.
+   * A column's own `width` wins. Otherwise it is the wider of what the content
+   * needs and what the heading needs — because for the short types the heading
+   * is what actually sets the width. A boolean renders `Yes`, but its column is
+   * called `2FA` in one list and `Negative stock` in another, and one constant
+   * per type is wrong for both: it wastes half a column on the first and clips
+   * the second.
+   *
+   * Text and email return nothing and split whatever is left over; they hold
+   * the names people came to read, and no guess beats giving them the room.
    */
   colWidth(c: ColumnDef<T>): string | null {
     if (c.width) return c.width;
-    return TYPE_WIDTHS[c.type] ?? null;
+    const content = c.type === 'badge' ? this.badgePx(c) : CONTENT_PX[c.type];
+    if (content === undefined) return null;
+    return `${Math.max(content, this.headingPx(c))}px`;
   }
 
-  /** The actions column: sized to its buttons, which are words, not content. */
-  actionsWidth(): string {
-    return `${5.5 + 3 * ((this.config().actions?.length ?? 1) - 1)}rem`;
+  /**
+   * What a badge column's content needs — measured from the values it can
+   * hold, not from the longest status in the app.
+   *
+   * `badgeColors` keys are the domain: a Hold column that only ever says `ok`
+   * or `on hold` was taking the same 140px as one that says
+   * `partially received`. A badge column that declares no tones keeps the
+   * cautious default, since anything at all might land in it.
+   */
+  private badgePx(c: ColumnDef<T>): number {
+    const values = Object.keys(c.badgeColors ?? {});
+    if (!values.length) return CONTENT_PX.badge ?? 140;
+    const longest = Math.max(...values.map((v) => v.replace(/_/g, ' ').length));
+    return Math.ceil(longest * BADGE_CHAR_PX + BADGE_PADDING_PX + CELL_PADDING_PX);
   }
+
+  /** What a heading needs to sit on one line, arrow and padding included. */
+  private headingPx(c: ColumnDef<T>): number {
+    return (
+      c.label.length * HEADING_CHAR_PX + CELL_PADDING_PX + (c.sortable ? SORT_ARROW_PX : 0)
+    );
+  }
+
+  /**
+   * The actions column: sized to its buttons, which are words, not content.
+   *
+   * In px, not rem: this app sets a 15px root, so the 5.5rem this used to
+   * return was 82.5px and clipped its own "Actions" heading, which needs 85.
+   */
+  actionsWidth(): string {
+    return `${ACTIONS_BASE_PX + ACTIONS_EACH_PX * ((this.config().actions?.length ?? 1) - 1)}px`;
+  }
+
+  /**
+   * The narrowest the whole grid may be drawn: every sized column at its width,
+   * every text column at its floor.
+   *
+   * Fixed layout will otherwise shrink a table to whatever it is given, and
+   * squeeze the text columns to nothing to do it. Below this the table stops
+   * and the wrapper scrolls — the columns keep their meaning and the reader
+   * gets a scrollbar, rather than a page of ellipses.
+   */
+  readonly tableMinPx = computed(() => {
+    const sized = this.visibleColumns().map((c) => this.colWidth(c));
+    const fixed = sized.reduce((sum, w) => sum + (w?.endsWith('px') ? parseFloat(w) : 0), 0);
+    const flexible = sized.filter((w) => w === null).length * TEXT_MIN_PX;
+    const chrome =
+      (this.rowDetail() ? 32 : 0) +
+      (this.config().multiSelect ? 32 : 0) +
+      (this.config().actions?.length ? parseFloat(this.actionsWidth()) : 0);
+    return Math.round(fixed + flexible + chrome);
+  });
 
   /** Placeholder rows for the skeleton shown on the first (empty) load. */
   readonly skeletonRows = Array.from({ length: 8 });
@@ -552,21 +606,53 @@ export class DataTable<T = unknown> {
 }
 
 /**
- * What each kind of column is worth, when it does not say for itself.
+ * What each kind of column's *content* needs, in px, cell padding included.
  *
  * Only the predictable ones are here. Text and email are deliberately absent:
  * they hold the names and descriptions a reader is actually scanning, so they
  * take whatever the fixed layout has left over.
+ *
+ * These are the widest each type ever renders — `2026-07-15`, `1,234,567.89`,
+ * `partially received`, `Yes`. A type whose content is wider than this should
+ * say so with `width`.
  */
-const TYPE_WIDTHS: Partial<Record<ColumnType, string>> = {
-  date: '7.5rem',
-  datetime: '10rem',
-  number: '7rem',
-  currency: '8rem',
-  badge: '9rem',
-  boolean: '6rem',
-  image: '4rem',
+const CONTENT_PX: Partial<Record<ColumnType, number>> = {
+  date: 112,
+  datetime: 156,
+  number: 100,
+  currency: 124,
+  badge: 140,
+  boolean: 70,
+  image: 68,
 };
+
+/** Cell padding (px-4, both sides) — the floor under any column. */
+const CELL_PADDING_PX = 32;
+/**
+ * The least a text column may be squeezed to.
+ *
+ * Fixed layout hands the leftover to the text columns, and on a list with eight
+ * sized columns there is barely any: the item *name* — the column someone came
+ * to read — came out at 80px while the currency code beside it had 110. Below
+ * this the table stops shrinking and the grid scrolls instead, which is the
+ * right way round: a name is worth a scrollbar, a truncated one is worth
+ * nothing.
+ */
+const TEXT_MIN_PX = 160;
+/** The sort arrow that rides beside a sortable heading. */
+const SORT_ARROW_PX = 18;
+/**
+ * Rough width of one heading character: headings are `text-xs uppercase` with
+ * wide tracking, so caps and spacing put them near 7.5px at the 15px root.
+ */
+const HEADING_CHAR_PX = 7.5;
+/** One character of badge text — `text-xs`, mixed case, so narrower. */
+const BADGE_CHAR_PX = 5.6;
+/** The pill's own px-2. */
+const BADGE_PADDING_PX = 16;
+/** One row action ("View") plus the cell's padding; each extra action adds a word. */
+const ACTIONS_BASE_PX = 92;
+const ACTIONS_EACH_PX = 46;
 
 /** A column's alignment in the terms the reporting engine uses. */
 function exportAlign(align: ColumnDef['align']): ExportColumn['align'] {

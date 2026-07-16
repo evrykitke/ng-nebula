@@ -40,7 +40,19 @@ export interface ColumnDef<T = unknown> {
   visible: boolean;
   /** Whether the user may show/hide it via the column-toggle modal. */
   toggleable: boolean;
-  /** Fixed column width, e.g. `'120px'`. */
+  /**
+   * This column's width, e.g. `'120px'` — the last word on the matter.
+   *
+   * The table lays out fixed, so every column has a width whether it says so or
+   * not. Left unset, the predictable types (date, number, currency, badge,
+   * boolean, image) take the wider of what their content needs and what their
+   * heading needs, and text columns share what is left.
+   *
+   * Set it when the content is narrower or wider than the type implies — a
+   * currency *code* ('USD') in a text column, a SKU, a quantity that never
+   * passes 999. Setting it on a text column takes that column out of the share
+   * and hands the space to the others, which is usually the point.
+   */
   width?: string;
   /** Horizontal cell alignment. */
   align?: 'left' | 'right' | 'center';

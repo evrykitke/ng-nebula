@@ -43,7 +43,7 @@ export function accountsTable(opts: {
           revenue: 'success',
           expense: 'danger',
         }),
-      col.text<AccountingAccount>('currency', 'Currency').width('100px'),
+      col.text<AccountingAccount>('currency', 'Ccy').width('70px'),
       col
         .badge<AccountingAccount>('system_key', 'Role')
         .value((a) => a.system_key ?? '—')

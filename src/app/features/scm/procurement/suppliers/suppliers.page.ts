@@ -37,7 +37,7 @@ export class SuppliersPage {
       col.text<ProcurementSupplier>('name', 'Name').sortable(),
       col.text<ProcurementSupplier>('contact_name', 'Contact').value((s) => s.contact_name ?? '—'),
       col.text<ProcurementSupplier>('phone', 'Phone').value((s) => s.phone ?? '—').hidden(),
-      col.text<ProcurementSupplier>('currency', 'Currency').width('90px'),
+      col.text<ProcurementSupplier>('currency', 'Ccy').width('70px'),
       col
         .number<ProcurementSupplier>('payment_terms_days', 'Terms (days)')
         .value((s) => s.payment_terms_days),
