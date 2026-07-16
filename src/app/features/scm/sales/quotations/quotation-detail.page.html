@@ -7,6 +7,7 @@
     { label: quotation()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="quotation" [id]="quotation()?.id" />
   @if (canCreate() && quotation()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
       <ng-icon name="lucidePencil" size="16" /> Edit

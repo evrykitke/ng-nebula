@@ -7,6 +7,7 @@
     { label: ret()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="purchase-return" [id]="ret()?.id" />
   @if (canCreate() && ret()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete

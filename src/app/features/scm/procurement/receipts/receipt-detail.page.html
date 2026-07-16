@@ -7,6 +7,7 @@
     { label: receipt()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="goods-receipt" [id]="receipt()?.id" />
   @if (canCreate() && receipt()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete

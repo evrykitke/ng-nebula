@@ -11,6 +11,8 @@
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
       <ng-icon name="lucidePencil" size="16" /> Edit
     </button>
+  }
+  @if (canCreate() && rfq()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete
     </button>

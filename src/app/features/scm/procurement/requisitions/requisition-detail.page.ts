@@ -7,6 +7,7 @@ import { UiButton } from '../../../../shared/ui/button';
 import { Modal } from '../../../../shared/ui/modal';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
+import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -23,7 +24,7 @@ import {
 /** One requisition with its lines and the approval → conversion lifecycle. */
 @Component({
   selector: 'app-requisition-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader],
+  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './requisition-detail.page.html',
 })

@@ -7,10 +7,13 @@
     { label: req()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="requisition" [id]="req()?.id" />
   @if (canCreate() && req()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
       <ng-icon name="lucidePencil" size="16" /> Edit
     </button>
+  }
+  @if (canCreate() && req()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete
     </button>
@@ -24,6 +27,8 @@
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openReject()">
       <ng-icon name="lucideBan" size="16" /> Reject
     </button>
+  }
+  @if (canApprove() && req()?.status === 'submitted') {
     <button uiBtn actions [disabled]="busy()" (click)="approve()">
       <ng-icon name="lucideCircleCheck" size="16" /> Approve
     </button>

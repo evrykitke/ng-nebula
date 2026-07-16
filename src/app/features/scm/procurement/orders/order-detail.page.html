@@ -7,10 +7,13 @@
     { label: order()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="purchase-order" [id]="order()?.id" />
   @if (canCreate() && order()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="edit()">
       <ng-icon name="lucidePencil" size="16" /> Edit
     </button>
+  }
+  @if (canCreate() && order()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete
     </button>

@@ -7,6 +7,7 @@
     { label: invoice()?.number ?? '…' },
   ]"
 >
+  <app-document-pdf actions report="supplier-invoice" [id]="invoice()?.id" />
   @if (canCreate() && invoice()?.status === 'draft') {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="remove()">
       <ng-icon name="lucideTrash2" size="16" /> Delete

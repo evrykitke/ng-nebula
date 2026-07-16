@@ -6,6 +6,7 @@ import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
 import { Modal } from '../../../../shared/ui/modal';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
+import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -20,7 +21,7 @@ import {
 /** One credit note: header, lines and the draft → posted → cancelled lifecycle. */
 @Component({
   selector: 'app-credit-note-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, PageHeader],
+  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './credit-note-detail.page.html',
 })
