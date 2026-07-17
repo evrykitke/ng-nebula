@@ -295,7 +295,7 @@ export class AccountingServiceProxy {
      * @param from (optional) From date (inclusive)
      * @param to (optional) To date (inclusive)
      */
-    account_ledger(id: string, from?: string | null | null | undefined, to?: string | null | null | undefined): Observable<AccountLedger> {
+    account_ledger(id: string, from?: string | null | undefined, to?: string | null | undefined): Observable<AccountLedger> {
         let url_ = this.baseUrl + "/accounting/accounts/{id}/ledger?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -352,7 +352,7 @@ export class AccountingServiceProxy {
     /**
      * @param as_of (optional) Balances as of this date
      */
-    balance_sheet(as_of?: string | null | null | undefined): Observable<BalanceSheet> {
+    balance_sheet(as_of?: string | null | undefined): Observable<BalanceSheet> {
         let url_ = this.baseUrl + "/accounting/balance-sheet?";
         if (as_of !== undefined && as_of !== null)
             url_ += "as_of=" + encodeURIComponent("" + as_of) + "&";
@@ -601,7 +601,7 @@ export class AccountingServiceProxy {
      * @param from (optional) From date (inclusive)
      * @param to (optional) To date (inclusive)
      */
-    income_statement(from?: string | null | null | undefined, to?: string | null | null | undefined): Observable<IncomeStatement> {
+    income_statement(from?: string | null | undefined, to?: string | null | undefined): Observable<IncomeStatement> {
         let url_ = this.baseUrl + "/accounting/income-statement?";
         if (from !== undefined && from !== null)
             url_ += "from=" + encodeURIComponent("" + from) + "&";
@@ -655,7 +655,7 @@ export class AccountingServiceProxy {
     /**
      * @param status (optional) Filter by status
      */
-    list_entries(status?: EntryStatus | null | null | undefined): Observable<JournalEntryHeader[]> {
+    list_entries(status?: EntryStatus | null | undefined): Observable<JournalEntryHeader[]> {
         let url_ = this.baseUrl + "/accounting/journal?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -1451,7 +1451,7 @@ export class AccountingServiceProxy {
     /**
      * @param as_of (optional) Balances as of this date
      */
-    trial_balance(as_of?: string | null | null | undefined): Observable<TrialBalance> {
+    trial_balance(as_of?: string | null | undefined): Observable<TrialBalance> {
         let url_ = this.baseUrl + "/accounting/trial-balance?";
         if (as_of !== undefined && as_of !== null)
             url_ += "as_of=" + encodeURIComponent("" + as_of) + "&";
@@ -1514,7 +1514,7 @@ export class AuditServiceProxy {
         this.baseUrl = baseUrl ?? "";
     }
 
-    list_logs(limit?: number | null | null | undefined, offset?: number | null | null | undefined, action?: string | null | null | undefined, entity_type?: string | null | null | undefined, user_id?: string | null | null | undefined): Observable<AuditLog[]> {
+    list_logs(limit?: number | null | undefined, offset?: number | null | undefined, action?: string | null | undefined, entity_type?: string | null | undefined, user_id?: string | null | undefined): Observable<AuditLog[]> {
         let url_ = this.baseUrl + "/audit/logs?";
         if (limit !== undefined && limit !== null)
             url_ += "limit=" + encodeURIComponent("" + limit) + "&";
@@ -2102,6 +2102,63 @@ export class AuthServiceProxy {
     }
 
     /**
+     * Replace a password login refused as expired, using the bridge token
+    from the `password_expired` answer. No session is issued: the user
+    signs in again with the new password, the same way mandated two-factor
+    setup ends.
+     */
+    change_expired_password(body: ExpiredPasswordRequest): Observable<StatusResponse> {
+        let url_ = this.baseUrl + "/auth/password/expired";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processChange_expired_password(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processChange_expired_password(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StatusResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StatusResponse>;
+        }));
+    }
+
+    protected processChange_expired_password(response: HttpResponseBase): Observable<StatusResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as StatusResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * The full permission definition tree, for admin UIs.
      */
     permission_tree(): Observable<PermissionDef[]> {
@@ -2420,7 +2477,7 @@ export class AuthServiceProxy {
      * @param file (optional) The image file: png, jpg or webp, at most 1 MiB. SVG is refused —
     it is a script container, and `/public` serves it same-origin.
      */
-    tenant_logo_upload(file?: FileParameter | null | null | undefined): Observable<CompanyProfileResponse> {
+    tenant_logo_upload(file?: FileParameter | null | undefined): Observable<CompanyProfileResponse> {
         let url_ = this.baseUrl + "/auth/tenant/logo";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2474,6 +2531,161 @@ export class AuthServiceProxy {
         return _observableOf(null as any);
     }
 
+    mail_settings_get(): Observable<MailSettingsResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/mail";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMail_settings_get(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMail_settings_get(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MailSettingsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MailSettingsResponse>;
+        }));
+    }
+
+    protected processMail_settings_get(response: HttpResponseBase): Observable<MailSettingsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MailSettingsResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    mail_settings_update(body: MailSettingsInput): Observable<MailSettingsResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/mail";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMail_settings_update(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMail_settings_update(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MailSettingsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MailSettingsResponse>;
+        }));
+    }
+
+    protected processMail_settings_update(response: HttpResponseBase): Observable<MailSettingsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MailSettingsResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Send a test message with the given settings. The mail server's own
+    complaint is passed back verbatim: "authentication failed" and
+    "connection refused" send an admin to entirely different places, and a
+    generic failure would tell them neither.
+     */
+    mail_settings_test(body: MailTestRequest): Observable<MailTestResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/mail/test";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMail_settings_test(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMail_settings_test(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MailTestResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MailTestResponse>;
+        }));
+    }
+
+    protected processMail_settings_test(response: HttpResponseBase): Observable<MailTestResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as MailTestResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     /**
      * Queue a background migration of the caller's tenant database — how a
     tenant picks up newly deployed features without waiting for the next
@@ -2516,6 +2728,112 @@ export class AuthServiceProxy {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as QueuedJobResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * The company's password policy. Any authenticated user of the tenant may
+    read it.
+     */
+    password_policy_get(): Observable<PasswordPolicyResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/password-policy";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPassword_policy_get(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPassword_policy_get(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PasswordPolicyResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PasswordPolicyResponse>;
+        }));
+    }
+
+    protected processPassword_policy_get(response: HttpResponseBase): Observable<PasswordPolicyResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PasswordPolicyResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Replace the company's overrides. Fields left null revert to the
+    deployment default.
+     */
+    password_policy_update(body: PasswordPolicyOverridesView): Observable<PasswordPolicyResponse> {
+        let url_ = this.baseUrl + "/auth/tenant/password-policy";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPassword_policy_update(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPassword_policy_update(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PasswordPolicyResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PasswordPolicyResponse>;
+        }));
+    }
+
+    protected processPassword_policy_update(response: HttpResponseBase): Observable<PasswordPolicyResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PasswordPolicyResponse;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -3787,7 +4105,7 @@ export class InventoryServiceProxy {
      * @param category_id (optional) 
      * @param active (optional) 
      */
-    list_items(q?: string | null | null | undefined, category_id?: string | null | null | undefined, active?: boolean | null | null | undefined): Observable<InventoryItem[]> {
+    list_items(q?: string | null | undefined, category_id?: string | null | undefined, active?: boolean | null | undefined): Observable<InventoryItem[]> {
         let url_ = this.baseUrl + "/inventory/items?";
         if (q !== undefined && q !== null)
             url_ += "q=" + encodeURIComponent("" + q) + "&";
@@ -4059,7 +4377,7 @@ export class InventoryServiceProxy {
      * @param warehouse_id (optional) Restrict to one warehouse; otherwise all warehouses summed.
      * @param include_empty (optional) Include exhausted lots (zero on hand). Default false.
      */
-    item_batches(id: string, warehouse_id?: string | null | null | undefined, include_empty?: boolean | null | null | undefined): Observable<BatchLevelView[]> {
+    item_batches(id: string, warehouse_id?: string | null | undefined, include_empty?: boolean | null | undefined): Observable<BatchLevelView[]> {
         let url_ = this.baseUrl + "/inventory/items/{id}/batches?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -4118,7 +4436,7 @@ export class InventoryServiceProxy {
      * @param status (optional) 
      * @param warehouse_id (optional) 
      */
-    item_serials(id: string, status?: SerialStatus | null | null | undefined, warehouse_id?: string | null | null | undefined): Observable<InventorySerial[]> {
+    item_serials(id: string, status?: SerialStatus | null | undefined, warehouse_id?: string | null | undefined): Observable<InventorySerial[]> {
         let url_ = this.baseUrl + "/inventory/items/{id}/serials?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -4179,7 +4497,7 @@ export class InventoryServiceProxy {
      * @param from (optional) Entry date range, inclusive.
      * @param to (optional) 
      */
-    list_moves(move_type?: MoveType | null | null | undefined, status?: MoveStatus | null | null | undefined, warehouse_id?: string | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<MoveHeader[]> {
+    list_moves(move_type?: MoveType | null | undefined, status?: MoveStatus | null | undefined, warehouse_id?: string | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<MoveHeader[]> {
         let url_ = this.baseUrl + "/inventory/moves?";
         if (move_type !== undefined && move_type !== null)
             url_ += "move_type=" + encodeURIComponent("" + move_type) + "&";
@@ -4615,7 +4933,7 @@ export class InventoryServiceProxy {
      * @param after_seq (optional) Page cursor: rows with seq greater than this.
      * @param limit (optional) Page size, capped at 1000 (default 500).
      */
-    list_ledger(item_id?: string | null | null | undefined, warehouse_id?: string | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined, after_seq?: number | null | null | undefined, limit?: number | null | null | undefined): Observable<LedgerRowView[]> {
+    list_ledger(item_id?: string | null | undefined, warehouse_id?: string | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined, after_seq?: number | null | undefined, limit?: number | null | undefined): Observable<LedgerRowView[]> {
         let url_ = this.baseUrl + "/inventory/stock/ledger?";
         if (item_id !== undefined && item_id !== null)
             url_ += "item_id=" + encodeURIComponent("" + item_id) + "&";
@@ -4679,7 +4997,7 @@ export class InventoryServiceProxy {
      * @param item_id (optional) 
      * @param below_reorder (optional) Only positions at or below their effective reorder level.
      */
-    list_levels(warehouse_id?: string | null | null | undefined, item_id?: string | null | null | undefined, below_reorder?: boolean | null | null | undefined): Observable<LevelView[]> {
+    list_levels(warehouse_id?: string | null | undefined, item_id?: string | null | undefined, below_reorder?: boolean | null | undefined): Observable<LevelView[]> {
         let url_ = this.baseUrl + "/inventory/stock/levels?";
         if (warehouse_id !== undefined && warehouse_id !== null)
             url_ += "warehouse_id=" + encodeURIComponent("" + warehouse_id) + "&";
@@ -4732,7 +5050,7 @@ export class InventoryServiceProxy {
         return _observableOf(null as any);
     }
 
-    get_valuation(warehouse_id?: string | null | null | undefined): Observable<ValuationSummary> {
+    get_valuation(warehouse_id?: string | null | undefined): Observable<ValuationSummary> {
         let url_ = this.baseUrl + "/inventory/stock/valuation?";
         if (warehouse_id !== undefined && warehouse_id !== null)
             url_ += "warehouse_id=" + encodeURIComponent("" + warehouse_id) + "&";
@@ -5108,7 +5426,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Invoice date range, inclusive.
      * @param to (optional) 
      */
-    list_invoices(supplier_id?: string | null | null | undefined, order_id?: string | null | null | undefined, status?: InvoiceStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<InvoiceHeader[]> {
+    list_invoices(supplier_id?: string | null | undefined, order_id?: string | null | undefined, status?: InvoiceStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<InvoiceHeader[]> {
         let url_ = this.baseUrl + "/procurement/invoices?";
         if (supplier_id !== undefined && supplier_id !== null)
             url_ += "supplier_id=" + encodeURIComponent("" + supplier_id) + "&";
@@ -5495,7 +5813,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Order date range, inclusive.
      * @param to (optional) 
      */
-    list_orders(status?: OrderStatus | null | null | undefined, supplier_id?: string | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<OrderHeader[]> {
+    list_orders(status?: OrderStatus | null | undefined, supplier_id?: string | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<OrderHeader[]> {
         let url_ = this.baseUrl + "/procurement/orders?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -6096,7 +6414,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Payment date range, inclusive.
      * @param to (optional) 
      */
-    list_payments(supplier_id?: string | null | null | undefined, status?: PaymentStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<PaymentHeader[]> {
+    list_payments(supplier_id?: string | null | undefined, status?: PaymentStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<PaymentHeader[]> {
         let url_ = this.baseUrl + "/procurement/payments?";
         if (supplier_id !== undefined && supplier_id !== null)
             url_ += "supplier_id=" + encodeURIComponent("" + supplier_id) + "&";
@@ -6481,7 +6799,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Receipt date range, inclusive.
      * @param to (optional) 
      */
-    list_receipts(order_id?: string | null | null | undefined, status?: ReceiptStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<ReceiptHeader[]> {
+    list_receipts(order_id?: string | null | undefined, status?: ReceiptStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<ReceiptHeader[]> {
         let url_ = this.baseUrl + "/procurement/receipts?";
         if (order_id !== undefined && order_id !== null)
             url_ += "order_id=" + encodeURIComponent("" + order_id) + "&";
@@ -7005,7 +7323,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Document date window, inclusive; open-ended when omitted.
      * @param to (optional) 
      */
-    supplier_scorecards_json(from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<SupplierScorecardView> {
+    supplier_scorecards_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<SupplierScorecardView> {
         let url_ = this.baseUrl + "/procurement/reports/supplier-scorecards?";
         if (from !== undefined && from !== null)
             url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
@@ -7056,7 +7374,7 @@ export class ProcurementServiceProxy {
         return _observableOf(null as any);
     }
 
-    list_requisitions(status?: RequisitionStatus | null | null | undefined, warehouse_id?: string | null | null | undefined): Observable<RequisitionHeader[]> {
+    list_requisitions(status?: RequisitionStatus | null | undefined, warehouse_id?: string | null | undefined): Observable<RequisitionHeader[]> {
         let url_ = this.baseUrl + "/procurement/requisitions?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -7600,7 +7918,7 @@ export class ProcurementServiceProxy {
      * @param from (optional) Return date range, inclusive.
      * @param to (optional) 
      */
-    list_returns(order_id?: string | null | null | undefined, status?: ReturnStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<ReturnHeader[]> {
+    list_returns(order_id?: string | null | undefined, status?: ReturnStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<ReturnHeader[]> {
         let url_ = this.baseUrl + "/procurement/returns?";
         if (order_id !== undefined && order_id !== null)
             url_ += "order_id=" + encodeURIComponent("" + order_id) + "&";
@@ -7979,7 +8297,7 @@ export class ProcurementServiceProxy {
         return _observableOf(null as any);
     }
 
-    list_rfqs(status?: RfqStatus | null | null | undefined): Observable<RfqHeader[]> {
+    list_rfqs(status?: RfqStatus | null | undefined): Observable<RfqHeader[]> {
         let url_ = this.baseUrl + "/procurement/rfqs?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -8957,7 +9275,7 @@ export class SalesServiceProxy {
         this.baseUrl = baseUrl ?? "";
     }
 
-    list_notes(customer_id?: string | null | null | undefined, invoice_id?: string | null | null | undefined, status?: CreditNoteStatus | null | null | undefined): Observable<CreditNoteHeader[]> {
+    list_notes(customer_id?: string | null | undefined, invoice_id?: string | null | undefined, status?: CreditNoteStatus | null | undefined): Observable<CreditNoteHeader[]> {
         let url_ = this.baseUrl + "/sales/credit-notes?";
         if (customer_id !== undefined && customer_id !== null)
             url_ += "customer_id=" + encodeURIComponent("" + customer_id) + "&";
@@ -9870,7 +10188,7 @@ export class SalesServiceProxy {
      * @param from (optional) Delivery date range, inclusive.
      * @param to (optional) 
      */
-    list_deliveries(order_id?: string | null | null | undefined, status?: DeliveryStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<DeliveryHeader[]> {
+    list_deliveries(order_id?: string | null | undefined, status?: DeliveryStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<DeliveryHeader[]> {
         let url_ = this.baseUrl + "/sales/deliveries?";
         if (order_id !== undefined && order_id !== null)
             url_ += "order_id=" + encodeURIComponent("" + order_id) + "&";
@@ -10256,7 +10574,7 @@ export class SalesServiceProxy {
      * @param from (optional) Invoice date range, inclusive.
      * @param to (optional) 
      */
-    list_invoices2(customer_id?: string | null | null | undefined, order_id?: string | null | null | undefined, status?: SalesInvoiceStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<SalesInvoiceHeader[]> {
+    list_invoices2(customer_id?: string | null | undefined, order_id?: string | null | undefined, status?: SalesInvoiceStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<SalesInvoiceHeader[]> {
         let url_ = this.baseUrl + "/sales/invoices?";
         if (customer_id !== undefined && customer_id !== null)
             url_ += "customer_id=" + encodeURIComponent("" + customer_id) + "&";
@@ -10643,7 +10961,7 @@ export class SalesServiceProxy {
      * @param from (optional) Order date range, inclusive.
      * @param to (optional) 
      */
-    list_orders2(status?: SalesOrderStatus | null | null | undefined, customer_id?: string | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<SalesOrderHeader[]> {
+    list_orders2(status?: SalesOrderStatus | null | undefined, customer_id?: string | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<SalesOrderHeader[]> {
         let url_ = this.baseUrl + "/sales/orders?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -11244,7 +11562,7 @@ export class SalesServiceProxy {
      * @param from (optional) Payment date range, inclusive.
      * @param to (optional) 
      */
-    list_payments2(customer_id?: string | null | null | undefined, status?: SalesPaymentStatus | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<SalesPaymentHeader[]> {
+    list_payments2(customer_id?: string | null | undefined, status?: SalesPaymentStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<SalesPaymentHeader[]> {
         let url_ = this.baseUrl + "/sales/payments?";
         if (customer_id !== undefined && customer_id !== null)
             url_ += "customer_id=" + encodeURIComponent("" + customer_id) + "&";
@@ -12108,7 +12426,7 @@ export class SalesServiceProxy {
      * @param currency (optional) Currency (default: the customer's)
      * @param date (optional) Pricing date (default: today)
      */
-    resolve_price(customer_id: string, item_id: string, qty?: string | null | null | undefined, uom_id?: string | null | null | undefined, currency?: string | null | null | undefined, date?: string | null | null | undefined): Observable<ResolvedPrice> {
+    resolve_price(customer_id: string, item_id: string, qty?: string | null | undefined, uom_id?: string | null | undefined, currency?: string | null | undefined, date?: string | null | undefined): Observable<ResolvedPrice> {
         let url_ = this.baseUrl + "/sales/pricing/resolve?";
         if (customer_id === undefined || customer_id === null)
             throw new globalThis.Error("The parameter 'customer_id' must be defined and cannot be null.");
@@ -12177,7 +12495,7 @@ export class SalesServiceProxy {
      * @param from (optional) Quote date range, inclusive.
      * @param to (optional) 
      */
-    list_quotations(status?: QuotationStatus | null | null | undefined, customer_id?: string | null | null | undefined, from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<QuotationHeader[]> {
+    list_quotations(status?: QuotationStatus | null | undefined, customer_id?: string | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<QuotationHeader[]> {
         let url_ = this.baseUrl + "/sales/quotations?";
         if (status !== undefined && status !== null)
             url_ += "status=" + encodeURIComponent("" + status) + "&";
@@ -12669,7 +12987,7 @@ export class SalesServiceProxy {
     /**
      * @param as_of (optional) The aging cut-off; defaults to today.
      */
-    ar_aging_json(as_of?: DateTime | null | null | undefined): Observable<ArAgingView> {
+    ar_aging_json(as_of?: DateTime | null | undefined): Observable<ArAgingView> {
         let url_ = this.baseUrl + "/sales/reports/ar-aging?";
         if (as_of !== undefined && as_of !== null)
             url_ += "as_of=" + encodeURIComponent(as_of ? "" + as_of.toString() : "") + "&";
@@ -12812,7 +13130,7 @@ export class SalesServiceProxy {
         return _observableOf(null as any);
     }
 
-    margins_json(from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined): Observable<MarginsView> {
+    margins_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<MarginsView> {
         let url_ = this.baseUrl + "/sales/reports/margins?";
         if (from !== undefined && from !== null)
             url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
@@ -12863,7 +13181,7 @@ export class SalesServiceProxy {
         return _observableOf(null as any);
     }
 
-    register_json(from?: DateTime | null | null | undefined, to?: DateTime | null | null | undefined, customer_id?: string | null | null | undefined): Observable<RegisterView> {
+    register_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined, customer_id?: string | null | undefined): Observable<RegisterView> {
         let url_ = this.baseUrl + "/sales/reports/register?";
         if (from !== undefined && from !== null)
             url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
@@ -13761,8 +14079,17 @@ export interface DnbView {
     [key: string]: any;
 }
 
+/** How the connection to the SMTP server is protected. */
+export type Encryption = "none" | "starttls" | "tls";
+
 /** Where a journal entry is in its lifecycle. */
 export type EntryStatus = "draft" | "posted" | "reversed";
+
+export interface ExpiredPasswordRequest {
+    new_password: string;
+
+    [key: string]: any;
+}
 
 export interface FieldChange {
     field: string;
@@ -14295,6 +14622,59 @@ it is a script container, and `/public` serves it same-origin. */
     [key: string]: any;
 }
 
+/** A tenant's mail configuration as the API reports it. The password is absent by construction — [`MailSettings::password_set`] says whether there is one, which is all a settings page needs to know. */
+export interface MailSettings {
+    enabled: boolean;
+    encryption: Encryption;
+    from_address: string;
+    from_name?: string | undefined;
+    host: string;
+    password_set: boolean;
+    port: number;
+    updated_at: DateTime;
+    username?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** What an admin submits. `password: None` leaves whatever is stored alone, so a settings form can round-trip without ever holding the password; `Some("")` clears it. */
+export interface MailSettingsInput {
+    enabled: boolean;
+    encryption: Encryption;
+    from_address: string;
+    from_name?: string | undefined;
+    host: string;
+    password?: string | undefined;
+    port: number;
+    username?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** The company's mail settings, or `configured: false` when it has none. */
+export interface MailSettingsResponse {
+    configured: boolean;
+    settings?: MailSettings | undefined;
+
+    [key: string]: any;
+}
+
+export interface MailTestRequest {
+    /** The settings to test. Sent with the request rather than read from
+storage so an admin can prove a server works before saving it. */
+    settings: MailSettingsInput;
+    /** Where to send the test message. */
+    to: string;
+
+    [key: string]: any;
+}
+
+export interface MailTestResponse {
+    status: string;
+
+    [key: string]: any;
+}
+
 /** One item's revenue against COGS in the window. */
 export interface MarginRow {
     /** Moving-average COGS the deliveries booked (base currency). */
@@ -14313,9 +14693,12 @@ export interface MarginRow {
 
 export interface MarginsView {
     cogs: string;
+    /** The window the rows were selected from — see [`RegisterView::from`]. */
+    from?: DateTime | undefined;
     margin: string;
     revenue: string;
     rows: MarginRow[];
+    to?: DateTime | undefined;
 
     [key: string]: any;
 }
@@ -14483,6 +14866,53 @@ export interface OrderView {
     /** After header discounts and other charges, before tax. */
     total: string;
     warehouse_code: string;
+
+    [key: string]: any;
+}
+
+/** The rules actually enforced for one tenant, after resolving overrides over the deployment defaults. */
+export interface PasswordPolicy {
+    /** Force a change this many days after the last one. `0` never expires. */
+    expiry_days: number;
+    /** Refuse a password matching any of the last N. `0` allows reuse. */
+    history_count: number;
+    lockout_max_failed: number;
+    lockout_secs: number;
+    min_length: number;
+    require_digit: boolean;
+    require_lowercase: boolean;
+    require_symbol: boolean;
+    require_uppercase: boolean;
+
+    [key: string]: any;
+}
+
+/** The stored overrides, echoed back so a form can tell "the company chose 12" from "the company chose nothing and the deployment says 12". */
+export interface PasswordPolicyOverridesView {
+    expiry_days?: number | undefined;
+    history_count?: number | undefined;
+    lockout_max_failed?: number | undefined;
+    lockout_secs?: number | undefined;
+    min_length?: number | undefined;
+    require_digit?: boolean | undefined;
+    require_lowercase?: boolean | undefined;
+    require_symbol?: boolean | undefined;
+    require_uppercase?: boolean | undefined;
+
+    [key: string]: any;
+}
+
+export interface PasswordPolicyResponse {
+    /** The deployment's own settings. A company may tighten past these,
+never below them — so a settings page can show what is not on offer
+instead of letting an admin discover it by being refused. */
+    floor: PasswordPolicy;
+    /** The company's overrides as stored: null means the rule follows
+`floor` and will keep following it if the deployment changes. */
+    overrides: PasswordPolicyOverridesView;
+    /** The rules actually enforced, after the company's overrides. */
+    policy: PasswordPolicy;
+    tenant: string;
 
     [key: string]: any;
 }
@@ -14962,9 +15392,13 @@ export interface RegisterRow {
 }
 
 export interface RegisterView {
+    /** The window the rows were selected from — carried so a rendered
+register states what it covers instead of implying it is everything. */
+    from?: DateTime | undefined;
     net: string;
     rows: RegisterRow[];
     tax: string;
+    to?: DateTime | undefined;
     total: string;
 
     [key: string]: any;

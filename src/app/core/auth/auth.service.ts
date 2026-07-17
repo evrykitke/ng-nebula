@@ -44,6 +44,12 @@ function loadSession(): Session | null {
  * `two_factor_setup_required` when the company mandates 2FA and the account
  * has none). The bridge token is held here and attached by the interceptor to
  * the two-factor endpoints until the exchange completes.
+ *
+ * A sign-in can also end at `password_expired` — the company's policy has
+ * aged the password out. That carries its own bridge token, kept separate
+ * from the two-factor one because it opens a different door: the forced
+ * change at `POST /auth/password/expired`. It only ever arrives once any
+ * second factor has been cleared.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -54,6 +60,7 @@ export class AuthService {
     localStorage.getItem(TENANT_KEY) ?? this._session()?.tenant ?? null,
   );
   private readonly _twoFactorToken = signal<string | null>(null);
+  private readonly _passwordToken = signal<string | null>(null);
 
   /** In-flight refresh, shared so concurrent 401s trigger a single refresh. */
   private refreshInFlight?: Observable<Session>;
@@ -68,6 +75,8 @@ export class AuthService {
   readonly tenant = this._tenant.asReadonly();
   /** The pending two-factor bridge token, while a 2FA exchange is under way. */
   readonly twoFactorToken = this._twoFactorToken.asReadonly();
+  /** The pending bridge token for a forced change of an expired password. */
+  readonly passwordToken = this._passwordToken.asReadonly();
 
   /** The signed-in user as the layout consumes it. */
   readonly currentUser = computed<AuthUser | null>(() => {
@@ -115,6 +124,20 @@ export class AuthService {
     return this.proxy.login_two_factor(body).pipe(switchMap((res) => this.settle(asLoginResult(res))));
   }
 
+  /**
+   * Replace a password the server refused as expired, using the bridge
+   * token from `password_expired`. No session comes back — the user signs
+   * in again with the new password, the same way mandated two-factor setup
+   * ends.
+   */
+  changeExpiredPassword(newPassword: string): Observable<void> {
+    return this.proxy.change_expired_password({ new_password: newPassword }).pipe(
+      map(() => {
+        this._passwordToken.set(null);
+      }),
+    );
+  }
+
   /** Route a login result: establish the session or hold the bridge token. */
   private settle(result: LoginResult): Observable<LoginResult> {
     if (result.status === 'tenant_selection') {
@@ -123,11 +146,19 @@ export class AuthService {
     // Adopt the server-resolved tenant: the two-factor endpoints and the
     // whole session must carry it as the `X-Tenant` header.
     if (result.tenant) this.setTenant(result.tenant);
+    if (result.status === 'password_expired') {
+      // The second factor is behind us; this bridge opens only the forced
+      // change, so the two-factor one has no further use.
+      this._twoFactorToken.set(null);
+      this._passwordToken.set(result.password_token);
+      return of(result);
+    }
     if (result.status !== 'success') {
       this._twoFactorToken.set(result.two_factor_token);
       return of(result);
     }
     this._twoFactorToken.set(null);
+    this._passwordToken.set(null);
     this.establish(result.access_token, result.refresh_token, result.user, []);
     // Permissions live server-side; fetch them with the fresh access token.
     return this.proxy.my_permissions().pipe(

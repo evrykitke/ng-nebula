@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBuilding2, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideBuilding2,
+  lucideHistory,
+  lucideMail,
+  lucideShield,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import { UiButton } from '../../../shared/ui/button';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -9,6 +15,8 @@ import { ConfirmService } from '../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
 import { Lookup } from '../../../shared/lookup/lookup';
 import { currencyLookup } from '../../../shared/lookup/entity-lookups';
+import { MailSettingsCard } from './mail-settings-card';
+import { PasswordPolicyCard } from './password-policy-card';
 import { environment } from '../../../../environments/environment';
 import {
   AuditServiceProxy,
@@ -18,18 +26,36 @@ import {
   RetentionResponse,
 } from '../../../shared/service-proxies/service-proxies';
 
+type TabId = 'company' | 'security' | 'email' | 'audit';
+
 /**
- * Tenant Settings — what a tenant admin controls about the workspace: the
- * company information (display name, logo, tax identifiers, default
- * currency), the company 2FA mandate and the audit-trail retention
+ * Tenant Settings — what a tenant admin controls about the workspace,
+ * across four tabs: the company information (display name, logo, tax
+ * identifiers, default currency), security (the 2FA mandate and the
+ * password policy), the SMTP server, and the audit-trail retention
  * override. Database migrations are not a user concern — deployments
  * migrate every tenant automatically (boot auto-migrate + the tenant
  * migration job).
+ *
+ * The password-policy and email panels are their own components: each
+ * carries a form's worth of state that has nothing to do with the rest of
+ * the page, and both load independently. That also means their data is
+ * fetched when their tab is first shown, not on every visit to the page.
  */
 @Component({
   selector: 'app-tenant-settings-page',
-  imports: [FormsModule, NgIcon, UiButton, PageHeader, Lookup],
-  providers: [provideIcons({ lucideBuilding2, lucideUpload })],
+  imports: [
+    FormsModule,
+    NgIcon,
+    UiButton,
+    PageHeader,
+    Lookup,
+    PasswordPolicyCard,
+    MailSettingsCard,
+  ],
+  providers: [
+    provideIcons({ lucideBuilding2, lucideHistory, lucideMail, lucideShield, lucideUpload }),
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tenant-settings.page.html',
 })
@@ -41,6 +67,14 @@ export class TenantSettingsPage {
   private readonly confirm = inject(ConfirmService);
 
   // Company information.
+  readonly tabs = [
+    { id: 'company' as const, label: 'Company', icon: 'lucideBuilding2' },
+    { id: 'security' as const, label: 'Security', icon: 'lucideShield' },
+    { id: 'email' as const, label: 'Email', icon: 'lucideMail' },
+    { id: 'audit' as const, label: 'Audit trail', icon: 'lucideHistory' },
+  ];
+  readonly activeTab = signal<TabId>('company');
+
   readonly currencies = currencyLookup(this.currencyProxy);
   readonly profile = signal<CompanyProfileResponse | null>(null);
   readonly profileSaving = signal(false);
@@ -85,6 +119,10 @@ export class TenantSettingsPage {
       },
       error: () => this.notify.error('Could not load the audit retention settings'),
     });
+  }
+
+  setTab(tab: TabId): void {
+    this.activeTab.set(tab);
   }
 
   private applyProfile(res: CompanyProfileResponse): void {

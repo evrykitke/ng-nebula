@@ -4,203 +4,235 @@
   [breadcrumbs]="[{ label: 'Administration', route: '/administration' }, { label: 'Business Information' }]"
 />
 
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-  <!-- Company information -->
-  <div class="rounded-xl border border-border bg-card p-5 lg:col-span-2">
-    <h2 class="text-sm font-semibold text-foreground">Company information</h2>
-    <p class="mt-1 mb-4 text-sm text-muted-foreground">
-      The name, logo, contact details and identifiers your workspace presents (including on report
-      letterheads) — and the currency it operates in.
-    </p>
-    @if (profile(); as p) {
-      <div class="flex flex-col gap-6 md:flex-row">
-        <!-- Logo -->
-        <div class="flex shrink-0 flex-col items-center gap-3">
-          @if (logoSrc(p); as src) {
-            <img
-              [src]="src"
-              alt="Company logo"
-              class="size-28 rounded-lg border border-border bg-background object-contain p-2"
-            />
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
+  <!-- Tabs -->
+  <nav class="flex gap-1 self-start rounded-xl border border-border bg-card p-2 lg:flex-col">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-sm lg:flex-none"
+        [class]="activeTab() === tab.id ? 'bg-accent font-medium text-foreground' : 'text-muted-foreground hover:bg-accent/60'"
+        (click)="setTab(tab.id)"
+      >
+        <ng-icon [name]="tab.icon" size="16" /> {{ tab.label }}
+      </button>
+    }
+  </nav>
+
+  @switch (activeTab()) {
+    @case ('company') {
+      <div class="rounded-xl border border-border bg-card p-5">
+        <h2 class="text-sm font-semibold text-foreground">Company information</h2>
+        <p class="mt-1 mb-4 text-sm text-muted-foreground">
+          The name, logo, contact details and identifiers your workspace presents (including on
+          report letterheads) — and the currency it operates in.
+        </p>
+        @if (profile(); as p) {
+          <div class="flex flex-col gap-6 md:flex-row">
+            <!-- Logo -->
+            <div class="flex shrink-0 flex-col items-center gap-3">
+              @if (logoSrc(p); as src) {
+                <img
+                  [src]="src"
+                  alt="Company logo"
+                  class="size-28 rounded-lg border border-border bg-background object-contain p-2"
+                />
+              } @else {
+                <div
+                  class="flex size-28 items-center justify-center rounded-lg border border-dashed
+                         border-border text-muted-foreground"
+                >
+                  <ng-icon name="lucideBuilding2" size="36" />
+                </div>
+              }
+              <button
+                uiBtn
+                variant="outline"
+                size="sm"
+                type="button"
+                [disabled]="logoUploading()"
+                (click)="logoInput.click()"
+              >
+                <ng-icon name="lucideUpload" size="14" />
+                {{ logoUploading() ? 'Uploading…' : 'Upload logo' }}
+              </button>
+              <input
+                #logoInput
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg,.webp"
+                class="hidden"
+                (change)="onLogoSelected($event)"
+              />
+              <p class="text-center text-xs text-muted-foreground">png, jpg, svg or webp<br />up to 1 MiB</p>
+            </div>
+
+            <!-- Details -->
+            <form class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2" (ngSubmit)="saveProfile()">
+              <div class="md:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium">Company name</label>
+                <input
+                  [(ngModel)]="displayName"
+                  name="displayName"
+                  type="text"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Tax PIN</label>
+                <input
+                  [(ngModel)]="taxPin"
+                  name="taxPin"
+                  type="text"
+                  placeholder="e.g. KRA PIN"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">VAT number</label>
+                <input
+                  [(ngModel)]="vatNumber"
+                  name="vatNumber"
+                  type="text"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Email</label>
+                <input
+                  [(ngModel)]="email"
+                  name="email"
+                  type="email"
+                  placeholder="e.g. hello@company.com"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Phone</label>
+                <input
+                  [(ngModel)]="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="e.g. +254 700 000 000"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Website</label>
+                <input
+                  [(ngModel)]="website"
+                  name="website"
+                  type="text"
+                  placeholder="e.g. www.company.com"
+                  class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Default currency</label>
+                <app-lookup [config]="currencies" [(value)]="currency" [(display)]="currencyDisplay" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium">Address</label>
+                <textarea
+                  [(ngModel)]="address"
+                  name="address"
+                  rows="2"
+                  placeholder="Street, city, postal code"
+                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                ></textarea>
+              </div>
+              <div class="flex items-end justify-end md:col-span-2">
+                <button uiBtn type="submit" [disabled]="profileSaving()">
+                  {{ profileSaving() ? 'Saving…' : 'Save company information' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        } @else {
+          <p class="text-sm text-muted-foreground">Loading…</p>
+        }
+      </div>
+    }
+
+    @case ('security') {
+      <div class="flex flex-col gap-4">
+        <!-- Two-factor mandate -->
+        <div class="rounded-xl border border-border bg-card p-5">
+          <h2 class="text-sm font-semibold text-foreground">Two-factor authentication</h2>
+          <p class="mt-1 mb-4 text-sm text-muted-foreground">
+            When mandated, users without an authenticator must enroll before they can sign in.
+          </p>
+          @if (twoFactorLoading()) {
+            <p class="text-sm text-muted-foreground">Loading…</p>
           } @else {
-            <div
-              class="flex size-28 items-center justify-center rounded-lg border border-dashed
-                     border-border text-muted-foreground"
-            >
-              <ng-icon name="lucideBuilding2" size="36" />
+            <div class="flex items-center justify-between gap-4">
+              <span
+                class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
+                [class]="requireTwoFactor() ? 'bg-success/10 text-success' : 'bg-secondary text-secondary-foreground'"
+              >
+                {{ requireTwoFactor() ? 'Mandatory for everyone' : 'Optional (per user)' }}
+              </span>
+              <button uiBtn [variant]="requireTwoFactor() ? 'outline' : 'default'" (click)="toggleTwoFactor()" [disabled]="twoFactorSaving()">
+                {{ twoFactorSaving() ? 'Saving…' : requireTwoFactor() ? 'Make optional' : 'Mandate 2FA' }}
+              </button>
             </div>
           }
-          <button
-            uiBtn
-            variant="outline"
-            size="sm"
-            type="button"
-            [disabled]="logoUploading()"
-            (click)="logoInput.click()"
-          >
-            <ng-icon name="lucideUpload" size="14" />
-            {{ logoUploading() ? 'Uploading…' : 'Upload logo' }}
-          </button>
-          <input
-            #logoInput
-            type="file"
-            accept=".png,.jpg,.jpeg,.svg,.webp"
-            class="hidden"
-            (change)="onLogoSelected($event)"
-          />
-          <p class="text-center text-xs text-muted-foreground">png, jpg, svg or webp<br />up to 1 MiB</p>
         </div>
 
-        <!-- Details -->
-        <form class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2" (ngSubmit)="saveProfile()">
-          <div class="md:col-span-2">
-            <label class="mb-1.5 block text-sm font-medium">Company name</label>
-            <input
-              [(ngModel)]="displayName"
-              name="displayName"
-              type="text"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">Tax PIN</label>
-            <input
-              [(ngModel)]="taxPin"
-              name="taxPin"
-              type="text"
-              placeholder="e.g. KRA PIN"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">VAT number</label>
-            <input
-              [(ngModel)]="vatNumber"
-              name="vatNumber"
-              type="text"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">Email</label>
-            <input
-              [(ngModel)]="email"
-              name="email"
-              type="email"
-              placeholder="e.g. hello@company.com"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">Phone</label>
-            <input
-              [(ngModel)]="phone"
-              name="phone"
-              type="tel"
-              placeholder="e.g. +254 700 000 000"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">Website</label>
-            <input
-              [(ngModel)]="website"
-              name="website"
-              type="text"
-              placeholder="e.g. www.company.com"
-              class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label class="mb-1.5 block text-sm font-medium">Default currency</label>
-            <app-lookup [config]="currencies" [(value)]="currency" [(display)]="currencyDisplay" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="mb-1.5 block text-sm font-medium">Address</label>
-            <textarea
-              [(ngModel)]="address"
-              name="address"
-              rows="2"
-              placeholder="Street, city, postal code"
-              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            ></textarea>
-          </div>
-          <div class="flex items-end justify-end md:col-span-2">
-            <button uiBtn type="submit" [disabled]="profileSaving()">
-              {{ profileSaving() ? 'Saving…' : 'Save company information' }}
+        <!-- Password policy -->
+        <div class="rounded-xl border border-border bg-card p-5">
+          <app-password-policy-card />
+        </div>
+      </div>
+    }
+
+    @case ('email') {
+      <div class="rounded-xl border border-border bg-card p-5">
+        <app-mail-settings-card />
+      </div>
+    }
+
+    @case ('audit') {
+      <div class="rounded-xl border border-border bg-card p-5">
+        <h2 class="text-sm font-semibold text-foreground">Audit log retention</h2>
+        <p class="mt-1 mb-4 text-sm text-muted-foreground">
+          How long the audit trail is kept before the pruner removes old rows.
+        </p>
+        @if (retention(); as r) {
+          <div class="mb-4 flex items-end gap-2">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Retention (days)</label>
+              <input
+                [(ngModel)]="retentionDays"
+                name="retentionDays"
+                type="number"
+                [min]="1"
+                [max]="r.max_days"
+                [placeholder]="'default: ' + r.system_default_days"
+                class="h-9 w-40 rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </div>
+            <button uiBtn (click)="saveRetention()" [disabled]="retentionSaving()">
+              {{ retentionSaving() ? 'Saving…' : 'Save' }}
             </button>
           </div>
-        </form>
-      </div>
-    } @else {
-      <p class="text-sm text-muted-foreground">Loading…</p>
-    }
-  </div>
-
-  <!-- Two-factor mandate -->
-  <div class="rounded-xl border border-border bg-card p-5">
-    <h2 class="text-sm font-semibold text-foreground">Two-factor authentication</h2>
-    <p class="mt-1 mb-4 text-sm text-muted-foreground">
-      When mandated, users without an authenticator must enroll before they can sign in.
-    </p>
-    @if (twoFactorLoading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
-    } @else {
-      <div class="flex items-center justify-between gap-4">
-        <span
-          class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
-          [class]="requireTwoFactor() ? 'bg-success/10 text-success' : 'bg-secondary text-secondary-foreground'"
-        >
-          {{ requireTwoFactor() ? 'Mandatory for everyone' : 'Optional (per user)' }}
-        </span>
-        <button uiBtn [variant]="requireTwoFactor() ? 'outline' : 'default'" (click)="toggleTwoFactor()" [disabled]="twoFactorSaving()">
-          {{ twoFactorSaving() ? 'Saving…' : requireTwoFactor() ? 'Make optional' : 'Mandate 2FA' }}
-        </button>
+          <dl class="grid max-w-md grid-cols-3 gap-2 text-sm">
+            <div class="rounded-md bg-muted/40 p-2 text-center">
+              <dt class="text-xs text-muted-foreground">System default</dt>
+              <dd class="font-medium">{{ r.system_default_days }} d</dd>
+            </div>
+            <div class="rounded-md bg-muted/40 p-2 text-center">
+              <dt class="text-xs text-muted-foreground">Maximum</dt>
+              <dd class="font-medium">{{ r.max_days }} d</dd>
+            </div>
+            <div class="rounded-md bg-muted/40 p-2 text-center">
+              <dt class="text-xs text-muted-foreground">Effective</dt>
+              <dd class="font-medium">{{ r.effective_days }} d</dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="text-sm text-muted-foreground">Loading…</p>
+        }
       </div>
     }
-  </div>
-
-  <!-- Audit retention -->
-  <div class="rounded-xl border border-border bg-card p-5">
-    <h2 class="text-sm font-semibold text-foreground">Audit log retention</h2>
-    <p class="mt-1 mb-4 text-sm text-muted-foreground">
-      How long the audit trail is kept before the pruner removes old rows.
-    </p>
-    @if (retention(); as r) {
-      <div class="mb-4 flex items-end gap-2">
-        <div>
-          <label class="mb-1.5 block text-sm font-medium">Retention (days)</label>
-          <input
-            [(ngModel)]="retentionDays"
-            name="retentionDays"
-            type="number"
-            [min]="1"
-            [max]="r.max_days"
-            [placeholder]="'default: ' + r.system_default_days"
-            class="h-9 w-40 rounded-md border border-input bg-background px-3 text-sm"
-          />
-        </div>
-        <button uiBtn (click)="saveRetention()" [disabled]="retentionSaving()">
-          {{ retentionSaving() ? 'Saving…' : 'Save' }}
-        </button>
-      </div>
-      <dl class="grid grid-cols-3 gap-2 text-sm">
-        <div class="rounded-md bg-muted/40 p-2 text-center">
-          <dt class="text-xs text-muted-foreground">System default</dt>
-          <dd class="font-medium">{{ r.system_default_days }} d</dd>
-        </div>
-        <div class="rounded-md bg-muted/40 p-2 text-center">
-          <dt class="text-xs text-muted-foreground">Maximum</dt>
-          <dd class="font-medium">{{ r.max_days }} d</dd>
-        </div>
-        <div class="rounded-md bg-muted/40 p-2 text-center">
-          <dt class="text-xs text-muted-foreground">Effective</dt>
-          <dd class="font-medium">{{ r.effective_days }} d</dd>
-        </div>
-      </dl>
-    } @else {
-      <p class="text-sm text-muted-foreground">Loading…</p>
-    }
-  </div>
-
+  }
 </div>

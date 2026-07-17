@@ -11,7 +11,7 @@ import { apiErrorInfo } from '../../../../shared/api/api-error';
 import { LoginResult } from '../../auth.model';
 import { TenantChoice } from '../../../../shared/service-proxies/service-proxies';
 
-type Step = 'credentials' | 'workspace' | 'code' | 'setup';
+type Step = 'credentials' | 'workspace' | 'code' | 'setup' | 'expired';
 
 /**
  * Sign-in screen. Credentials only — the server resolves which company they
@@ -20,6 +20,11 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
  * `two_factor_required` asks for an authenticator code,
  * `two_factor_setup_required` runs enrollment inline (company-mandated 2FA),
  * after which the user signs in again.
+ *
+ * `password_expired` can end *either* the password step or the two-factor
+ * one — it is checked last, after identity is fully proved — so both routes
+ * hand their answer to the same [`LoginPage.handle`] rather than assuming a
+ * session came back.
  */
 @Component({
   selector: 'app-login-page',
@@ -169,6 +174,49 @@ type Step = 'credentials' | 'workspace' | 'code' | 'setup';
               Back to sign in
             </button>
           }
+          @case ('expired') {
+            <form (ngSubmit)="replacePassword()">
+              <h1 class="text-xl font-semibold text-foreground">Choose a new password</h1>
+              <p class="mb-5 text-sm text-muted-foreground">
+                Your password has expired under your company's policy. Set a new one to continue.
+              </p>
+
+              <label class="mb-1.5 block text-sm font-medium text-foreground">New password</label>
+              <input
+                [(ngModel)]="newPassword"
+                name="newPassword"
+                type="password"
+                autocomplete="new-password"
+                class="mb-4 h-9 w-full rounded-md border border-input bg-background px-3 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+
+              <label class="mb-1.5 block text-sm font-medium text-foreground">Confirm password</label>
+              <input
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+                class="mb-4 h-9 w-full rounded-md border border-input bg-background px-3 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+
+              @if (error(); as message) {
+                <p class="mb-4 text-sm text-destructive">{{ message }}</p>
+              }
+
+              <button uiBtn type="submit" class="w-full" [disabled]="loading()">
+                {{ loading() ? 'Saving…' : 'Set password' }}
+              </button>
+              <button
+                type="button"
+                class="mt-3 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+                (click)="backToCredentials()"
+              >
+                Back to sign in
+              </button>
+            </form>
+          }
         }
       </div>
     </app-auth-backdrop>
@@ -181,6 +229,8 @@ export class LoginPage {
   login = '';
   password = '';
   recoveryCode = '';
+  newPassword = '';
+  confirmPassword = '';
   readonly code = signal('');
 
   readonly step = signal<Step>('credentials');
@@ -217,24 +267,39 @@ export class LoginPage {
     request.subscribe({
       next: (result: LoginResult) => {
         this.loading.set(false);
-        if (result.status === 'success') {
-          void this.router.navigateByUrl(this.auth.landingUrl());
-        } else if (result.status === 'tenant_selection') {
-          this.workspaces.set(result.tenants);
-          this.step.set('workspace');
-        } else if (result.status === 'two_factor_required') {
-          this.code.set('');
-          this.step.set('code');
-        } else {
-          // The company mandates 2FA and this account has none yet.
-          this.step.set('setup');
-        }
+        this.handle(result);
       },
       error: (err: unknown) => {
         this.loading.set(false);
         this.error.set(this.messageFor(err));
       },
     });
+  }
+
+  /** Where the server's answer sends the user next. */
+  private handle(result: LoginResult): void {
+    switch (result.status) {
+      case 'success':
+        void this.router.navigateByUrl(this.auth.landingUrl());
+        return;
+      case 'tenant_selection':
+        this.workspaces.set(result.tenants);
+        this.step.set('workspace');
+        return;
+      case 'two_factor_required':
+        this.code.set('');
+        this.step.set('code');
+        return;
+      case 'two_factor_setup_required':
+        // The company mandates 2FA and this account has none yet.
+        this.step.set('setup');
+        return;
+      case 'password_expired':
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.step.set('expired');
+        return;
+    }
   }
 
   verifyCode(): void {
@@ -248,9 +313,11 @@ export class LoginPage {
     this.loading.set(true);
     this.error.set(null);
     this.auth.loginTwoFactor(code).subscribe({
-      next: () => {
+      // Not necessarily a session: an expired password is only checked
+      // once the second factor has cleared, so this can still branch.
+      next: (result: LoginResult) => {
         this.loading.set(false);
-        void this.router.navigateByUrl(this.auth.landingUrl());
+        this.handle(result);
       },
       error: (err: unknown) => {
         this.loading.set(false);
@@ -270,6 +337,45 @@ export class LoginPage {
     this.recoveryCode = '';
   }
 
+  /**
+   * Replace the expired password. The server holds it to the company's
+   * policy and says exactly which rule it broke, so that message is shown
+   * as-is rather than restated here — the rules live server-side and a
+   * copy in the client would drift out of step with them.
+   */
+  replacePassword(): void {
+    if (this.loading()) return;
+    if (!this.newPassword) {
+      this.error.set('Enter a new password.');
+      return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.error.set('The two passwords do not match.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+    this.auth.changeExpiredPassword(this.newPassword).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.backToCredentials();
+        this.notice.set('Your password has been changed. Sign in with it to continue.');
+      },
+      error: (err: unknown) => {
+        this.loading.set(false);
+        // Here a 401 is the bridge token having run out, not bad
+        // credentials — the user has minutes, not hours, to finish this.
+        const info = apiErrorInfo(err);
+        this.error.set(
+          info.status === 401
+            ? 'This took too long and the session expired. Sign in again to retry.'
+            : this.messageFor(err),
+        );
+      },
+    });
+  }
+
   /** Enrollment done; the bridge token is spent, so sign in again. */
   setupDone(): void {
     this.backToCredentials();
@@ -281,6 +387,8 @@ export class LoginPage {
     this.error.set(null);
     this.password = '';
     this.recoveryCode = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
     this.code.set('');
     this.useRecovery.set(false);
     this.workspaces.set([]);

@@ -10,7 +10,9 @@ function isAuthEndpoint(req: HttpRequest<unknown>): boolean {
   return (
     req.url.includes('/auth/login') ||
     req.url.includes('/auth/token/refresh') ||
-    req.url.includes('/auth/register')
+    req.url.includes('/auth/register') ||
+    // Carries a bridge token, not a session: there is nothing to refresh.
+    req.url.includes('/auth/password/expired')
   );
 }
 
@@ -25,6 +27,15 @@ function isTwoFactorEndpoint(req: HttpRequest<unknown>): boolean {
     req.url.includes('/auth/two-factor/setup') ||
     req.url.includes('/auth/two-factor/confirm')
   );
+}
+
+/**
+ * The forced change of an expired password, which takes its own bridge
+ * token from `POST /auth/login` — a different token to the two-factor one,
+ * and the only endpoint that accepts it.
+ */
+function isPasswordChangeEndpoint(req: HttpRequest<unknown>): boolean {
+  return req.url.includes('/auth/password/expired');
 }
 
 /**
@@ -75,7 +86,9 @@ function report(err: unknown, req: HttpRequest<unknown>): ApiError {
 /**
  * Cross-cutting request concerns for the nebula API:
  *  - attaches the `Authorization: Bearer` token when signed in, or the pending
- *    two-factor bridge token on the 2FA endpoints during sign-in;
+ *    bridge token on the endpoint it was issued for during sign-in — the
+ *    two-factor one on the 2FA endpoints, the password one on the forced
+ *    change of an expired password;
  *  - attaches the `X-Tenant` header so the server resolves the tenant
  *    (header strategy) — needed even for the anonymous login request;
  *  - on a 401 it transparently refreshes the access token once and retries;
@@ -87,7 +100,9 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
   const withAuth = (r: HttpRequest<unknown>): HttpRequest<unknown> => {
     const token =
-      auth.token() ?? (isTwoFactorEndpoint(r) ? auth.twoFactorToken() : null);
+      auth.token() ??
+      (isTwoFactorEndpoint(r) ? auth.twoFactorToken() : null) ??
+      (isPasswordChangeEndpoint(r) ? auth.passwordToken() : null);
     // Registration creates a workspace, so it cannot belong to one: sending a
     // leftover `X-Tenant` would have the server resolve that tenant first and
     // refuse the request outright if it is gone.

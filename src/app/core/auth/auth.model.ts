@@ -17,12 +17,19 @@ export type LoginResult =
     }
   | { status: 'two_factor_required'; two_factor_token: string; tenant: string | null }
   | { status: 'two_factor_setup_required'; two_factor_token: string; tenant: string | null }
+  /**
+   * The password is older than the company's policy allows. No session is
+   * issued until it is replaced at `POST /auth/password/expired` with this
+   * token. It arrives only after any second factor has been cleared.
+   */
+  | { status: 'password_expired'; password_token: string; tenant: string | null }
   | { status: 'tenant_selection'; tenants: TenantChoice[] };
 
 const STATUSES: readonly LoginResult['status'][] = [
   'success',
   'two_factor_required',
   'two_factor_setup_required',
+  'password_expired',
   'tenant_selection',
 ];
 
