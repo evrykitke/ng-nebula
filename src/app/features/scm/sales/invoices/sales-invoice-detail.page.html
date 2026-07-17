@@ -38,7 +38,7 @@
 </a>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton />
 } @else if (error()) {
   <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
     {{ error() }}

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../shared/ui/button';
+import { Skeleton } from '../../../shared/ui/skeleton';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions.constants';
@@ -33,7 +34,7 @@ type CheckState = 'all' | 'some' | 'none';
  */
 @Component({
   selector: 'app-roles-page',
-  imports: [FormsModule, NgIcon, UiButton, PageHeader],
+  imports: [FormsModule, NgIcon, UiButton, Skeleton, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './roles.page.html',
 })

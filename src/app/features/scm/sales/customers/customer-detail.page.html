@@ -22,7 +22,7 @@
 </a>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton />
 } @else if (error()) {
   <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
     {{ error() }}
@@ -92,7 +92,10 @@
         <app-datepicker [(date)]="to" placeholder="To" />
       </div>
       <button uiBtn variant="outline" size="sm" [disabled]="statementLoading()" (click)="runStatement()">
-        {{ statementLoading() ? 'Loading…' : 'Run' }}
+        @if (statementLoading()) {
+          <app-spinner [size]="14" />
+        }
+        Run
       </button>
       <!-- Beside the dates it prints, not up in the header away from them. -->
       <app-document-pdf

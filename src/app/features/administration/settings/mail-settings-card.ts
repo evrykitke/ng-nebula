@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../shared/ui/button';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
 import {
@@ -23,7 +24,7 @@ import {
  */
 @Component({
   selector: 'app-mail-settings-card',
-  imports: [FormsModule, UiButton],
+  imports: [PageSkeleton, FormsModule, UiButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 class="text-sm font-semibold text-foreground">Email (SMTP)</h2>
@@ -32,7 +33,7 @@ import {
     </p>
 
     @if (loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="form" [rows]="3" />
     } @else {
       <form class="grid grid-cols-1 gap-4 sm:grid-cols-2" (ngSubmit)="save()">
         <div class="sm:col-span-2">

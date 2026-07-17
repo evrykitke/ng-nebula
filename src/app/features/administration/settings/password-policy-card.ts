@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../shared/ui/button';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
 import {
@@ -25,7 +26,7 @@ import {
  */
 @Component({
   selector: 'app-password-policy-card',
-  imports: [FormsModule, UiButton],
+  imports: [PageSkeleton, FormsModule, UiButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 class="text-sm font-semibold text-foreground">Password policy</h2>
@@ -148,7 +149,7 @@ import {
         </div>
       </form>
     } @else {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="form" [rows]="3" />
     }
   `,
 })

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
 import { fmtMoney, num } from '../../shared/scm-format';
@@ -16,7 +17,7 @@ import {
  */
 @Component({
   selector: 'app-stock-reconciliation-page',
-  imports: [NgIcon, UiButton, PageHeader],
+  imports: [PageSkeleton, NgIcon, UiButton, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reconciliation.page.html',
 })

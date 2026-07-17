@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { Modal } from '../../../../shared/ui/modal';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
@@ -28,7 +29,7 @@ type Tab = 'profile' | 'catalog';
 /** One supplier: master data and the item catalog (supplier-specific pricing and SKUs). */
 @Component({
   selector: 'app-supplier-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './supplier-detail.page.html',
 })

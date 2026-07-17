@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
@@ -26,7 +27,7 @@ interface OrderGroup {
  */
 @Component({
   selector: 'app-grni-page',
-  imports: [RouterLink, NgIcon, UiButton, PageHeader],
+  imports: [PageSkeleton, RouterLink, NgIcon, UiButton, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './grni.page.html',
 })

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { Modal } from '../../../../shared/ui/modal';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
@@ -24,7 +25,7 @@ import {
 /** One requisition with its lines and the approval → conversion lifecycle. */
 @Component({
   selector: 'app-requisition-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader, DocumentPdfButton],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, Modal, Lookup, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './requisition-detail.page.html',
 })

@@ -18,6 +18,7 @@ import {
   AuditServiceProxy,
   FieldChange,
 } from '../../../shared/service-proxies/service-proxies';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 
 /**
  * One audit entry: the full request context (who, from where, how long) and
@@ -26,7 +27,7 @@ import {
  */
 @Component({
   selector: 'app-audit-log-detail-page',
-  imports: [RouterLink, PageHeader],
+  imports: [PageSkeleton, RouterLink, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit-log-detail.page.html',
 })

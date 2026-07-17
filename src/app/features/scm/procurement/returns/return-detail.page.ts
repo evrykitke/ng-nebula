@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -19,7 +20,7 @@ import {
 /** One purchase return with its lines; supports posting a draft and reversing a posting. */
 @Component({
   selector: 'app-return-detail-page',
-  imports: [RouterLink, NgIcon, UiButton, PageHeader, DocumentPdfButton],
+  imports: [PageSkeleton, RouterLink, NgIcon, UiButton, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './return-detail.page.html',
 })

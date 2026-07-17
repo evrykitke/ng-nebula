@@ -77,7 +77,7 @@
           @if (loading()) {
             <tr>
               <td [attr.colspan]="config().columns.length" class="px-3 py-6 text-center text-muted-foreground">
-                Loading…
+                <app-spinner [size]="20" />
               </td>
             </tr>
           } @else {

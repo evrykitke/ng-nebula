@@ -148,7 +148,7 @@
             </form>
           </div>
         } @else {
-          <p class="text-sm text-muted-foreground">Loading…</p>
+          <app-page-skeleton variant="form" [rows]="3" />
         }
       </div>
     }
@@ -162,7 +162,7 @@
             When mandated, users without an authenticator must enroll before they can sign in.
           </p>
           @if (twoFactorLoading()) {
-            <p class="text-sm text-muted-foreground">Loading…</p>
+            <app-page-skeleton variant="form" [rows]="3" />
           } @else {
             <div class="flex items-center justify-between gap-4">
               <span
@@ -230,7 +230,7 @@
             </div>
           </dl>
         } @else {
-          <p class="text-sm text-muted-foreground">Loading…</p>
+          <app-page-skeleton variant="form" [rows]="3" />
         }
       </div>
     }

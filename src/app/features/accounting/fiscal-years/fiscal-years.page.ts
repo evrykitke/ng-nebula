@@ -4,6 +4,7 @@ import { NgIcon } from '@ng-icons/core';
 import { DateTime } from 'luxon';
 import { Observable } from 'rxjs';
 import { UiButton } from '../../../shared/ui/button';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { UiDatepicker } from '../../../shared/ui/datepicker';
 import { Modal } from '../../../shared/ui/modal';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
@@ -26,7 +27,7 @@ import {
  */
 @Component({
   selector: 'app-fiscal-years-page',
-  imports: [FormsModule, NgIcon, UiButton, UiDatepicker, PageHeader, Modal],
+  imports: [PageSkeleton, FormsModule, NgIcon, UiButton, UiDatepicker, PageHeader, Modal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fiscal-years.page.html',
 })

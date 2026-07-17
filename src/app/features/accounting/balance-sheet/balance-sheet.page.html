@@ -12,7 +12,7 @@
 </app-page-header>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton variant="report" />
 } @else if (data(); as bs) {
   <div class="grid gap-4 lg:grid-cols-2">
     <!-- Assets -->

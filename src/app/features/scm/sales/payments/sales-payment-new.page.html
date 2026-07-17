@@ -57,7 +57,7 @@
   <div class="rounded-lg border border-border bg-card p-4">
     <h2 class="mb-3 text-sm font-semibold">Open invoices</h2>
     @if (loadingInvoices()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="form" [rows]="3" />
     } @else if (!form.customer_id) {
       <p class="text-sm text-muted-foreground">Pick a customer to list their open invoices.</p>
     } @else if (rows().length === 0) {

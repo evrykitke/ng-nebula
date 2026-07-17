@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DateTime } from 'luxon';
 import { UiDatepicker } from '../../../shared/ui/datepicker';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
@@ -13,7 +14,7 @@ import {
 /** One account's ledger: its postings in date order with a running balance. */
 @Component({
   selector: 'app-account-ledger-page',
-  imports: [RouterLink, UiDatepicker, PageHeader],
+  imports: [PageSkeleton, RouterLink, UiDatepicker, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './account-ledger.page.html',
 })

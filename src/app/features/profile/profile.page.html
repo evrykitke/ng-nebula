@@ -1,7 +1,7 @@
 <app-page-header title="My Profile" subtitle="Your account and sign-in security" />
 
 @if (loading()) {
-  <div class="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">Loading…</div>
+  <app-page-skeleton variant="form" />
 } @else if (profile(); as p) {
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
     <!-- Tabs -->

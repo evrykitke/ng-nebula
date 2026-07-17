@@ -11,7 +11,7 @@
 </app-page-header>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton variant="table" />
 } @else if (!years().length) {
   <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
     No fiscal years yet. Create one to open the ledger for posting.

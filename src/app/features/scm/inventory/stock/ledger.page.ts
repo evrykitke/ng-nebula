@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { DateTime } from 'luxon';
 import { UiButton } from '../../../../shared/ui/button';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
+import { Spinner } from '../../../../shared/ui/skeleton';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -25,7 +26,7 @@ const PAGE = 100;
  */
 @Component({
   selector: 'app-stock-ledger-page',
-  imports: [FormsModule, RouterLink, UiButton, UiDatepicker, Lookup, PageHeader],
+  imports: [FormsModule, RouterLink, UiButton, UiDatepicker, Spinner, Lookup, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ledger.page.html',
 })

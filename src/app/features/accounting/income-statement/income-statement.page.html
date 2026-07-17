@@ -16,7 +16,7 @@
 </app-page-header>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton variant="report" />
 } @else if (data(); as is) {
   <div class="mx-auto max-w-2xl rounded-lg border border-border bg-card">
     <table class="w-full text-sm">

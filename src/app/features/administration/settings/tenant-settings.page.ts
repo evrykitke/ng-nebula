@@ -9,6 +9,7 @@ import {
   lucideUpload,
 } from '@ng-icons/lucide';
 import { UiButton } from '../../../shared/ui/button';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
@@ -44,7 +45,7 @@ type TabId = 'company' | 'security' | 'email' | 'audit';
  */
 @Component({
   selector: 'app-tenant-settings-page',
-  imports: [
+  imports: [PageSkeleton, 
     FormsModule,
     NgIcon,
     UiButton,

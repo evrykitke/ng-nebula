@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DateTime } from 'luxon';
 import { switchMap } from 'rxjs';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -32,7 +33,7 @@ interface ReceivableRow {
 /** Record a customer payment and allocate it across their open invoices. */
 @Component({
   selector: 'app-sales-payment-new-page',
-  imports: [FormsModule, RouterLink, UiButton, UiDatepicker, PageHeader],
+  imports: [PageSkeleton, FormsModule, RouterLink, UiButton, UiDatepicker, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-payment-new.page.html',
 })

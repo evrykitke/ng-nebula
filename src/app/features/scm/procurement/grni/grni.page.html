@@ -9,7 +9,7 @@
 </app-page-header>
 
 @if (loading()) {
-  <p class="text-sm text-muted-foreground">Loading…</p>
+  <app-page-skeleton variant="table" />
 } @else if (groups().length === 0) {
   <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
     Nothing outstanding — every received line has been billed.

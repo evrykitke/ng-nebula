@@ -34,9 +34,15 @@
         }
       </button>
     } @empty {
-      <p class="px-3 py-6 text-center text-sm text-muted-foreground">
-        {{ loading() ? 'Loading…' : 'No roles yet.' }}
-      </p>
+      @if (loading()) {
+        <div class="flex flex-col gap-2 p-3">
+          @for (row of [0, 1, 2, 3]; track row) {
+            <app-skeleton class="h-9 w-full" />
+          }
+        </div>
+      } @else {
+        <p class="px-3 py-6 text-center text-sm text-muted-foreground">No roles yet.</p>
+      }
     }
   </div>
 

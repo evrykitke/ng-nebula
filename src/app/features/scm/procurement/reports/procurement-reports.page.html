@@ -81,7 +81,7 @@
         </table>
       </div>
     } @else if (loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="table" />
     }
   }
 
@@ -129,7 +129,7 @@
         </table>
       </div>
     } @else if (loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="table" />
     }
   }
 
@@ -144,7 +144,10 @@
         <app-datepicker [(date)]="scoreTo" placeholder="End" />
       </div>
       <button uiBtn [disabled]="loading()" (click)="loadScorecards()">
-        {{ loading() ? 'Loading…' : 'Run' }}
+        @if (loading()) {
+          <app-spinner />
+        }
+        Run
       </button>
     </div>
     @if (scorecards(); as s) {
@@ -194,7 +197,7 @@
         </table>
       </div>
     } @else if (loading()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="table" />
     }
   }
 }

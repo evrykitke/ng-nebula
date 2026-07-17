@@ -18,6 +18,7 @@ import {
 } from '@angular/cdk/overlay';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucidePlus, lucideX } from '@ng-icons/lucide';
+import { Spinner } from '../ui/skeleton';
 import { LookupConfig } from './lookup-config';
 
 /**
@@ -30,7 +31,7 @@ import { LookupConfig } from './lookup-config';
  */
 @Component({
   selector: 'app-lookup',
-  imports: [FormsModule, NgIcon, CdkConnectedOverlay, CdkOverlayOrigin],
+  imports: [FormsModule, NgIcon, Spinner, CdkConnectedOverlay, CdkOverlayOrigin],
   providers: [provideIcons({ lucideChevronDown, lucidePlus, lucideX })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './lookup.html',

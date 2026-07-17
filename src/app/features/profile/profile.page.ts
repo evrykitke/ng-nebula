@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideKeyRound, lucideShield, lucideUser } from '@ng-icons/lucide';
 import { UiButton } from '../../shared/ui/button';
+import { PageSkeleton } from '../../shared/ui/skeleton';
 import { PageHeader } from '../../core/layout/page-header/page-header';
 import { TwoFactorSetupCard } from '../../shared/components/two-factor-setup-card';
 import { AuthService } from '../../core/auth/auth.service';
@@ -19,7 +20,7 @@ import { AuthServiceProxy, Profile } from '../../shared/service-proxies/service-
  */
 @Component({
   selector: 'app-profile-page',
-  imports: [FormsModule, NgIcon, UiButton, PageHeader, TwoFactorSetupCard],
+  imports: [PageSkeleton, FormsModule, NgIcon, UiButton, PageHeader, TwoFactorSetupCard],
   providers: [provideIcons({ lucideKeyRound, lucideShield, lucideUser })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile.page.html',

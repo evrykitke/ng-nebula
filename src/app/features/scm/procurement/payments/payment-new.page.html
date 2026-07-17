@@ -75,7 +75,7 @@
     @if (!form.supplier_id) {
       <p class="text-sm text-muted-foreground">Pick a supplier to see their unpaid invoices.</p>
     } @else if (loadingInvoices()) {
-      <p class="text-sm text-muted-foreground">Loading…</p>
+      <app-page-skeleton variant="form" [rows]="3" />
     } @else if (rows().length === 0) {
       <p class="text-sm text-muted-foreground">
         This supplier has no posted invoices with an outstanding balance.

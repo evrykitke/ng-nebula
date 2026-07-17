@@ -47,7 +47,7 @@ export function accountsTable(opts: {
       col
         .badge<AccountingAccount>('system_key', 'Role')
         .value((a) => a.system_key ?? '—')
-        .badgeColors({ '—': 'muted' }),
+        .badgeColors({ '—': 'muted' }).width("150px"),
       col
         .badge<AccountingAccount>('is_active', 'Status')
         .value((a) => (a.is_active ? 'Active' : 'Inactive'))

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router } from '@angular/router';
 import { DateTime } from 'luxon';
 import { UiDatepicker } from '../../../shared/ui/datepicker';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
@@ -13,7 +14,7 @@ import {
 /** The income statement: revenue less expenses over a period, and net income. */
 @Component({
   selector: 'app-income-statement-page',
-  imports: [UiDatepicker, PageHeader],
+  imports: [PageSkeleton, UiDatepicker, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './income-statement.page.html',
 })

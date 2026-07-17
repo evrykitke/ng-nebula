@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../shared/ui/button';
+import { PageSkeleton } from '../../../shared/ui/skeleton';
 import { PageHeader } from '../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
@@ -40,7 +41,7 @@ type Override = 'inherit' | 'grant' | 'deny';
  */
 @Component({
   selector: 'app-user-permissions-page',
-  imports: [FormsModule, NgIcon, RouterLink, UiButton, PageHeader],
+  imports: [PageSkeleton, FormsModule, NgIcon, RouterLink, UiButton, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-permissions.page.html',
 })

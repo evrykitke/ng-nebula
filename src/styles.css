@@ -302,6 +302,15 @@ html.theme-transition *::after {
   .modal-in {
     animation: none;
   }
+  /* Skeletons and spinners still need to read as "waiting" without motion:
+     the pulse settles at a flat tint, the spinner holds one frame. */
+  .animate-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
+  .animate-spin {
+    animation: none;
+  }
   html.theme-transition,
   html.theme-transition * {
     transition: none !important;

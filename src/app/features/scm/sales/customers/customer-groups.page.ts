@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { Modal } from '../../../../shared/ui/modal';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
@@ -22,7 +23,7 @@ import {
 /** Customer groups — shared pricing and discount defaults for a set of customers. */
 @Component({
   selector: 'app-customer-groups-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Lookup, Modal, PageHeader],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, Lookup, Modal, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-groups.page.html',
 })

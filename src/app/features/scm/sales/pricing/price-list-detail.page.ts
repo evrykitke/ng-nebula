@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -33,7 +34,7 @@ interface PriceRow {
 /** One price list: its header, activation lifecycle and editable item prices. */
 @Component({
   selector: 'app-price-list-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Lookup, PageHeader],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, Lookup, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './price-list-detail.page.html',
 })

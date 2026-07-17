@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { DateTime } from 'luxon';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
 import { Lookup } from '../../../../shared/lookup/lookup';
 import { Modal } from '../../../../shared/ui/modal';
@@ -26,7 +27,7 @@ import {
 /** One quotation: header, lines and the draft → sent → accepted → converted lifecycle. */
 @Component({
   selector: 'app-quotation-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, Lookup, Modal, PageHeader, DocumentPdfButton],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, Lookup, Modal, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quotation-detail.page.html',
 })

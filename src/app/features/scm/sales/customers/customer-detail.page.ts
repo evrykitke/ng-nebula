@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { DateTime } from 'luxon';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton, Spinner } from '../../../../shared/ui/skeleton';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
@@ -21,7 +22,7 @@ import {
 /** One customer: master details plus an on-demand account statement. */
 @Component({
   selector: 'app-customer-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, PageHeader, DocumentPdfButton],
+  imports: [PageSkeleton, Spinner, FormsModule, RouterLink, NgIcon, UiButton, UiDatepicker, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './customer-detail.page.html',
 })

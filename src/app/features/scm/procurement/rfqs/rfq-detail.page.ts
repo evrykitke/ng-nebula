@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { Modal } from '../../../../shared/ui/modal';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { DocumentPdfButton } from '../../../../shared/reporting/document-pdf-button';
@@ -40,7 +41,7 @@ interface QuoteEntry {
  */
 @Component({
   selector: 'app-rfq-detail-page',
-  imports: [FormsModule, RouterLink, NgIcon, UiButton, Modal, PageHeader, DocumentPdfButton],
+  imports: [PageSkeleton, FormsModule, RouterLink, NgIcon, UiButton, Modal, PageHeader, DocumentPdfButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './rfq-detail.page.html',
 })

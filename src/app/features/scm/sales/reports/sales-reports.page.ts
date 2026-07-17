@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { DateTime } from 'luxon';
 import { UiButton } from '../../../../shared/ui/button';
+import { PageSkeleton } from '../../../../shared/ui/skeleton';
 import { UiDatepicker } from '../../../../shared/ui/datepicker';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -25,7 +26,7 @@ type Tab = 'aging' | 'recon' | 'dnb' | 'margins' | 'register';
  */
 @Component({
   selector: 'app-sales-reports-page',
-  imports: [RouterLink, UiButton, UiDatepicker, PageHeader],
+  imports: [PageSkeleton, RouterLink, UiButton, UiDatepicker, PageHeader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-reports.page.html',
 })
