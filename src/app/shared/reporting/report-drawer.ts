@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
   HostListener,
   computed,
   effect,
@@ -10,7 +9,6 @@ import {
   input,
   output,
   signal,
-  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -24,13 +22,11 @@ import {
   lucidePrinter,
   lucideX,
 } from '@ng-icons/lucide';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { LayoutService, SIDEBAR_RAIL, SIDEBAR_WIDTH } from '../../core/layout/layout.service';
-import { apiErrorInfo } from '../api/api-error';
 import { UiButton } from '../ui/button';
-import { saveBlob, slugify } from './download';
-import { drawPage, openPdf } from './pdf-canvas';
-import { REPORT_FORMATS, ReportFormat, ReportService } from './report.service';
+import { saveBlob } from './download';
+import { LoadedPdf, PdfView } from './pdf-view';
+import { REPORT_FORMATS, ReportFormat } from './report.service';
 
 /** The zoom steps the − / + buttons walk through. */
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
@@ -45,16 +41,16 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
  * only in whether a record is named, so they share one panel rather than one
  * each.
  *
- * The pages are drawn by pdf.js into our own chrome rather than handed to the
- * browser's PDF plugin: the plugin cannot be themed, titles the document with
- * the blob's uuid, and behaves differently in every browser. pdf.js is the same
- * engine Firefox ships, so "our own viewer" is not a rebuild of PDF rendering —
- * only of the toolbar around it.
+ * The pages are drawn by [`PdfView`] rather than handed to the browser's PDF
+ * plugin: the plugin cannot be themed, titles the document with the blob's
+ * uuid, and behaves differently in every browser. pdf.js is the same engine
+ * Firefox ships, so "our own viewer" is not a rebuild of PDF rendering — only
+ * of the toolbar around it, which is all this component is.
  */
 @Component({
   selector: 'app-report-drawer',
   standalone: true,
-  imports: [FormsModule, NgIcon, UiButton],
+  imports: [FormsModule, NgIcon, UiButton, PdfView],
   providers: [
     provideIcons({
       lucideX,
@@ -212,21 +208,15 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
           }
 
           <div class="relative flex-1 overflow-auto bg-neutral-200 dark:bg-neutral-900">
-            @if (loading()) {
-              <p class="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
-                Rendering…
-              </p>
-            } @else if (error()) {
-              <div class="absolute inset-0 grid place-items-center px-6 text-center">
-                <div>
-                  <p class="text-sm font-medium text-destructive">Could not render the document</p>
-                  <p class="mt-1 text-xs text-muted-foreground">{{ error() }}</p>
-                  <button uiBtn variant="outline" class="mt-3" (click)="load()">Try again</button>
-                </div>
-              </div>
-            }
-            <!-- The pages are appended here as canvases, one per page. -->
-            <div #pageHost class="flex flex-col items-center gap-4 p-6"></div>
+            <app-pdf-view
+              [report]="report()"
+              [id]="id()"
+              [format]="format()"
+              [params]="params()"
+              [zoom]="zoom()"
+              [active]="open()"
+              (loaded)="onLoaded($event)"
+            />
           </div>
         </section>
       </div>
@@ -234,7 +224,6 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
   `,
 })
 export class ReportDrawer {
-  private readonly reports = inject(ReportService);
   private readonly layout = inject(LayoutService);
 
   /**
@@ -256,7 +245,7 @@ export class ReportDrawer {
   /** The document's own number, shown under the heading. */
   readonly number = input<string>('');
   /**
-   * Anything else the report asks for � a statement's `from`/`to`. Kept open
+   * Anything else the report asks for — a statement's `from`/`to`. Kept open
    * rather than typed per report: the engine takes whatever parameters a
    * report declares, and the drawer does not need to know which.
    */
@@ -264,12 +253,8 @@ export class ReportDrawer {
 
   readonly close = output<void>();
 
-  private readonly pageHost = viewChild<ElementRef<HTMLDivElement>>('pageHost');
-
   readonly formats = REPORT_FORMATS;
   readonly format = signal<ReportFormat>('corporate');
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
   readonly blob = signal<Blob | null>(null);
   readonly pages = signal(0);
   readonly composing = signal(false);
@@ -286,28 +271,20 @@ export class ReportDrawer {
   readonly canZoomIn = computed(() => this.zoom() < ZOOMS[ZOOMS.length - 1]);
   readonly canZoomOut = computed(() => this.zoom() > ZOOMS[0]);
 
-  private doc: PDFDocumentProxy | null = null;
   private objectUrl: string | null = null;
   private fileName = '';
 
   constructor() {
-    // Render on opening, and again whenever the letterhead is switched. Note
-    // `id` is read so a document re-renders once its record arrives, but is not
-    // required: a report that stands on its own has none.
+    // Closing drops what was drawn, so the toolbar cannot act on the last
+    // document while the next one is still rendering.
     effect(() => {
-      const open = this.open();
-      const format = this.format();
-      this.id();
-      this.params();
-      if (open) queueMicrotask(() => this.load(format));
-      else queueMicrotask(() => this.release());
+      if (!this.open()) {
+        this.releaseUrl();
+        this.blob.set(null);
+        this.pages.set(0);
+      }
     });
-    // Zoom redraws the pages already in hand — no need to ask the server again.
-    effect(() => {
-      const zoom = this.zoom();
-      if (this.doc) queueMicrotask(() => void this.paint(zoom));
-    });
-    inject(DestroyRef).onDestroy(() => this.release());
+    inject(DestroyRef).onDestroy(() => this.releaseUrl());
   }
 
   @HostListener('document:keydown.escape')
@@ -315,46 +292,12 @@ export class ReportDrawer {
     if (this.open()) this.close.emit();
   }
 
-  load(format: ReportFormat = this.format()): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.reports.renderPdf(this.report(), this.id() ?? null, format, this.params()).subscribe({
-      next: async (res) => {
-        if (!res.body) {
-          this.loading.set(false);
-          return;
-        }
-        this.release();
-        this.blob.set(res.body);
-        this.fileName = fileNameOf(res.headers.get('content-disposition'), this.report());
-        try {
-          this.doc = await openPdf(await res.body.arrayBuffer());
-          this.pages.set(this.doc.numPages);
-          await this.paint(this.zoom());
-        } catch (e) {
-          this.error.set(e instanceof Error ? e.message : 'The document could not be read.');
-        }
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(apiErrorInfo(err).message ?? 'The server did not say why.');
-      },
-    });
-  }
-
-  /** Draw every page into the host, replacing whatever was there. */
-  private async paint(zoom: number): Promise<void> {
-    const host = this.pageHost()?.nativeElement;
-    const doc = this.doc;
-    if (!host || !doc) return;
-    host.replaceChildren();
-    for (let n = 1; n <= doc.numPages; n++) {
-      const canvas = document.createElement('canvas');
-      canvas.className = 'bg-white shadow-lg';
-      host.append(canvas);
-      await drawPage(doc, n, canvas, zoom);
-    }
+  /** Take hold of what was drawn: the toolbar acts on the bytes, not the pages. */
+  onLoaded(pdf: LoadedPdf): void {
+    this.releaseUrl();
+    this.blob.set(pdf.blob);
+    this.fileName = pdf.fileName;
+    this.pages.set(pdf.pages);
   }
 
   zoomBy(step: number): void {
@@ -403,24 +346,17 @@ export class ReportDrawer {
     setTimeout(() => frame.remove(), 60_000);
   }
 
-  /** Drop the rendered bytes, the parsed document and the URL holding them. */
-  private release(): void {
+  /**
+   * Drop the URL pointing at the old bytes. Held only while something points at
+   * it — a stale one would keep the whole document alive and hand Print the
+   * previous letterhead.
+   */
+  private releaseUrl(): void {
     if (this.objectUrl) {
       URL.revokeObjectURL(this.objectUrl);
       this.objectUrl = null;
     }
-    void this.doc?.destroy();
-    this.doc = null;
-    this.pages.set(0);
-    this.blob.set(null);
-    this.pageHost()?.nativeElement.replaceChildren();
   }
-}
-
-/** The name the server gave the file — it knows the document's number. */
-function fileNameOf(disposition: string | null, report: string): string {
-  const match = /filename="?([^";]+)"?/i.exec(disposition ?? '');
-  return match?.[1]?.trim() || `${slugify(report)}.pdf`;
 }
 
 function prettify(name: string): string {

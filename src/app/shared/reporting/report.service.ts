@@ -38,11 +38,6 @@ export interface ReportSettings {
   watermark?: string | null;
 }
 
-/** The themed preview: a report's pages as SVG markup, one per page. */
-export interface ReportPreview {
-  pages: string[];
-}
-
 export interface ReportTables {
   title: string;
   tables: DataTable[];
@@ -179,19 +174,6 @@ export class ReportService {
       responseType: 'blob',
       observe: 'response',
     });
-  }
-
-  /**
-   * The themed in-app preview: the report's pages as SVG, to render inside
-   * the app's own chrome instead of the browser's native PDF viewer.
-   */
-  preview(name: string, format: ReportFormat | null): Observable<ReportPreview> {
-    const params = new URLSearchParams();
-    if (format) params.set('format', format);
-    const qs = params.toString();
-    return this.http.get<ReportPreview>(
-      `${this.base}/reports/${encodeURIComponent(name)}/preview${qs ? `?${qs}` : ''}`,
-    );
   }
 
   /** The interactive datatable payload for a list report (`table` output). */

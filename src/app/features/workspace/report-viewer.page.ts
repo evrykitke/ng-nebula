@@ -5,11 +5,11 @@ import {
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
@@ -47,6 +47,7 @@ import {
   ReportSettings,
   ReportTables,
 } from '../../shared/reporting/report.service';
+import { PdfView } from '../../shared/reporting/pdf-view';
 import { saveBlob } from '../../shared/reporting/download';
 
 type ViewMode = 'document' | 'table';
@@ -57,16 +58,15 @@ interface SortState {
 }
 
 /**
- * The report viewer. The preview matches the app theme: instead of the
- * browser's native PDF viewer, the report's pages are rendered as SVG
- * (themed chrome around white "paper") with a custom zoom toolbar. List
- * reports can also be viewed as an interactive datatable (sort + filter).
- * The right sidebar carries the format switcher, PDF/Excel downloads and,
- * for admins, the workspace report settings.
+ * The report viewer. The pages are drawn by [`PdfView`] — the same component
+ * the document drawer uses, so a report looks the same wherever it is opened
+ * and there is one renderer to fix. List reports can also be viewed as an
+ * interactive datatable (sort + filter). The right sidebar carries the format
+ * switcher, PDF/Excel downloads and, for admins, the workspace report settings.
  */
 @Component({
   selector: 'app-report-viewer-page',
-  imports: [FormsModule, NgIcon, UiButton, PageHeader],
+  imports: [FormsModule, NgIcon, UiButton, PageHeader, PdfView],
   providers: [
     provideIcons({
       lucideArrowDown,
@@ -89,36 +89,23 @@ interface SortState {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './report-viewer.page.html',
-  // The SVG comes in via [innerHTML], so it lives outside emulated view
-  // encapsulation — ::ng-deep lets us size it to fit its page card.
-  styles: [
-    `
-      :host ::ng-deep .report-page svg {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-    `,
-  ],
 })
 export class ReportViewerPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly reports = inject(ReportService);
   private readonly auth = inject(AuthService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly notify = inject(NotificationService);
 
   readonly formats = REPORT_FORMATS;
   readonly name = signal('');
   readonly info = signal<ReportInfo | null>(null);
   readonly format = signal<ReportFormat | null>(null);
+  /** Whether the *table* is loading; the document view says so for itself. */
   readonly rendering = signal(false);
 
-  // Preview (themed SVG pages) + zoom.
-  readonly pages = signal<SafeHtml[]>([]);
   readonly zoom = signal(1);
-  /** Portrait A4 at ~96dpi; scaled by the zoom factor. */
-  readonly pageWidth = computed(() => Math.round(794 * this.zoom()));
+
+  private readonly pdf = viewChild(PdfView);
 
   // Document vs interactive table view.
   readonly view = signal<ViewMode>('document');
@@ -157,7 +144,9 @@ export class ReportViewerPage implements OnDestroy {
         const info = list.find((r) => r.name === this.name()) ?? null;
         this.info.set(info);
         if (info && this.format() === null) this.format.set(info.default_format);
-        this.refresh();
+        // Nothing to kick off for the document view: `app-pdf-view` draws
+        // itself from its inputs, and asking again here would fetch it twice.
+        if (this.view() === 'table') this.loadTables();
         this.loadJobs();
       },
       error: (err) => this.notify.error('Could not load the report', apiErrorInfo(err).message),
@@ -173,26 +162,14 @@ export class ReportViewerPage implements OnDestroy {
     this.watermark = s.watermark ?? '';
   }
 
-  /** (Re)load whatever the current view needs. */
+  /**
+   * Draw the current view again from scratch. For settings changes — a new
+   * watermark or house format is not one of the view's inputs, so nothing would
+   * notice it on its own.
+   */
   refresh(): void {
     if (this.view() === 'table') this.loadTables();
-    else this.renderPreview();
-  }
-
-  private renderPreview(): void {
-    const name = this.name();
-    if (!name) return;
-    this.rendering.set(true);
-    this.reports.preview(name, this.format()).subscribe({
-      next: (preview) => {
-        this.pages.set(preview.pages.map((svg) => this.sanitizer.bypassSecurityTrustHtml(svg)));
-        this.rendering.set(false);
-      },
-      error: (err) => {
-        this.rendering.set(false);
-        this.notify.error('Could not render the report', apiErrorInfo(err).message);
-      },
-    });
+    else this.pdf()?.load();
   }
 
   private loadTables(): void {
@@ -216,13 +193,13 @@ export class ReportViewerPage implements OnDestroy {
     this.view.set(view);
     this.filter.set('');
     this.sort.set(null);
-    this.refresh();
+    if (view === 'table') this.loadTables();
   }
 
   selectFormat(format: ReportFormat): void {
     if (this.format() === format) return;
     this.format.set(format);
-    this.refresh();
+    if (this.view() === 'table') this.loadTables();
   }
 
   zoomIn(): void {
