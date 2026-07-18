@@ -113,6 +113,15 @@ if (selling && item) {
   );
   r.step('item lands in the cart', carted);
 
+  // Type a quantity straight into the line's count.
+  const qtyBox = await page.$('input[aria-label=Quantity]');
+  await qtyBox.click({ clickCount: 3 });
+  await qtyBox.type('3');
+  await page.keyboard.press('Enter');
+  await sleep(500);
+  const qty3 = await page.evaluate(() => document.body.innerText.includes('3 ×'));
+  r.step('typed quantity sticks', qty3);
+
   await clickText(page, 'Charge');
   await sleep(800);
   r.step('tender screen', /remaining/i.test(await body()));

@@ -219,9 +219,20 @@
                   >
                     <ng-icon name="lucideMinus" size="15" />
                   </button>
-                  <span class="w-8 text-center text-sm font-semibold tabular-nums">
-                    {{ fmtQty(l.qty) }}
-                  </span>
+                  <!-- The count itself is the input: tap it, type, Enter. The
+                       only road to fractional quantities (0.5 kg), and the fast
+                       one to large ones (24 sodas ≠ 24 taps). -->
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    [step]="l.item.uom_fractional ? '0.001' : '1'"
+                    [value]="l.qty"
+                    (change)="qtyTyped(l.uid, $event)"
+                    (keydown.enter)="commitQty($event)"
+                    class="h-11 w-14 border-x border-border bg-transparent text-center text-sm font-semibold tabular-nums focus:bg-accent/50 focus:outline-none"
+                    aria-label="Quantity"
+                  />
                   <button
                     type="button"
                     class="flex h-11 w-11 items-center justify-center hover:bg-accent"

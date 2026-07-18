@@ -228,6 +228,20 @@ export class TillPage {
     return (Math.round(num(line.item.price) * 100) * line.qty) / 100;
   }
 
+  /** A typed quantity commits on change (blur / Enter). Zero removes the
+   * line — same contract as stepping down to nothing. The input is then
+   * resynced to what the store actually kept (whole-unit rounding). */
+  qtyTyped(uid: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.store.setQty(uid, num(input.value));
+    const line = this.store.cart().find((l) => l.uid === uid);
+    if (line) input.value = String(line.qty);
+  }
+
+  commitQty(event: Event): void {
+    (event.target as HTMLInputElement).blur();
+  }
+
   /** The tile's stock badge: quiet when plenty, amber when low, red when out. */
   stockBadgeClass(onHand: string): string {
     const n = num(onHand);
