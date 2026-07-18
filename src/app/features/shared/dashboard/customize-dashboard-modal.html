@@ -1,0 +1,75 @@
+<app-modal
+  [open]="open()"
+  size="md"
+  title="Customize dashboard"
+  [subtitle]="counter()"
+  (closed)="closed.emit()"
+>
+  @if (!catalogue()) {
+    <div class="space-y-3">
+      @for (r of [0, 1, 2, 3, 4]; track r) {
+        <app-skeleton class="h-12 w-full" />
+      }
+    </div>
+  } @else if (catalogue()!.length === 0) {
+    <p class="py-6 text-center text-sm text-muted-foreground">
+      There are no widgets you can add to this dashboard.
+    </p>
+  } @else {
+    <ul class="space-y-2">
+      @for (w of catalogue()!; track w.name) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors"
+            [class]="
+              picked(w.name)
+                ? 'border-primary/50 bg-primary/5'
+                : full()
+                  ? 'border-border opacity-50'
+                  : 'border-border hover:bg-accent'
+            "
+            [disabled]="!picked(w.name) && full()"
+            (click)="toggle(w.name)"
+          >
+            <span
+              class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
+              [class]="
+                picked(w.name) ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+              "
+            >
+              <ng-icon [name]="kindIcon(w.kind)" size="16" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-2">
+                <span class="truncate text-sm font-medium text-foreground">{{ w.title }}</span>
+                <span
+                  class="shrink-0 rounded-full border border-border px-1.5 py-px text-[10px] text-muted-foreground"
+                >
+                  {{ kindLabel(w.kind) }}
+                </span>
+              </span>
+              <span class="mt-0.5 block truncate text-xs text-muted-foreground">
+                {{ w.description }}
+              </span>
+            </span>
+            @if (picked(w.name)) {
+              <ng-icon name="lucideCheck" size="16" class="mt-1 shrink-0 text-primary" />
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div modalFooter class="flex items-center gap-2 border-t border-border px-6 py-4">
+    <button type="button" uiBtn variant="ghost" size="sm" (click)="reset.emit()">
+      <ng-icon name="lucideRotateCcw" size="14" />
+      Reset to default
+    </button>
+    <div class="ml-auto flex items-center gap-2">
+      <button type="button" uiBtn variant="secondary" (click)="closed.emit()">Cancel</button>
+      <button type="button" uiBtn [disabled]="!catalogue()" (click)="save()">Save</button>
+    </div>
+  </div>
+</app-modal>

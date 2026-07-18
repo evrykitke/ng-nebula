@@ -3825,6 +3825,293 @@ export class CurrencyServiceProxy {
 @Injectable({
     providedIn: 'root'
 })
+export class DashboardServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param dashboard Dashboard name
+     */
+    get_dashboard(dashboard: string): Observable<DashboardView> {
+        let url_ = this.baseUrl + "/dashboards/{dashboard}";
+        if (dashboard === undefined || dashboard === null)
+            throw new globalThis.Error("The parameter 'dashboard' must be defined.");
+        url_ = url_.replace("{dashboard}", encodeURIComponent("" + dashboard));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_dashboard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_dashboard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DashboardView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DashboardView>;
+        }));
+    }
+
+    protected processGet_dashboard(response: HttpResponseBase): Observable<DashboardView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DashboardView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param dashboard Dashboard name
+     */
+    put_dashboard(dashboard: string, body: UpdateDashboardRequest): Observable<DashboardView> {
+        let url_ = this.baseUrl + "/dashboards/{dashboard}";
+        if (dashboard === undefined || dashboard === null)
+            throw new globalThis.Error("The parameter 'dashboard' must be defined.");
+        url_ = url_.replace("{dashboard}", encodeURIComponent("" + dashboard));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPut_dashboard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPut_dashboard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DashboardView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DashboardView>;
+        }));
+    }
+
+    protected processPut_dashboard(response: HttpResponseBase): Observable<DashboardView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DashboardView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param dashboard Dashboard name
+     */
+    reset_dashboard(dashboard: string): Observable<DashboardView> {
+        let url_ = this.baseUrl + "/dashboards/{dashboard}";
+        if (dashboard === undefined || dashboard === null)
+            throw new globalThis.Error("The parameter 'dashboard' must be defined.");
+        url_ = url_.replace("{dashboard}", encodeURIComponent("" + dashboard));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processReset_dashboard(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processReset_dashboard(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DashboardView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DashboardView>;
+        }));
+    }
+
+    protected processReset_dashboard(response: HttpResponseBase): Observable<DashboardView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as DashboardView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param dashboard Dashboard name
+     */
+    dashboard_widgets(dashboard: string): Observable<WidgetInfo[]> {
+        let url_ = this.baseUrl + "/dashboards/{dashboard}/widgets";
+        if (dashboard === undefined || dashboard === null)
+            throw new globalThis.Error("The parameter 'dashboard' must be defined.");
+        url_ = url_.replace("{dashboard}", encodeURIComponent("" + dashboard));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDashboard_widgets(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDashboard_widgets(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WidgetInfo[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WidgetInfo[]>;
+        }));
+    }
+
+    protected processDashboard_widgets(response: HttpResponseBase): Observable<WidgetInfo[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WidgetInfo[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param dashboard Dashboard name
+     * @param name Widget name
+     */
+    widget_data(dashboard: string, name: string): Observable<WidgetData> {
+        let url_ = this.baseUrl + "/dashboards/{dashboard}/widgets/{name}/data";
+        if (dashboard === undefined || dashboard === null)
+            throw new globalThis.Error("The parameter 'dashboard' must be defined.");
+        url_ = url_.replace("{dashboard}", encodeURIComponent("" + dashboard));
+        if (name === undefined || name === null)
+            throw new globalThis.Error("The parameter 'name' must be defined.");
+        url_ = url_.replace("{name}", encodeURIComponent("" + name));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processWidget_data(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processWidget_data(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<WidgetData>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<WidgetData>;
+        }));
+    }
+
+    protected processWidget_data(response: HttpResponseBase): Observable<WidgetData> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as WidgetData;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
 export class HealthServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
@@ -15061,6 +15348,20 @@ export interface ChangePasswordRequest {
     [key: string]: any;
 }
 
+/** A chart payload: category labels plus one or more aligned series. Pie/donut charts read the first series as the slice values. */
+export interface ChartData {
+    chart: ChartType;
+    labels: string[];
+    series: SeriesData[];
+    /** A unit hint for axis/tooltip formatting, e.g. "KES". */
+    unit?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** How a [`WidgetKind::Chart`] widget draws its series. */
+export type ChartType = "line" | "area" | "bar" | "stacked_bar" | "pie" | "donut";
+
 export interface CloseSessionRequest {
     counts: SessionCountRequest[];
     /** Required when any tender's count differs from expected. */
@@ -15599,6 +15900,19 @@ export interface CustomerBody {
     tax_exemption_no?: string | undefined;
     tax_number?: string | undefined;
     website?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** A dashboard as the caller sees it: their layout (or the default), already filtered to the widgets they may see. */
+export interface DashboardView {
+    /** Whether this is the caller's own saved arrangement (true) or the
+dashboard's default (false). */
+    customized: boolean;
+    dashboard: string;
+    /** The canvas cap — the client disables "add" at this count. */
+    max_widgets: number;
+    widgets: PlacedWidgetView[];
 
     [key: string]: any;
 }
@@ -16269,6 +16583,24 @@ export interface LevelView {
     [key: string]: any;
 }
 
+export interface ListData {
+    empty_text?: string | undefined;
+    items: ListItemData[];
+
+    [key: string]: any;
+}
+
+/** One entry of a [`ListData`] widget. */
+export interface ListItemData {
+    subtitle?: string | undefined;
+    title: string;
+    trend?: TrendDirection | undefined;
+    /** The right-aligned figure, e.g. an amount or a count. */
+    value?: string | undefined;
+
+    [key: string]: any;
+}
+
 /** Who a price list applies to. */
 export type ListScope = "default" | "group" | "customer";
 
@@ -16689,6 +17021,26 @@ export interface PinApproval {
     [key: string]: any;
 }
 
+/** One placed widget in a saved layout: which widget, at what width. Order in the vector is order on the canvas — the grid flows them. */
+export interface PlacedWidget {
+    /** Width in grid columns, 1..=12. */
+    span: number;
+    widget: string;
+
+    [key: string]: any;
+}
+
+/** A placed widget resolved against its definition — what the canvas renders before any data arrives. */
+export interface PlacedWidgetView {
+    description: string;
+    kind: WidgetKind;
+    name: string;
+    span: number;
+    title: string;
+
+    [key: string]: any;
+}
+
 export interface PosOrderHeader {
     captured_offline: boolean;
     client_uuid: string;
@@ -16945,6 +17297,21 @@ export interface Profile {
     time_zone?: string | undefined;
     two_factor_enabled: boolean;
     user_name: string;
+
+    [key: string]: any;
+}
+
+export interface ProgressData {
+    items: ProgressItemData[];
+
+    [key: string]: any;
+}
+
+/** One bar of a [`ProgressData`] widget. `value` is a fraction 0.0..=1.0. */
+export interface ProgressItemData {
+    caption?: string | undefined;
+    label: string;
+    value: number;
 
     [key: string]: any;
 }
@@ -17965,6 +18332,14 @@ export type SalesSettlementStatus = "unpaid" | "partially_paid" | "paid";
 /** Where a serialized unit is in its life. */
 export type SerialStatus = "in_stock" | "issued" | "scrapped";
 
+/** One named series of values aligned to the chart's labels. */
+export interface SeriesData {
+    name: string;
+    values: number[];
+
+    [key: string]: any;
+}
+
 export interface SessionCountRequest {
     counted: string;
     /** The count-sheet breakdown behind `counted`, when one was used;
@@ -18121,6 +18496,17 @@ export interface Settings {
 
 /** How much of a posted invoice has been paid: `unpaid` (nothing settled or the invoice is not posted), `partially_paid`, or `paid` in full. */
 export type SettlementStatus = "unpaid" | "partially_paid" | "paid";
+
+/** A stat card: the value as display text (the widget owns its own formatting — money, counts and percentages all render differently), with an optional caption and period-over-period delta. */
+export interface StatData {
+    caption?: string | undefined;
+    /** A short comparison line, e.g. "+12% vs last month". */
+    delta?: string | undefined;
+    trend?: TrendDirection | undefined;
+    value: string;
+
+    [key: string]: any;
+}
 
 /** One account's contribution to a financial statement, at its natural-side balance. */
 export interface StatementLine {
@@ -18286,6 +18672,24 @@ export interface SyncSalesRequest {
     [key: string]: any;
 }
 
+export interface TableColumnData {
+    label: string;
+    /** Numeric columns right-align. */
+    numeric?: boolean;
+
+    [key: string]: any;
+}
+
+/** A small table: string-rendered cells, like the reporting datatables. */
+export interface TableData {
+    columns: TableColumnData[];
+    /** What to say when there are no rows, e.g. "No sessions today." */
+    empty_text?: string | undefined;
+    rows: string[][];
+
+    [key: string]: any;
+}
+
 /** Which side of the ledger a tax code lands on. */
 export type TaxDirection = "output" | "input";
 
@@ -18348,6 +18752,9 @@ movements, the clearing tenders are net takings. */
 
     [key: string]: any;
 }
+
+/** A trend hint the client colours (up = good is the client's call, not the data's — a rising expense is still `Up`). */
+export type TrendDirection = "up" | "down" | "flat";
 
 export interface TrialBalance {
     as_of?: DateTime | undefined;
@@ -18413,6 +18820,12 @@ export interface UpdateCompanyProfileRequest {
     tax_pin?: string | undefined;
     vat_number?: string | undefined;
     website?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface UpdateDashboardRequest {
+    widgets: PlacedWidget[];
 
     [key: string]: any;
 }
@@ -18523,6 +18936,33 @@ export interface WarehouseValuation {
 
     [key: string]: any;
 }
+
+/** A widget's loaded data. Deliberately flat rather than a tagged union: `kind` says which section is filled, and generated clients get plain optional fields instead of a discriminated type they may mishandle. */
+export interface WidgetData {
+    chart?: ChartData | undefined;
+    kind: WidgetKind;
+    list?: ListData | undefined;
+    progress?: ProgressData | undefined;
+    stat?: StatData | undefined;
+    table?: TableData | undefined;
+
+    [key: string]: any;
+}
+
+/** A widget's public metadata for the customize catalogue. */
+export interface WidgetInfo {
+    dashboard: string;
+    default_span: number;
+    description: string;
+    kind: WidgetKind;
+    name: string;
+    title: string;
+
+    [key: string]: any;
+}
+
+/** What a widget looks like — how the client renders its data. */
+export type WidgetKind = "stat" | "chart" | "table" | "list" | "progress";
 
 export type LoginResponseStatus = "success";
 

@@ -2199,6 +2199,179 @@
         }
       }
     },
+    "/dashboards/{dashboard}": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "get_dashboard",
+        "parameters": [
+          {
+            "name": "dashboard",
+            "in": "path",
+            "description": "Dashboard name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "put_dashboard",
+        "parameters": [
+          {
+            "name": "dashboard",
+            "in": "path",
+            "description": "Dashboard name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "reset_dashboard",
+        "parameters": [
+          {
+            "name": "dashboard",
+            "in": "path",
+            "description": "Dashboard name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboards/{dashboard}/widgets": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "dashboard_widgets",
+        "parameters": [
+          {
+            "name": "dashboard",
+            "in": "path",
+            "description": "Dashboard name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WidgetInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboards/{dashboard}/widgets/{name}/data": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "operationId": "widget_data",
+        "parameters": [
+          {
+            "name": "dashboard",
+            "in": "path",
+            "description": "Dashboard name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Widget name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -10377,6 +10550,51 @@
           }
         }
       },
+      "ChartData": {
+        "type": "object",
+        "description": "A chart payload: category labels plus one or more aligned series.\nPie/donut charts read the first series as the slice values.",
+        "required": [
+          "chart",
+          "labels",
+          "series"
+        ],
+        "properties": {
+          "chart": {
+            "$ref": "#/components/schemas/ChartType"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesData"
+            }
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A unit hint for axis/tooltip formatting, e.g. \"KES\"."
+          }
+        }
+      },
+      "ChartType": {
+        "type": "string",
+        "description": "How a [`WidgetKind::Chart`] widget draws its series.",
+        "enum": [
+          "line",
+          "area",
+          "bar",
+          "stacked_bar",
+          "pie",
+          "donut"
+        ]
+      },
       "CloseSessionRequest": {
         "type": "object",
         "required": [
@@ -12404,6 +12622,36 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "DashboardView": {
+        "type": "object",
+        "description": "A dashboard as the caller sees it: their layout (or the default),\nalready filtered to the widgets they may see.",
+        "required": [
+          "dashboard",
+          "max_widgets",
+          "customized",
+          "widgets"
+        ],
+        "properties": {
+          "customized": {
+            "type": "boolean",
+            "description": "Whether this is the caller's own saved arrangement (true) or the\ndashboard's default (false)."
+          },
+          "dashboard": {
+            "type": "string"
+          },
+          "max_widgets": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The canvas cap — the client disables \"add\" at this count."
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlacedWidgetView"
+            }
           }
         }
       },
@@ -14941,6 +15189,61 @@
           }
         }
       },
+      "ListData": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "empty_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListItemData"
+            }
+          }
+        }
+      },
+      "ListItemData": {
+        "type": "object",
+        "description": "One entry of a [`ListData`] widget.",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "subtitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "trend": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrendDirection"
+              }
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The right-aligned figure, e.g. an amount or a count."
+          }
+        }
+      },
       "ListScope": {
         "type": "string",
         "description": "Who a price list applies to.",
@@ -16464,6 +16767,53 @@
           }
         }
       },
+      "PlacedWidget": {
+        "type": "object",
+        "description": "One placed widget in a saved layout: which widget, at what width.\nOrder in the vector is order on the canvas — the grid flows them.",
+        "required": [
+          "widget",
+          "span"
+        ],
+        "properties": {
+          "span": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Width in grid columns, 1..=12."
+          },
+          "widget": {
+            "type": "string"
+          }
+        }
+      },
+      "PlacedWidgetView": {
+        "type": "object",
+        "description": "A placed widget resolved against its definition — what the canvas\nrenders before any data arrives.",
+        "required": [
+          "name",
+          "title",
+          "description",
+          "kind",
+          "span"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/WidgetKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "span": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "PosOrderHeader": {
         "type": "object",
         "required": [
@@ -17519,6 +17869,43 @@
           },
           "user_name": {
             "type": "string"
+          }
+        }
+      },
+      "ProgressData": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgressItemData"
+            }
+          }
+        }
+      },
+      "ProgressItemData": {
+        "type": "object",
+        "description": "One bar of a [`ProgressData`] widget. `value` is a fraction 0.0..=1.0.",
+        "required": [
+          "label",
+          "value"
+        ],
+        "properties": {
+          "caption": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -21144,6 +21531,26 @@
           "scrapped"
         ]
       },
+      "SeriesData": {
+        "type": "object",
+        "description": "One named series of values aligned to the chart's labels.",
+        "required": [
+          "name",
+          "values"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
       "SessionCountRequest": {
         "type": "object",
         "required": [
@@ -21632,6 +22039,41 @@
           "partially_paid",
           "paid"
         ]
+      },
+      "StatData": {
+        "type": "object",
+        "description": "A stat card: the value as display text (the widget owns its own\nformatting — money, counts and percentages all render differently),\nwith an optional caption and period-over-period delta.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "caption": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delta": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A short comparison line, e.g. \"+12% vs last month\"."
+          },
+          "trend": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrendDirection"
+              }
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        }
       },
       "StatementLine": {
         "type": "object",
@@ -22194,6 +22636,53 @@
           }
         }
       },
+      "TableColumnData": {
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "numeric": {
+            "type": "boolean",
+            "description": "Numeric columns right-align."
+          }
+        }
+      },
+      "TableData": {
+        "type": "object",
+        "description": "A small table: string-rendered cells, like the reporting datatables.",
+        "required": [
+          "columns",
+          "rows"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableColumnData"
+            }
+          },
+          "empty_text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What to say when there are no rows, e.g. \"No sessions today.\""
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
       "TaxDirection": {
         "type": "string",
         "description": "Which side of the ledger a tax code lands on.",
@@ -22353,6 +22842,15 @@
             ]
           }
         }
+      },
+      "TrendDirection": {
+        "type": "string",
+        "description": "A trend hint the client colours (up = good is the client's call, not\nthe data's — a rising expense is still `Up`).",
+        "enum": [
+          "up",
+          "down",
+          "flat"
+        ]
       },
       "TrialBalance": {
         "type": "object",
@@ -22546,6 +23044,20 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "UpdateDashboardRequest": {
+        "type": "object",
+        "required": [
+          "widgets"
+        ],
+        "properties": {
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlacedWidget"
+            }
           }
         }
       },
@@ -22881,6 +23393,112 @@
             "type": "string"
           }
         }
+      },
+      "WidgetData": {
+        "type": "object",
+        "description": "A widget's loaded data. Deliberately flat rather than a tagged union:\n`kind` says which section is filled, and generated clients get plain\noptional fields instead of a discriminated type they may mishandle.",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "chart": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChartData"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/WidgetKind"
+          },
+          "list": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ListData"
+              }
+            ]
+          },
+          "progress": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProgressData"
+              }
+            ]
+          },
+          "stat": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatData"
+              }
+            ]
+          },
+          "table": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TableData"
+              }
+            ]
+          }
+        }
+      },
+      "WidgetInfo": {
+        "type": "object",
+        "description": "A widget's public metadata for the customize catalogue.",
+        "required": [
+          "name",
+          "dashboard",
+          "title",
+          "description",
+          "kind",
+          "default_span"
+        ],
+        "properties": {
+          "dashboard": {
+            "type": "string"
+          },
+          "default_span": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/WidgetKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "WidgetKind": {
+        "type": "string",
+        "description": "What a widget looks like — how the client renders its data.",
+        "enum": [
+          "stat",
+          "chart",
+          "table",
+          "list",
+          "progress"
+        ]
       }
     }
   }

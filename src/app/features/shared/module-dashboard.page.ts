@@ -1,61 +1,29 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChartColumn } from '@ng-icons/lucide';
+import { lucideSettings2 } from '@ng-icons/lucide';
 import { PageHeader } from '../../core/layout/page-header/page-header';
-import { NAV_ITEMS, NavItem, appForUrl } from '../../core/layout/nav.model';
+import { UiButton } from '../../shared/ui/button';
+import { NAV_ITEMS, appForUrl, appPrefix } from '../../core/layout/nav.model';
+import { DashboardCanvas } from './dashboard/dashboard-canvas';
 
 /**
- * A module's dashboard, before it has one.
+ * A module's dashboard landing page, shared by every app.
  *
- * Each app is getting its own landing page — the numbers that matter to that
- * app, on arrival. The link is in the sidebar now, so the page has to exist:
- * a menu entry that 404s is worse than one that says "not yet". Until each is
- * built, this stands in and offers the app's pages, so landing here is still a
- * way in rather than a dead end.
+ * The backend names each canvas after the app's URL prefix ("accounting",
+ * "inventory", "procurement", "sales", "pos"), so one page serves them
+ * all: it reads which app it woke up in off the URL and mounts that
+ * canvas. The header's Customize button is the way into the widget
+ * catalogue, as everywhere else.
  */
 @Component({
   selector: 'app-module-dashboard-page',
-  imports: [RouterLink, NgIcon, PageHeader],
-  providers: [provideIcons({ lucideChartColumn })],
+  imports: [NgIcon, PageHeader, UiButton, DashboardCanvas],
+  providers: [provideIcons({ lucideSettings2 })],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <app-page-header
-      [title]="(app()?.label ?? 'Module') + ' dashboard'"
-      subtitle="Coming soon"
-      [breadcrumbs]="[{ label: app()?.label ?? 'Module' }, { label: 'Dashboard' }]"
-    />
-
-    <div
-      class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border
-             py-14 text-center"
-    >
-      <ng-icon name="lucideChartColumn" size="36" class="text-muted-foreground" />
-      <p class="mt-3 text-sm font-medium text-foreground">
-        {{ app()?.label }} has no dashboard yet
-      </p>
-      <p class="mt-1 max-w-md text-sm text-muted-foreground">
-        This is where {{ app()?.label ?? 'the module' }}'s figures will land. Until then, its pages
-        are below.
-      </p>
-
-      @if (pages().length) {
-        <div class="mt-5 flex flex-wrap justify-center gap-2 px-6">
-          @for (page of pages(); track page.label) {
-            <a
-              [routerLink]="page.route"
-              class="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground
-                     transition hover:bg-accent hover:text-foreground"
-            >
-              {{ page.label }}
-            </a>
-          }
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './module-dashboard.page.html',
 })
 export class ModuleDashboardPage {
   private readonly router = inject(Router);
@@ -72,8 +40,10 @@ export class ModuleDashboardPage {
 
   readonly app = computed(() => appForUrl(this.url(), NAV_ITEMS));
 
-  /** The app's real pages — this one is a placeholder, so it excludes itself. */
-  readonly pages = computed<NavItem[]>(() =>
-    (this.app()?.children ?? []).filter((c) => c.route && !c.route.endsWith('/dashboard')),
-  );
+  /** The backend canvas name — the app's URL prefix without its slash. */
+  readonly canvasName = computed(() => {
+    const app = this.app();
+    const prefix = app ? appPrefix(app) : null;
+    return prefix?.replace('/', '') ?? 'workspace';
+  });
 }

@@ -1,0 +1,96 @@
+@if (radial()) {
+  <div class="flex items-center gap-4">
+    <svg [attr.viewBox]="'0 0 230 230'" class="h-36 w-36 shrink-0" role="img">
+      @for (s of slices(); track $index) {
+        <path [attr.d]="s.d" [attr.fill]="s.color" stroke="var(--card)" stroke-width="1">
+          <title>{{ s.title }}</title>
+        </path>
+      }
+    </svg>
+    <ul class="min-w-0 flex-1 space-y-1.5 text-xs">
+      @for (e of legend(); track $index) {
+        <li class="flex items-center gap-2">
+          <span class="h-2.5 w-2.5 shrink-0 rounded-full" [style.background]="e.color"></span>
+          <span class="truncate text-muted-foreground">{{ e.label }}</span>
+          @if (e.value) {
+            <span class="ml-auto shrink-0 font-medium tabular-nums text-foreground">
+              {{ e.value }}
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+} @else {
+  <svg [attr.viewBox]="'0 0 ' + w + ' ' + h" class="w-full" role="img">
+    <!-- horizontal gridlines + y labels -->
+    @for (t of ticks(); track $index) {
+      <line
+        [attr.x1]="m.l"
+        [attr.x2]="w - m.r"
+        [attr.y1]="t.y"
+        [attr.y2]="t.y"
+        stroke="var(--border)"
+        stroke-width="1"
+      />
+      <text
+        [attr.x]="m.l - 6"
+        [attr.y]="t.y + 3"
+        text-anchor="end"
+        class="fill-current text-muted-foreground"
+        font-size="10"
+      >
+        {{ t.label }}
+      </text>
+    }
+    @for (x of xLabels(); track $index) {
+      <text
+        [attr.x]="x.x"
+        [attr.y]="h - 8"
+        text-anchor="middle"
+        class="fill-current text-muted-foreground"
+        font-size="10"
+      >
+        {{ x.label }}
+      </text>
+    }
+    @if (isBars()) {
+      @for (b of bars(); track $index) {
+        <rect
+          [attr.x]="b.x"
+          [attr.y]="b.y"
+          [attr.width]="b.w"
+          [attr.height]="b.h"
+          [attr.fill]="b.color"
+          rx="1.5"
+        >
+          <title>{{ b.title }}</title>
+        </rect>
+      }
+    } @else {
+      @for (a of areas(); track $index) {
+        <polygon [attr.points]="a" [attr.fill]="color($index)" opacity="0.15" />
+      }
+      @for (p of lines(); track $index) {
+        <polyline
+          [attr.points]="p"
+          fill="none"
+          [attr.stroke]="color($index)"
+          stroke-width="2"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+        />
+      }
+    }
+  </svg>
+  @if (legend().length > 1) {
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+      @for (e of legend(); track $index) {
+        <span class="inline-flex items-center gap-1.5">
+          <span class="h-2.5 w-2.5 rounded-full" [style.background]="e.color"></span>
+          <span class="text-muted-foreground">{{ e.label }}</span>
+        </span>
+      }
+    </div>
+  }
+}

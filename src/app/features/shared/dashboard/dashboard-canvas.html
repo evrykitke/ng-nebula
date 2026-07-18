@@ -1,0 +1,46 @@
+@if (loading()) {
+  <app-page-skeleton variant="cards" [rows]="6" />
+} @else if (view(); as v) {
+  @if (v.widgets.length === 0) {
+    <div
+      class="flex flex-col items-center justify-center rounded-xl border border-dashed
+             border-border py-14 text-center"
+    >
+      <ng-icon name="lucideLayoutDashboard" size="36" class="text-muted-foreground" />
+      <p class="mt-3 text-sm font-medium text-foreground">This dashboard is empty</p>
+      <p class="mt-1 max-w-md text-sm text-muted-foreground">
+        Add widgets to make this canvas yours — stats, charts, tables and more.
+      </p>
+      <button type="button" uiBtn class="mt-5" (click)="openCustomize()">
+        <ng-icon name="lucideSettings2" size="15" />
+        Customize
+      </button>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-6 lg:grid-cols-12">
+      @for (w of v.widgets; track w.name) {
+        <div
+          [class]="tileClass(w)"
+          draggable="true"
+          (dragstart)="onDragStart($index, $event)"
+          (dragenter)="onDragEnter($index)"
+          (dragover)="$event.preventDefault()"
+          (dragend)="onDragEnd()"
+          (drop)="$event.preventDefault()"
+        >
+          <app-dashboard-widget [dashboard]="dashboard()" [widget]="w" />
+        </div>
+      }
+    </div>
+  }
+}
+
+<app-customize-dashboard-modal
+  [open]="customizing()"
+  [dashboard]="dashboard()"
+  [maxWidgets]="view()?.max_widgets ?? 12"
+  [placed]="view()?.widgets ?? []"
+  (closed)="customizing.set(false)"
+  (saved)="onCustomized($event)"
+  (reset)="onReset()"
+/>
