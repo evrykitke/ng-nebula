@@ -11,6 +11,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText, optDec } from '../../../../shared/forms/numeric';
 import { fmtCost, priceListStatusTones, statusLabel } from '../../shared/scm-format';
 import { itemLookup } from '../../shared/scm-lookups';
 import {
@@ -149,15 +150,15 @@ export class PriceListDetailPage {
     const lines: PriceLineBody[] = [];
     for (const r of this.rows()) {
       if (!r.item_id) continue;
-      if (!r.unit_price.trim() && !r.discount_pct.trim()) {
+      if (!fieldText(r.unit_price) && !fieldText(r.discount_pct)) {
         this.notify.error('Each line needs a unit price or a discount %.');
         return;
       }
       lines.push({
         item_id: r.item_id,
-        min_qty: r.min_qty.trim() ? Number(r.min_qty).toString() : undefined,
-        unit_price: r.unit_price.trim() ? Number(r.unit_price).toString() : undefined,
-        discount_pct: r.discount_pct.trim() ? Number(r.discount_pct).toString() : undefined,
+        min_qty: optDec(r.min_qty),
+        unit_price: optDec(r.unit_price),
+        discount_pct: optDec(r.discount_pct),
       });
     }
     const body: PriceLinesBody = { lines };

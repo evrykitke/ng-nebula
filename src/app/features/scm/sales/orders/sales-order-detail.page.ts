@@ -13,6 +13,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText } from '../../../../shared/forms/numeric';
 import { fmtDate, fmtMoney, fmtQty, num, salesOrderStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   DeliveryHeader,
@@ -173,7 +174,7 @@ export class SalesOrderDetailPage {
   doConfirm(): void {
     if (this.busy()) return;
     this.busy.set(true);
-    const body = this.confirmRate.trim() ? { exchange_rate: Number(this.confirmRate).toString() } : {};
+    const body = fieldText(this.confirmRate) ? { exchange_rate: Number(this.confirmRate).toString() } : {};
     this.proxy.confirm_order(this.id, body).subscribe({
       next: (o) => {
         this.busy.set(false);

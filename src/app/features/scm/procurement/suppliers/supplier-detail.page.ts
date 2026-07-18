@@ -13,6 +13,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec as dec, optInt as int } from '../../../../shared/forms/numeric';
 import { fmtCost, fmtDate } from '../../shared/scm-format';
 import { itemLookup } from '../../shared/scm-lookups';
 import {
@@ -163,8 +164,6 @@ export class SupplierDetailPage {
     if (!this.catalogForm.item_id) return this.catalogError.set('An item is required.');
 
     const opt = (v: string): string | undefined => v.trim() || undefined;
-    const dec = (v: string): string | undefined => (v.trim() === '' ? undefined : v.trim());
-    const int = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v));
 
     const body: ItemSupplierBody = {
       item_id: this.catalogForm.item_id,

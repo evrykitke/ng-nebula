@@ -12,6 +12,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec } from '../../../../shared/forms/numeric';
 import { fmtPct } from '../../shared/scm-format';
 import { priceListLookup } from '../../shared/scm-lookups';
 import {
@@ -113,7 +114,7 @@ export class CustomerGroupsPage {
     const body: GroupBody = {
       name: this.form.name.trim(),
       description: this.form.description.trim() || undefined,
-      default_discount_pct: this.form.default_discount_pct.trim() || undefined,
+      default_discount_pct: optDec(this.form.default_discount_pct),
       price_list_id: this.form.price_list_id || undefined,
       is_active: this.form.is_active,
     };

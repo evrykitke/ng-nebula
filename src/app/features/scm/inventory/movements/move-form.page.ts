@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText } from '../../../../shared/forms/numeric';
 import { asDateString } from '../../shared/scm-format';
 import { itemLookup, warehouseLookup } from '../../shared/scm-lookups';
 import {
@@ -266,7 +267,7 @@ export class MoveFormPage {
         this.formError.set('Each line needs a valid quantity.');
         return null;
       }
-      if (this.needsCost() && !(Number(l.unit_cost) >= 0 && l.unit_cost.trim() !== '')) {
+      if (this.needsCost() && !(Number(l.unit_cost) >= 0 && fieldText(l.unit_cost) !== '')) {
         this.formError.set('Receipts require a unit cost on every line.');
         return null;
       }
@@ -285,7 +286,7 @@ export class MoveFormPage {
       lines.push({
         item_id: l.item_id,
         qty: qty.toString(),
-        unit_cost: this.needsCost() && l.unit_cost.trim() ? Number(l.unit_cost).toString() : undefined,
+        unit_cost: this.needsCost() && fieldText(l.unit_cost) ? Number(l.unit_cost).toString() : undefined,
         batch_no: l.track_batches ? l.batch_no.trim() : undefined,
         serial_nos: l.track_serials ? serials : undefined,
         memo: l.memo.trim() || undefined,

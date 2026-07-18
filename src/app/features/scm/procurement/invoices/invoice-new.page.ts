@@ -11,6 +11,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText, optDec } from '../../../../shared/forms/numeric';
 import { asDateString, fmtMoney, fmtQty, num } from '../../shared/scm-format';
 import { orderLookup } from '../../shared/scm-lookups';
 import {
@@ -190,7 +191,7 @@ export class InvoiceNewPage {
       const qty = num(l.qty);
       if (qty <= 0) continue;
       const price = num(l.unit_price);
-      if (!(price >= 0) || l.unit_price.trim() === '') {
+      if (!(price >= 0) || fieldText(l.unit_price) === '') {
         this.formError.set(`Enter a unit price for ${l.sku}.`);
         return null;
       }
@@ -198,7 +199,7 @@ export class InvoiceNewPage {
         order_line_id: l.order_line_id,
         qty: qty.toString(),
         unit_price: price.toString(),
-        discount_pct: l.discount_pct.trim() ? Number(l.discount_pct).toString() : undefined,
+        discount_pct: optDec(l.discount_pct),
       });
     }
     if (lines.length === 0) {
@@ -211,8 +212,8 @@ export class InvoiceNewPage {
       supplier_invoice_no: this.form.supplier_invoice_no.trim(),
       invoice_date: asDateString(date),
       due_date: this.form.due_date ? asDateString(this.form.due_date) : undefined,
-      discount_pct: this.form.discount_pct.trim() ? Number(this.form.discount_pct).toString() : undefined,
-      other_charges: this.form.other_charges.trim() ? Number(this.form.other_charges).toString() : undefined,
+      discount_pct: optDec(this.form.discount_pct),
+      other_charges: optDec(this.form.other_charges),
       memo: this.form.memo.trim() || undefined,
       lines,
     };

@@ -13,6 +13,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText, optDec, optInt } from '../../../../shared/forms/numeric';
 import { fmtCost, fmtDate, fmtQty, num, rfqStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   ProcurementServiceProxy,
@@ -253,7 +254,7 @@ export class RfqDetailPage {
     this.recordError.set(null);
     const quotes: QuoteRequest[] = [];
     for (const e of this.quoteEntries()) {
-      if (e.unit_price.trim() === '') continue; // a blank line = no quote for that item
+      if (fieldText(e.unit_price) === '') continue; // a blank line = no quote for that item
       const price = Number(e.unit_price);
       if (!(price > 0)) {
         this.recordError.set(`Enter a valid price for ${e.sku} (or leave it blank).`);
@@ -262,8 +263,8 @@ export class RfqDetailPage {
       quotes.push({
         rfq_line_id: e.rfq_line_id,
         unit_price: price.toString(),
-        min_qty: e.min_qty.trim() ? Number(e.min_qty).toString() : undefined,
-        lead_time_days: e.lead_time_days.trim() ? Number(e.lead_time_days) : undefined,
+        min_qty: optDec(e.min_qty),
+        lead_time_days: optInt(e.lead_time_days),
         notes: e.notes.trim() || undefined,
       });
     }

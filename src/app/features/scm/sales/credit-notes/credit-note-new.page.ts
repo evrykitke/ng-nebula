@@ -11,6 +11,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec } from '../../../../shared/forms/numeric';
 import { asDateString, fmtMoney, fmtQty, num } from '../../shared/scm-format';
 import { warehouseLookup } from '../../shared/scm-lookups';
 import {
@@ -182,8 +183,8 @@ export class CreditNoteNewPage {
       lines.push({
         invoice_line_id: l.invoice_line_id,
         qty: qty.toString(),
-        unit_price: l.unit_price.trim() ? Number(l.unit_price).toString() : undefined,
-        discount_pct: l.discount_pct.trim() ? Number(l.discount_pct).toString() : undefined,
+        unit_price: optDec(l.unit_price),
+        discount_pct: optDec(l.discount_pct),
         restock: l.restock,
         restock_warehouse_id: l.restock ? this.form.restock_warehouse_id : undefined,
         batch_no: l.batch_no.trim() || undefined,

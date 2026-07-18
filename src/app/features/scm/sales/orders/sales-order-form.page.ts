@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec, optInt } from '../../../../shared/forms/numeric';
 import { asDateString, fmtMoney, num } from '../../shared/scm-format';
 import { customerLookup, itemLookup, taxCodeLookup, warehouseLookup } from '../../shared/scm-lookups';
 import {
@@ -277,8 +278,8 @@ export class SalesOrderFormPage {
         item_id: l.item_id,
         description: l.description.trim() || undefined,
         qty: qty.toString(),
-        unit_price: l.unit_price.trim() ? Number(l.unit_price).toString() : undefined,
-        discount_pct: l.discount_pct.trim() ? Number(l.discount_pct).toString() : undefined,
+        unit_price: optDec(l.unit_price),
+        discount_pct: optDec(l.discount_pct),
         tax_code_id: l.tax_code_id || undefined,
       });
     }
@@ -293,15 +294,13 @@ export class SalesOrderFormPage {
       currency: this.form.currency.trim().toUpperCase() || undefined,
       order_date: asDateString(orderDate),
       expected_date: this.form.expected_date ? asDateString(this.form.expected_date) : undefined,
-      payment_terms_days: this.form.payment_terms_days.trim()
-        ? Number(this.form.payment_terms_days)
-        : undefined,
+      payment_terms_days: optInt(this.form.payment_terms_days),
       customer_po_no: this.form.customer_po_no.trim() || undefined,
       shipping_method: this.form.shipping_method.trim() || undefined,
       shipping_address: this.form.shipping_address.trim() || undefined,
       incoterms: this.form.incoterms.trim() || undefined,
-      discount_pct: this.form.discount_pct.trim() ? Number(this.form.discount_pct).toString() : undefined,
-      other_charges: this.form.other_charges.trim() ? Number(this.form.other_charges).toString() : undefined,
+      discount_pct: optDec(this.form.discount_pct),
+      other_charges: optDec(this.form.other_charges),
       tax_inclusive: this.form.tax_inclusive,
       terms_and_conditions: this.form.terms_and_conditions.trim() || undefined,
       memo: this.form.memo.trim() || undefined,

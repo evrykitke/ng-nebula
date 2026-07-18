@@ -6,6 +6,7 @@ import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec as dec, optInt as int } from '../../../../shared/forms/numeric';
 import { taxCodeLookup } from '../../shared/scm-lookups';
 import {
   AccountingServiceProxy,
@@ -169,8 +170,6 @@ export class SupplierFormPage {
     if (!this.form.currency.trim()) return this.formError.set('Currency is required.');
 
     const opt = (v: string): string | undefined => v.trim() || undefined;
-    const dec = (v: string): string | undefined => (v.trim() === '' ? undefined : v.trim());
-    const int = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v));
 
     const body: SupplierBody = {
       code: this.form.code.trim(),

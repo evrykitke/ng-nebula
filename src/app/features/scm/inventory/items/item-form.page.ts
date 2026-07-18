@@ -6,6 +6,7 @@ import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { optDec as dec, optInt as int } from '../../../../shared/forms/numeric';
 import { itemLookup, supplierLookup, taxCodeLookup, uomLookup, warehouseLookup } from '../../shared/scm-lookups';
 import {
   AccountingServiceProxy,
@@ -219,9 +220,6 @@ export class ItemFormPage {
     if (!this.form.sku.trim()) return this.formError.set('SKU is required.');
     if (!this.form.name.trim()) return this.formError.set('Name is required.');
     if (!this.form.uom_id) return this.formError.set('A stock unit of measure is required.');
-
-    const dec = (v: string): string | undefined => (v.trim() === '' ? undefined : v.trim());
-    const int = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v));
 
     const body: ItemBody = {
       sku: this.form.sku.trim(),

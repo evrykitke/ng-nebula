@@ -13,6 +13,7 @@ import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { fieldText } from '../../../../shared/forms/numeric';
 import { fmtCost, fmtDate, fmtMoney, fmtQty, num, orderStatusTones, statusLabel } from '../../shared/scm-format';
 import {
   OrderView,
@@ -189,7 +190,7 @@ export class OrderDetailPage {
   confirmApprove(): void {
     if (this.busy()) return;
     this.busy.set(true);
-    const body = this.approveRate.trim() ? { exchange_rate: Number(this.approveRate).toString() } : {};
+    const body = fieldText(this.approveRate) ? { exchange_rate: Number(this.approveRate).toString() } : {};
     this.proxy.approve_order(this.id, body).subscribe({
       next: (o) => {
         this.busy.set(false);

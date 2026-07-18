@@ -19,6 +19,7 @@ import { DataTable } from '../../../shared/datatable/data-table';
 import { TableDataSource } from '../../../shared/datatable/table-config';
 import { clientSideSource } from '../../../shared/datatable/client-side';
 import { apiErrorInfo } from '../../../shared/api/api-error';
+import { fieldText } from '../../../shared/forms/numeric';
 import { taxCodesTable } from './tax-codes.table';
 import {
   AccountingAccount,
@@ -135,7 +136,7 @@ export class TaxCodesPage {
       return;
     }
     const rate = Number(this.form.rate);
-    if (this.form.rate.trim() === '' || Number.isNaN(rate) || rate < 0) {
+    if (fieldText(this.form.rate) === '' || Number.isNaN(rate) || rate < 0) {
       this.formError.set('Rate must be a non-negative number.');
       return;
     }
