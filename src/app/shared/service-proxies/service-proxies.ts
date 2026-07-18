@@ -18104,6 +18104,17 @@ export interface Settings {
     blind_count: boolean;
     /** Largest first. */
     denominations: string[];
+    receipt_font_size_px: number;
+    receipt_margin_mm: number;
+    /** The roll the tills print to — 58 and 80 are the common widths. */
+    receipt_paper_width_mm: number;
+    receipt_show_address: boolean;
+    /** Which parts of the company profile the receipt header shows. */
+    receipt_show_company_name: boolean;
+    receipt_show_contacts: boolean;
+    receipt_show_tax_ids: boolean;
+    /** An M-Pesa tender must carry its confirmation code. */
+    require_mpesa_reference: boolean;
 
     [key: string]: any;
 }
@@ -18418,6 +18429,14 @@ export interface UpdateSettingsRequest {
     /** Positive amounts; the server sorts them largest-first and drops
 duplicates. Empty = no count-sheet helper. */
     denominations: string[];
+    receipt_font_size_px: number;
+    receipt_margin_mm: number;
+    receipt_paper_width_mm: number;
+    receipt_show_address: boolean;
+    receipt_show_company_name: boolean;
+    receipt_show_contacts: boolean;
+    receipt_show_tax_ids: boolean;
+    require_mpesa_reference: boolean;
 
     [key: string]: any;
 }

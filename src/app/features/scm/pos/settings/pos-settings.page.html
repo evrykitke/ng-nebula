@@ -66,5 +66,155 @@
         </button>
       </form>
     </div>
+
+    <div class="rounded-lg border border-border bg-card p-5">
+      <label class="flex items-start gap-3">
+        <input type="checkbox" [(ngModel)]="requireMpesaReference" class="mt-1" />
+        <span>
+          <span class="block text-sm font-medium">Require the M-Pesa confirmation code</span>
+          <span class="mt-0.5 block text-sm text-muted-foreground">
+            When on, the till refuses an M-Pesa payment until the cashier keys the customer's
+            confirmation code — the code is what reconciles the statement later. Turning it off
+            trades that rigour for queue speed: the code becomes optional and the sale goes
+            through without it.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="rounded-lg border border-border bg-card p-5">
+      <h2 class="text-sm font-medium">Receipt paper</h2>
+      <p class="mt-0.5 text-sm text-muted-foreground">
+        The roll the tills print to. Receipts are laid out to exactly these dimensions —
+        thermal rolls commonly come 58mm or 80mm wide.
+      </p>
+
+      <div class="mt-3 flex flex-wrap items-end gap-4">
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground" for="paper-width">
+            Width (mm)
+          </label>
+          <div class="mt-1 flex items-center gap-1.5">
+            @for (w of paperPresets; track w) {
+              <button
+                type="button"
+                class="h-9 rounded-md border px-3 text-sm font-medium"
+                [class]="
+                  paperWidth === w
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border hover:bg-accent'
+                "
+                (click)="paperWidth = w"
+              >
+                {{ w }}mm
+              </button>
+            }
+            <input
+              id="paper-width"
+              type="number"
+              min="30"
+              max="210"
+              [(ngModel)]="paperWidth"
+              name="paperWidth"
+              class="h-9 w-20 rounded-md border border-input bg-background px-3 text-right text-sm"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground" for="paper-margin">
+            Margin (mm)
+          </label>
+          <input
+            id="paper-margin"
+            type="number"
+            min="0"
+            max="20"
+            [(ngModel)]="paperMargin"
+            name="paperMargin"
+            class="mt-1 h-9 w-20 rounded-md border border-input bg-background px-3 text-right text-sm"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-muted-foreground" for="font-size">
+            Type size (px)
+          </label>
+          <input
+            id="font-size"
+            type="number"
+            min="6"
+            max="32"
+            [(ngModel)]="fontSize"
+            name="fontSize"
+            class="mt-1 h-9 w-20 rounded-md border border-input bg-background px-3 text-right text-sm"
+          />
+        </div>
+      </div>
+
+      <h3 class="mt-5 text-sm font-medium">Company details on the receipt</h3>
+      <p class="mt-0.5 text-sm text-muted-foreground">
+        Which parts of the company profile head every receipt. The values themselves come from
+        Administration → Tenant settings.
+      </p>
+      <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="showCompanyName" name="showCompanyName" />
+          Company name
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="showAddress" name="showAddress" />
+          Address
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="showContacts" name="showContacts" />
+          Phone &amp; email
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" [(ngModel)]="showTaxIds" name="showTaxIds" />
+          Tax PIN / VAT number
+        </label>
+      </div>
+
+      <!-- CSS millimetres render at physical size: this is the actual paper. -->
+      <div class="mt-4 overflow-x-auto rounded-md border border-dashed border-border bg-muted/40 p-4">
+        <div
+          class="mx-auto bg-white text-black shadow-sm"
+          [style.width.mm]="paperWidth"
+          [style.padding.mm]="paperMargin"
+          [style.font-size.px]="fontSize"
+          style="font-family: 'Courier New', monospace; line-height: 1.45"
+        >
+          @if (showCompanyName || showAddress || showContacts || showTaxIds) {
+            @if (showCompanyName) {
+              <p class="text-center font-bold" [style.font-size.px]="fontSize + 2">Company Ltd</p>
+            }
+            @if (showAddress) {
+              <p class="text-center">P.O. Box 0000, Nairobi</p>
+            }
+            @if (showContacts) {
+              <p class="text-center">0700 000 000 · shop&#64;example.com</p>
+            }
+            @if (showTaxIds) {
+              <p class="text-center">PIN A000000000B</p>
+            }
+            <div class="my-1 border-t border-dashed border-black/40"></div>
+          }
+          <p class="text-center font-bold">RCP-2026-000001</p>
+          <div class="my-1 border-t border-dashed border-black/40"></div>
+          <div class="flex justify-between gap-2"><span>1× Sample item</span><span>100.00</span></div>
+          <div class="my-1 border-t border-dashed border-black/40"></div>
+          <div class="flex justify-between font-bold"><span>TOTAL</span><span>100.00</span></div>
+        </div>
+        <p class="mt-2 text-center text-xs text-muted-foreground">
+          True size on most screens — hold a roll against it.
+        </p>
+      </div>
+    </div>
+
+    <!-- The page is tall enough that the header's Save is off-screen here. -->
+    <div class="flex justify-end">
+      <button uiBtn [disabled]="busy()" (click)="save()">
+        {{ busy() ? 'Saving…' : 'Save settings' }}
+      </button>
+    </div>
   </div>
 }

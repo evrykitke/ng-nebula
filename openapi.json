@@ -21571,7 +21571,15 @@
         "description": "The settings as the API speaks them.",
         "required": [
           "blind_count",
-          "denominations"
+          "denominations",
+          "require_mpesa_reference",
+          "receipt_paper_width_mm",
+          "receipt_margin_mm",
+          "receipt_font_size_px",
+          "receipt_show_company_name",
+          "receipt_show_address",
+          "receipt_show_contacts",
+          "receipt_show_tax_ids"
         ],
         "properties": {
           "blind_count": {
@@ -21583,6 +21591,36 @@
               "type": "string"
             },
             "description": "Largest first."
+          },
+          "receipt_font_size_px": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipt_margin_mm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipt_paper_width_mm": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The roll the tills print to — 58 and 80 are the common widths."
+          },
+          "receipt_show_address": {
+            "type": "boolean"
+          },
+          "receipt_show_company_name": {
+            "type": "boolean",
+            "description": "Which parts of the company profile the receipt header shows."
+          },
+          "receipt_show_contacts": {
+            "type": "boolean"
+          },
+          "receipt_show_tax_ids": {
+            "type": "boolean"
+          },
+          "require_mpesa_reference": {
+            "type": "boolean",
+            "description": "An M-Pesa tender must carry its confirmation code."
           }
         }
       },
@@ -22535,7 +22573,15 @@
         "type": "object",
         "required": [
           "blind_count",
-          "denominations"
+          "denominations",
+          "require_mpesa_reference",
+          "receipt_paper_width_mm",
+          "receipt_margin_mm",
+          "receipt_font_size_px",
+          "receipt_show_company_name",
+          "receipt_show_address",
+          "receipt_show_contacts",
+          "receipt_show_tax_ids"
         ],
         "properties": {
           "blind_count": {
@@ -22547,6 +22593,33 @@
               "type": "string"
             },
             "description": "Positive amounts; the server sorts them largest-first and drops\nduplicates. Empty = no count-sheet helper."
+          },
+          "receipt_font_size_px": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipt_margin_mm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipt_paper_width_mm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "receipt_show_address": {
+            "type": "boolean"
+          },
+          "receipt_show_company_name": {
+            "type": "boolean"
+          },
+          "receipt_show_contacts": {
+            "type": "boolean"
+          },
+          "receipt_show_tax_ids": {
+            "type": "boolean"
+          },
+          "require_mpesa_reference": {
+            "type": "boolean"
           }
         }
       },

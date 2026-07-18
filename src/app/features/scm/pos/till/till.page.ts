@@ -26,6 +26,7 @@ import {
   lucidePause,
   lucidePlay,
   lucidePlus,
+  lucidePrinter,
   lucideReceipt,
   lucideScanBarcode,
   lucideSearch,
@@ -36,10 +37,12 @@ import {
 } from '@ng-icons/lucide';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { Modal } from '../../../../shared/ui/modal';
 import { UiButton } from '../../../../shared/ui/button';
 import { fmtDateTime, fmtMoney, fmtQty, num } from '../../shared/scm-format';
 import { TENDERS, sheetTotal, suggestSheet, tenderLabel } from '../shared/pos-format';
+import { printReceipt } from '../shared/receipt-print';
 import { CartLine, TillStore } from './till-store';
 import {
   DenominationCount,
@@ -83,6 +86,7 @@ interface CloseRow {
       lucidePause,
       lucidePlay,
       lucidePlus,
+      lucidePrinter,
       lucideReceipt,
       lucideScanBarcode,
       lucideSearch,
@@ -98,6 +102,7 @@ interface CloseRow {
 export class TillPage {
   readonly store = inject(TillStore);
   private readonly auth = inject(AuthService);
+  private readonly notify = inject(NotificationService);
 
   private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
 
@@ -277,12 +282,26 @@ export class TillPage {
     this.store.addTender('cash', Math.min(due, tendered), tendered);
   }
 
+  /** Whether the tenant's settings insist on the M-Pesa confirmation code. */
+  mpesaCodeRequired(): boolean {
+    return this.store.settings()?.require_mpesa_reference !== false;
+  }
+
   addTenderEntry(): void {
     const amount = num(this.amountInput);
     if (this.activeTender === 'cash') {
       const tendered = this.tenderedInput ? num(this.tenderedInput) : amount;
       this.store.addTender('cash', Math.min(amount, this.store.remaining()), tendered);
     } else {
+      // Refuse here rather than at capture: the code box is on this screen.
+      if (
+        this.activeTender === 'mpesa' &&
+        this.mpesaCodeRequired() &&
+        !this.referenceInput.trim()
+      ) {
+        this.notify.error('Key the M-Pesa confirmation code — this tenant requires it.');
+        return;
+      }
       this.store.addTender(
         this.activeTender,
         amount,
@@ -293,6 +312,46 @@ export class TillPage {
     this.amountInput = this.store.remaining() > 0 ? this.store.remaining().toFixed(2) : '';
     this.tenderedInput = '';
     this.referenceInput = '';
+  }
+
+  /** "phone · email", from whichever the company profile actually has. */
+  companyContacts(c: { phone?: string; email?: string }): string {
+    return [c.phone, c.email].filter(Boolean).join(' · ');
+  }
+
+  /** Whether the company block contributes anything at all to the receipt. */
+  companyBlockVisible(c: { address?: string; phone?: string; email?: string }): boolean {
+    return (
+      this.showsOnReceipt('company_name') ||
+      (this.showsOnReceipt('address') && !!c.address) ||
+      (this.showsOnReceipt('contacts') && !!this.companyContacts(c))
+    );
+  }
+
+  /** Whether a receipt company field is on — everything until settings say no. */
+  showsOnReceipt(field: 'company_name' | 'address' | 'contacts' | 'tax_ids'): boolean {
+    const s = this.store.settings();
+    if (!s) return true;
+    return {
+      company_name: s.receipt_show_company_name,
+      address: s.receipt_show_address,
+      contacts: s.receipt_show_contacts,
+      tax_ids: s.receipt_show_tax_ids,
+    }[field];
+  }
+
+  /** Reprint the just-captured receipt to the tenant's configured paper. */
+  printLast(): void {
+    const order = this.store.lastReceipt();
+    if (!order) return;
+    const register = this.store.register();
+    printReceipt(
+      order,
+      this.store.settings(),
+      this.store.company(),
+      register?.receipt_header,
+      register?.receipt_footer,
+    );
   }
 
   // ---------------------------------------------------------------------------

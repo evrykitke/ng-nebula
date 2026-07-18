@@ -67,6 +67,15 @@ for (const [path, marker] of [
   r.step(`page ${path}`, ok);
 }
 
+// The settings page grew paper + M-Pesa policy cards.
+await page.goto(BASE + '/pos/settings', { waitUntil: 'networkidle2' });
+await sleep(1200);
+const settingsBody = await page.evaluate(() => document.body.innerText);
+r.step(
+  'settings show paper and M-Pesa policy',
+  settingsBody.includes('Receipt paper') && settingsBody.includes('M-Pesa confirmation code'),
+);
+
 // The reports tabs answer.
 await page.goto(BASE + '/pos/reports', { waitUntil: 'networkidle2' });
 await clickText(page, 'Tender mix');

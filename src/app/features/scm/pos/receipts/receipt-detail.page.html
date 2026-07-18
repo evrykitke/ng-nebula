@@ -7,6 +7,9 @@
     { label: order()?.number ?? '…' },
   ]"
 >
+  <button uiBtn actions variant="outline" [disabled]="!order()" (click)="print()">
+    <ng-icon name="lucidePrinter" size="16" /> Print
+  </button>
   @if (canRefund() && isSale() && isCaptured()) {
     <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openRefund()">
       <ng-icon name="lucideUndo2" size="16" /> Refund

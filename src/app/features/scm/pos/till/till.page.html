@@ -511,7 +511,13 @@
               @if (activeTender !== 'cash') {
                 <input
                   [(ngModel)]="referenceInput"
-                  [placeholder]="activeTender === 'mpesa' ? 'M-Pesa code' : 'Card slip / auth no.'"
+                  [placeholder]="
+                    activeTender === 'mpesa'
+                      ? mpesaCodeRequired()
+                        ? 'M-Pesa code'
+                        : 'M-Pesa code (optional)'
+                      : 'Card slip / auth no.'
+                  "
                   class="mt-3 h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm"
                 />
               }
@@ -597,6 +603,22 @@
             <div
               class="mt-5 rounded-lg border border-border bg-card p-5 font-mono text-[12px] leading-relaxed shadow-sm"
             >
+              @if (store.company(); as c) {
+                @if (companyBlockVisible(c)) {
+                  @if (showsOnReceipt('company_name')) {
+                    <p class="text-center text-[13px] font-bold">{{ c.display_name }}</p>
+                  }
+                  @if (showsOnReceipt('address') && c.address) {
+                    <p class="whitespace-pre-line text-center text-muted-foreground">
+                      {{ c.address }}
+                    </p>
+                  }
+                  @if (showsOnReceipt('contacts') && companyContacts(c); as contacts) {
+                    <p class="text-center text-muted-foreground">{{ contacts }}</p>
+                  }
+                  <div class="my-2 border-t border-dashed border-border"></div>
+                }
+              }
               @if (store.register()?.receipt_header; as h) {
                 <p class="whitespace-pre-line text-center text-muted-foreground">{{ h }}</p>
                 <div class="my-2 border-t border-dashed border-border"></div>
@@ -639,10 +661,22 @@
               }
             </div>
 
-            <button uiBtn size="lg" class="mt-5 h-14 w-full text-base" (click)="store.newSale()">
-              New sale
-              <span class="text-xs opacity-70">(Enter)</span>
-            </button>
+            <div class="mt-5 flex gap-2">
+              <button
+                uiBtn
+                variant="outline"
+                size="lg"
+                class="h-14 shrink-0 px-5"
+                (click)="printLast()"
+              >
+                <ng-icon name="lucidePrinter" size="18" />
+                Print
+              </button>
+              <button uiBtn size="lg" class="h-14 w-full text-base" (click)="store.newSale()">
+                New sale
+                <span class="text-xs opacity-70">(Enter)</span>
+              </button>
+            </div>
           </div>
         }
       </div>

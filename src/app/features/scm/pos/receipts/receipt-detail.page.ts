@@ -14,10 +14,15 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { apiErrorInfo } from '../../../../shared/api/api-error';
 import { fmtDateTime, fmtMoney, fmtQty, num } from '../../shared/scm-format';
 import { TENDERS, tenderLabel } from '../shared/pos-format';
+import { printReceipt } from '../shared/receipt-print';
 import {
+  AuthServiceProxy,
+  CompanyProfileResponse,
   PosOrderView,
+  PosRegister,
   PosServiceProxy,
   SessionView,
+  Settings,
 } from '../../../../shared/service-proxies/service-proxies';
 
 /**
@@ -35,6 +40,7 @@ import {
 })
 export class ReceiptDetailPage {
   private readonly proxy = inject(PosServiceProxy);
+  private readonly authProxy = inject(AuthServiceProxy);
   private readonly auth = inject(AuthService);
   private readonly notify = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
@@ -91,6 +97,37 @@ export class ReceiptDetailPage {
         this.error.set(apiErrorInfo(err).message || 'Could not load the receipt.');
         this.loading.set(false);
       },
+    });
+  }
+
+  /**
+   * Reprint to the tenant's configured paper. The register's header/footer
+   * are resolved through the session — best-effort, since either lookup may
+   * be denied; the receipt prints without them then.
+   */
+  print(): void {
+    const o = this.order();
+    if (!o) return;
+    forkJoin({
+      settings: this.proxy.get_settings().pipe(catchError(() => of(null as Settings | null))),
+      company: this.authProxy
+        .tenant_profile_get()
+        .pipe(catchError(() => of(null as CompanyProfileResponse | null))),
+      register: this.proxy.get_session(o.session_id).pipe(
+        map((s) => s.register_id),
+        catchError(() => of(null)),
+      ),
+    }).subscribe(({ settings, company, register }) => {
+      const done = (reg: PosRegister | null) =>
+        printReceipt(o, settings, company, reg?.receipt_header, reg?.receipt_footer);
+      if (!register) {
+        done(null);
+        return;
+      }
+      this.proxy
+        .get_register(register)
+        .pipe(catchError(() => of(null as PosRegister | null)))
+        .subscribe(done);
     });
   }
 

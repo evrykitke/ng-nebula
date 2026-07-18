@@ -10,8 +10,10 @@ import { fmtMoney, num } from '../../shared/scm-format';
 import { PosServiceProxy } from '../../../../shared/service-proxies/service-proxies';
 
 /**
- * The two POS policies a tenant sets: whether cashiers count blind, and which
- * notes and coins the count sheet offers. Server-side rules worth knowing
+ * The POS policies a tenant sets: whether cashiers count blind, which notes
+ * and coins the count sheet offers, whether an M-Pesa tender must carry its
+ * confirmation code, and the receipt paper the tills print to. Server-side
+ * rules worth knowing
  * here: blind never binds anyone holding Reports.View, and the server always
  * checks counted-vs-expected itself regardless.
  */
@@ -31,14 +33,32 @@ export class PosSettingsPage {
   blindCount = false;
   denominations: string[] = [];
   newDenomination = '';
+  requireMpesaReference = true;
+  paperWidth = 80;
+  paperMargin = 4;
+  fontSize = 12;
+  showCompanyName = true;
+  showAddress = true;
+  showContacts = true;
+  showTaxIds = true;
 
   readonly fmtMoney = fmtMoney;
+  /** The widths thermal rolls actually come in. */
+  readonly paperPresets = [58, 80];
 
   constructor() {
     this.proxy.get_settings().subscribe({
       next: (s) => {
         this.blindCount = s.blind_count;
         this.denominations = [...s.denominations];
+        this.requireMpesaReference = s.require_mpesa_reference;
+        this.paperWidth = s.receipt_paper_width_mm;
+        this.paperMargin = s.receipt_margin_mm;
+        this.fontSize = s.receipt_font_size_px;
+        this.showCompanyName = s.receipt_show_company_name;
+        this.showAddress = s.receipt_show_address;
+        this.showContacts = s.receipt_show_contacts;
+        this.showTaxIds = s.receipt_show_tax_ids;
         this.loading.set(false);
       },
       error: (err) => {
@@ -70,12 +90,31 @@ export class PosSettingsPage {
     if (this.busy()) return;
     this.busy.set(true);
     this.proxy
-      .put_settings({ blind_count: this.blindCount, denominations: this.denominations })
+      .put_settings({
+        blind_count: this.blindCount,
+        denominations: this.denominations,
+        require_mpesa_reference: this.requireMpesaReference,
+        receipt_paper_width_mm: num(this.paperWidth),
+        receipt_margin_mm: num(this.paperMargin),
+        receipt_font_size_px: num(this.fontSize),
+        receipt_show_company_name: this.showCompanyName,
+        receipt_show_address: this.showAddress,
+        receipt_show_contacts: this.showContacts,
+        receipt_show_tax_ids: this.showTaxIds,
+      })
       .subscribe({
         next: (s) => {
           this.busy.set(false);
           this.blindCount = s.blind_count;
           this.denominations = [...s.denominations];
+          this.requireMpesaReference = s.require_mpesa_reference;
+          this.paperWidth = s.receipt_paper_width_mm;
+          this.paperMargin = s.receipt_margin_mm;
+          this.fontSize = s.receipt_font_size_px;
+          this.showCompanyName = s.receipt_show_company_name;
+          this.showAddress = s.receipt_show_address;
+          this.showContacts = s.receipt_show_contacts;
+          this.showTaxIds = s.receipt_show_tax_ids;
           this.notify.success('POS settings saved');
         },
         error: (err) => {

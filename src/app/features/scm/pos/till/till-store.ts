@@ -4,7 +4,9 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { apiErrorInfo } from '../../../../shared/api/api-error';
 import { num } from '../../shared/scm-format';
 import {
+  AuthServiceProxy,
   CatalogItem,
+  CompanyProfileResponse,
   DenominationCount,
   PosOrderView,
   PosRegister,
@@ -52,6 +54,7 @@ const cents = (v: string | number | null | undefined): number => Math.round(num(
 @Injectable()
 export class TillStore {
   private readonly proxy = inject(PosServiceProxy);
+  private readonly authProxy = inject(AuthServiceProxy);
   private readonly notify = inject(NotificationService);
 
   readonly screen = signal<TillScreen>('boot');
@@ -61,6 +64,8 @@ export class TillStore {
   readonly register = signal<PosRegister | null>(null);
   readonly session = signal<SessionView | null>(null);
   readonly settings = signal<Settings | null>(null);
+  /** Whose receipt this is: the tenant's name and contacts, for the header. */
+  readonly company = signal<CompanyProfileResponse | null>(null);
 
   readonly catalog = signal<CatalogItem[]>([]);
   readonly currency = signal('');
@@ -127,6 +132,10 @@ export class TillStore {
     this.proxy.get_settings().subscribe({
       next: (s) => this.settings.set(s),
       error: () => this.settings.set(null),
+    });
+    this.authProxy.tenant_profile_get().subscribe({
+      next: (p) => this.company.set(p),
+      error: () => this.company.set(null),
     });
     this.proxy.list_registers().subscribe({
       next: (regs) => {
