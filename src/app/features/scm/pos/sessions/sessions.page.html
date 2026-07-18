@@ -1,0 +1,7 @@
+<app-page-header
+  title="Sessions"
+  subtitle="Each till day from float to count — live X while open, the stored Z once closed"
+  [breadcrumbs]="[{ label: 'Point of Sale' }, { label: 'Sessions' }]"
+/>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />

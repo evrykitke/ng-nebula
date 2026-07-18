@@ -125,4 +125,15 @@ export const Permissions = {
   salesPaymentsPost: 'Pages.Sales.Payments.Post',
   salesPaymentsReverse: 'Pages.Sales.Payments.Reverse',
   salesReportsView: 'Pages.Sales.Reports.View',
+
+  pos: 'Pages.Pos',
+  posRegistersView: 'Pages.Pos.Registers.View',
+  posRegistersManage: 'Pages.Pos.Registers.Manage',
+  posSessionsOpen: 'Pages.Pos.Sessions.Open',
+  posSessionsClose: 'Pages.Pos.Sessions.Close',
+  posSessionsPaidInOut: 'Pages.Pos.Sessions.PaidInOut',
+  posSell: 'Pages.Pos.Sell',
+  posRefund: 'Pages.Pos.Refund',
+  posOverride: 'Pages.Pos.Override',
+  posReportsView: 'Pages.Pos.Reports.View',
 } as const;

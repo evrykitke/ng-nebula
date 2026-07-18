@@ -1952,6 +1952,49 @@
         }
       }
     },
+    "/auth/users/{id}/override-pin": {
+      "put": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Set or clear a user's override PIN — the short numeric credential a\nsupervisor keys in at a till to approve gated acts (voids, discounts,\nprice overrides). The PIN itself is never stored or echoed; approval\nalso requires the override permission, so the PIN alone grants nothing.",
+        "operationId": "set_override_pin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOverridePinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/users/{id}/permissions": {
       "get": {
         "tags": [
@@ -3236,6 +3279,999 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InventoryWarehouse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/catalog": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "get_catalog",
+        "parameters": [
+          {
+            "name": "register_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Only items updated after this moment (the previous response's\n`generated_at`); absent = the full catalog.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/registers": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "list_registers",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosRegister"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "create_register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegister"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/registers/{id}": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "get_register",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Register id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegister"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "update_register",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Register id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegister"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "deactivate_register",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Register id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegister"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/registers/{id}/grid": {
+      "put": {
+        "tags": [
+          "pos"
+        ],
+        "summary": "The tile layout is the cashier's own arrangement — saving it needs\nonly the sell permission, not register management.",
+        "operationId": "set_register_grid",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Register id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegister"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/reports/hourly": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "hourly_json",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "tz_offset",
+            "in": "query",
+            "description": "Minutes east of UTC to bucket hours in (e.g. 180 for Nairobi).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HourlyView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/reports/item-sales": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "item_sales_json",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemSalesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/reports/sessions": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "sessions_json",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "register_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSummaryView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/reports/tender-mix": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "tender_mix_json",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderMixView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sales": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "list_sales",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PosOrderKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosOrderHeader"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "capture_sale",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSaleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sales/sync": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "summary": "Replay the offline queue: each sale captures independently, so one\nbad ticket never blocks the rest; already-captured entries come back\nas their existing orders. Override-gated content in an offline sale\nrides on the syncing cashier's own permission — a PIN cannot be\nverified after the fact.",
+        "operationId": "sync_sales",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSalesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SyncSaleResult"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sales/{id}": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "get_sale",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Order id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sales/{id}/refund": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "refund_sale",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Original order id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundSaleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sales/{id}/void": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "void_sale",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Order id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidSaleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "list_sessions",
+        "parameters": [
+          {
+            "name": "register_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PosSessionStatus"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Opened-at range, inclusive.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/current": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "summary": "Resume after a refresh: the register's open session, or nothing.",
+        "operationId": "current_session",
+        "parameters": [
+          {
+            "name": "register_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionView"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/open": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "open_session",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/{id}": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "get_session",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/{id}/cash-movements": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "add_cash_movement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashMovementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashMovementView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/{id}/close": {
+      "post": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "close_session",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/{id}/x-report": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "x_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/sessions/{id}/z-report": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "z_report",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pos/settings": {
+      "get": {
+        "tags": [
+          "pos"
+        ],
+        "summary": "Read by the till (it needs the count-sheet set and the blind flag) and\nby whoever manages registers.",
+        "operationId": "get_settings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pos"
+        ],
+        "operationId": "put_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
                 }
               }
             }
@@ -9060,6 +10096,204 @@
           }
         }
       },
+      "CashMovementRequest": {
+        "type": "object",
+        "required": [
+          "kind",
+          "amount",
+          "reason"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "paid_in | paid_out."
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CashMovementView": {
+        "type": "object",
+        "required": [
+          "id",
+          "session_id",
+          "kind",
+          "amount",
+          "reason",
+          "created_at"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CatalogBatch": {
+        "type": "object",
+        "description": "A lot with stock in the register's warehouse, expiry-sorted so the\ntill suggests first-expired-first-out.",
+        "required": [
+          "id",
+          "batch_no",
+          "on_hand"
+        ],
+        "properties": {
+          "batch_no": {
+            "type": "string"
+          },
+          "expires_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "on_hand": {
+            "type": "string"
+          }
+        }
+      },
+      "CatalogItem": {
+        "type": "object",
+        "description": "One sellable item as the till caches it: identity, the resolved price\nfor the register's default buyer, the VAT inside it, and the stock\ndimensions the till needs (batches for FEFO suggestion, on-hand for\nthe tile badge).",
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "uom_code",
+          "uom_fractional",
+          "price",
+          "tax_rate",
+          "track_batches",
+          "on_hand",
+          "batches",
+          "updated_at"
+        ],
+        "properties": {
+          "barcode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "batches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogBatch"
+            }
+          },
+          "category_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "image_file_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "on_hand": {
+            "type": "string"
+          },
+          "price": {
+            "type": "string"
+          },
+          "price_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sku": {
+            "type": "string"
+          },
+          "tax_code_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "tax_rate": {
+            "type": "string"
+          },
+          "track_batches": {
+            "type": "boolean"
+          },
+          "uom_code": {
+            "type": "string"
+          },
+          "uom_fractional": {
+            "type": "boolean",
+            "description": "Whole units only when false."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CatalogView": {
+        "type": "object",
+        "required": [
+          "generated_at",
+          "currency",
+          "items"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Pass back as `since` on the next delta fetch."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogItem"
+            },
+            "description": "Full when `since` was absent, else only items updated since."
+          }
+        }
+      },
       "CategoryBody": {
         "type": "object",
         "required": [
@@ -9140,6 +10374,32 @@
           },
           "new_password": {
             "type": "string"
+          }
+        }
+      },
+      "CloseSessionRequest": {
+        "type": "object",
+        "required": [
+          "counts"
+        ],
+        "properties": {
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionCountRequest"
+            }
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Required when any tender's count differs from expected."
+          },
+          "unsynced": {
+            "type": "integer",
+            "format": "int64",
+            "description": "How many sales the till still holds unsynced; nonzero refuses the\nclose."
           }
         }
       },
@@ -10106,6 +11366,83 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "CreateSaleRequest": {
+        "type": "object",
+        "required": [
+          "client_uuid",
+          "session_id",
+          "sold_at",
+          "lines",
+          "tenders"
+        ],
+        "properties": {
+          "approval": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PinApproval",
+                "description": "Supervisor approval for override-gated content, when the cashier\nlacks the permission themselves."
+              }
+            ]
+          },
+          "capture_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Till-measured seconds from first line to payment (instrumentation)."
+          },
+          "captured_offline": {
+            "type": "boolean",
+            "description": "True when this sale was captured with the network down and is\narriving through the queue replay."
+          },
+          "client_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The till-generated idempotency key."
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Attach a real customer; absent = the register's default buyer."
+          },
+          "input_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Till-measured inputs (taps/keys/scans) the sale cost."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleLineRequest"
+            }
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sold_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The client-captured moment of sale."
+          },
+          "tenders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleTenderRequest"
             }
           }
         }
@@ -11361,6 +12698,23 @@
           }
         }
       },
+      "DenominationCount": {
+        "type": "object",
+        "description": "One line of a count sheet: so many pieces of one denomination.",
+        "required": [
+          "denom",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "denom": {
+            "type": "string"
+          }
+        }
+      },
       "DisableTwoFactorRequest": {
         "type": "object",
         "required": [
@@ -11735,6 +13089,77 @@
           "version": {
             "type": "string",
             "description": "Framework version."
+          }
+        }
+      },
+      "HourlyRow": {
+        "type": "object",
+        "description": "One hour of the day across the window.",
+        "required": [
+          "hour",
+          "sales",
+          "refunds",
+          "gross_sales",
+          "refund_total",
+          "net_total"
+        ],
+        "properties": {
+          "gross_sales": {
+            "type": "string"
+          },
+          "hour": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The local hour of day, 0–23 (see [`PosQueries::hourly`] on \"local\").",
+            "minimum": 0
+          },
+          "net_total": {
+            "type": "string"
+          },
+          "refund_total": {
+            "type": "string"
+          },
+          "refunds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sales": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "HourlyView": {
+        "type": "object",
+        "required": [
+          "rows",
+          "tz_offset_minutes"
+        ],
+        "properties": {
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HourlyRow"
+            }
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tz_offset_minutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The minutes east of UTC the hours were bucketed in."
           }
         }
       },
@@ -13085,6 +14510,85 @@
           }
         }
       },
+      "ItemSalesRow": {
+        "type": "object",
+        "description": "One item's till performance over a window.",
+        "required": [
+          "item_id",
+          "sku",
+          "name",
+          "qty_sold",
+          "qty_refunded",
+          "gross",
+          "tax",
+          "net"
+        ],
+        "properties": {
+          "gross": {
+            "type": "string",
+            "description": "Net takings for the item (sales − refunds), VAT included."
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "net": {
+            "type": "string",
+            "description": "Net of the VAT inside `gross`."
+          },
+          "qty_refunded": {
+            "type": "string"
+          },
+          "qty_sold": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "tax": {
+            "type": "string"
+          }
+        }
+      },
+      "ItemSalesView": {
+        "type": "object",
+        "required": [
+          "rows",
+          "gross",
+          "tax"
+        ],
+        "properties": {
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "gross": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemSalesRow"
+            }
+          },
+          "tax": {
+            "type": "string"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ItemSupplierBody": {
         "type": "object",
         "required": [
@@ -14183,6 +15687,22 @@
           }
         }
       },
+      "OpenSessionRequest": {
+        "type": "object",
+        "required": [
+          "register_id",
+          "opening_float"
+        ],
+        "properties": {
+          "opening_float": {
+            "type": "string"
+          },
+          "register_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "OrderHeader": {
         "type": "object",
         "description": "A row of the order register.",
@@ -14926,6 +16446,403 @@
             "description": "Dot-separated unique name, e.g. `Pages.Sales.Invoices.Post`."
           }
         }
+      },
+      "PinApproval": {
+        "type": "object",
+        "description": "A supervisor's approval of a gated act: who, proven by their PIN.",
+        "required": [
+          "authorizer_id",
+          "pin"
+        ],
+        "properties": {
+          "authorizer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pin": {
+            "type": "string"
+          }
+        }
+      },
+      "PosOrderHeader": {
+        "type": "object",
+        "required": [
+          "id",
+          "client_uuid",
+          "session_id",
+          "kind",
+          "status",
+          "sold_at",
+          "currency",
+          "total",
+          "price_drift",
+          "captured_offline"
+        ],
+        "properties": {
+          "captured_offline": {
+            "type": "boolean"
+          },
+          "client_uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PosOrderKind"
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price_drift": {
+            "type": "boolean"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sold_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PosOrderStatus"
+          },
+          "total": {
+            "type": "string"
+          }
+        }
+      },
+      "PosOrderKind": {
+        "type": "string",
+        "description": "What a POS order is: a sale, or a refund against one.",
+        "enum": [
+          "sale",
+          "refund"
+        ]
+      },
+      "PosOrderLineView": {
+        "type": "object",
+        "required": [
+          "id",
+          "line_no",
+          "item_id",
+          "description",
+          "qty",
+          "unit_price",
+          "tax_amount",
+          "net"
+        ],
+        "properties": {
+          "batch_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "discount_pct": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "line_no": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "net": {
+            "type": "string"
+          },
+          "price_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qty": {
+            "type": "string"
+          },
+          "refund_of_line_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "tax_amount": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "string"
+          }
+        }
+      },
+      "PosOrderPaymentView": {
+        "type": "object",
+        "required": [
+          "tender",
+          "amount"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tender": {
+            "type": "string"
+          },
+          "tendered": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PosOrderStatus": {
+        "type": "string",
+        "description": "A captured order is immutable; voiding marks, never deletes.",
+        "enum": [
+          "captured",
+          "voided"
+        ]
+      },
+      "PosOrderView": {
+        "type": "object",
+        "required": [
+          "id",
+          "client_uuid",
+          "session_id",
+          "kind",
+          "status",
+          "customer_id",
+          "customer_name",
+          "sold_at",
+          "currency",
+          "subtotal",
+          "discount_total",
+          "tax_total",
+          "total",
+          "change",
+          "captured_offline",
+          "price_drift",
+          "lines",
+          "payments"
+        ],
+        "properties": {
+          "captured_offline": {
+            "type": "boolean"
+          },
+          "change": {
+            "type": "string",
+            "description": "Cash change due, summed over cash tenders."
+          },
+          "client_uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "discount_total": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PosOrderKind"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosOrderLineView"
+            }
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The RCP receipt number (always present once captured server-side)."
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosOrderPaymentView"
+            }
+          },
+          "price_drift": {
+            "type": "boolean"
+          },
+          "refund_of_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sold_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PosOrderStatus"
+          },
+          "subtotal": {
+            "type": "string"
+          },
+          "tax_total": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "void_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PosRegister": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "warehouse_id",
+          "allow_negative_stock_sales",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "allow_negative_stock_sales": {
+            "type": "boolean",
+            "description": "Offline-overshoot policy at close: whether a session may close\nwhen its consolidated issue would take stock negative."
+          },
+          "code": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "default_customer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "`None` = the seeded walk-in customer."
+          },
+          "grid_layout": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The client-owned tile layout; the server stores, never interprets."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "receipt_footer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receipt_header": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "warehouse_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "PosSessionStatus": {
+        "type": "string",
+        "description": "Where a session is in its life. `Closing` is a real resting state:\ncounting succeeded but consolidation has not yet — sales stay blocked\nand the close is retryable.",
+        "enum": [
+          "open",
+          "closing",
+          "closed"
+        ]
       },
       "PostingInputRequest": {
         "type": "object",
@@ -16365,6 +18282,122 @@
           }
         }
       },
+      "RefundLineRequest": {
+        "type": "object",
+        "required": [
+          "line_id",
+          "qty"
+        ],
+        "properties": {
+          "line_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "qty": {
+            "type": "string"
+          }
+        }
+      },
+      "RefundSaleRequest": {
+        "type": "object",
+        "required": [
+          "client_uuid",
+          "session_id",
+          "lines",
+          "tender"
+        ],
+        "properties": {
+          "approval": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PinApproval",
+                "description": "Supervisor approval when the cashier lacks the override permission."
+              }
+            ]
+          },
+          "client_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The till-generated idempotency key of the refund document."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundLineRequest"
+            }
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The open session the refund is paid out of."
+          },
+          "tender": {
+            "type": "string",
+            "description": "cash | mpesa | card — original tender by default, the till passes\nit explicitly."
+          }
+        }
+      },
+      "RegisterBody": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "warehouse_id"
+        ],
+        "properties": {
+          "allow_negative_stock_sales": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "default_customer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "receipt_footer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receipt_header": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warehouse_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "RegisterRequest": {
         "type": "object",
         "required": [
@@ -17560,6 +19593,73 @@
               "type": "string"
             },
             "description": "Explicit grants; static roles implicitly hold every permission."
+          }
+        }
+      },
+      "SaleLineRequest": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "qty",
+          "unit_price"
+        ],
+        "properties": {
+          "batch_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Required when the item tracks batches."
+          },
+          "discount_pct": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "manual_price": {
+            "type": "boolean",
+            "description": "The cashier keyed the price by hand (override-gated)."
+          },
+          "qty": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "string",
+            "description": "The tax-inclusive unit price the till charged."
+          }
+        }
+      },
+      "SaleTenderRequest": {
+        "type": "object",
+        "required": [
+          "tender",
+          "amount"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tender": {
+            "type": "string",
+            "description": "cash | mpesa | card."
+          },
+          "tendered": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -19044,6 +21144,370 @@
           "scrapped"
         ]
       },
+      "SessionCountRequest": {
+        "type": "object",
+        "required": [
+          "tender",
+          "counted"
+        ],
+        "properties": {
+          "counted": {
+            "type": "string"
+          },
+          "denominations": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DenominationCount"
+            },
+            "description": "The count-sheet breakdown behind `counted`, when one was used;\nmust sum to `counted`."
+          },
+          "tender": {
+            "type": "string",
+            "description": "cash | mpesa | card."
+          }
+        }
+      },
+      "SessionReport": {
+        "type": "object",
+        "description": "The X (live) or Z (stored) picture of a session.",
+        "required": [
+          "session",
+          "orders",
+          "refunds",
+          "voids",
+          "price_drift",
+          "offline",
+          "gross_sales",
+          "refund_total",
+          "net_total",
+          "tax_total",
+          "paid_in",
+          "paid_out",
+          "blind",
+          "tenders"
+        ],
+        "properties": {
+          "avg_sale_inputs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avg_sale_seconds": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Live instrumentation: mean seconds / inputs per sale, over the\nsales that reported them."
+          },
+          "blind": {
+            "type": "boolean",
+            "description": "True when the cash expectation was withheld (blind count)."
+          },
+          "expected_cash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Withheld (`None`) on a blind X report: the drawer is counted\nwithout a number to count to."
+          },
+          "gross_sales": {
+            "type": "string"
+          },
+          "net_total": {
+            "type": "string",
+            "description": "Net takings (sales − refunds), VAT included."
+          },
+          "offline": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Sales captured with the network down."
+          },
+          "orders": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paid_in": {
+            "type": "string"
+          },
+          "paid_out": {
+            "type": "string"
+          },
+          "price_drift": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Offline-synced sales whose price no longer matched at sync."
+          },
+          "refund_total": {
+            "type": "string"
+          },
+          "refunds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionView"
+          },
+          "tax_total": {
+            "type": "string"
+          },
+          "tenders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenderReportLine"
+            }
+          },
+          "voids": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SessionSummaryRow": {
+        "type": "object",
+        "description": "One session's day, summarized.",
+        "required": [
+          "session_id",
+          "register_code",
+          "status",
+          "opened_at",
+          "orders",
+          "refunds",
+          "voids",
+          "gross_sales",
+          "refund_total",
+          "net_total",
+          "tax_total"
+        ],
+        "properties": {
+          "avg_sale_inputs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avg_sale_seconds": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cash_variance": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Counted minus expected cash, from the counts stored at close."
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "gross_sales": {
+            "type": "string"
+          },
+          "net_total": {
+            "type": "string",
+            "description": "Net takings (sales − refunds), VAT included."
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "orders": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refund_total": {
+            "type": "string"
+          },
+          "refunds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "register_code": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PosSessionStatus"
+          },
+          "tax_total": {
+            "type": "string"
+          },
+          "voids": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SessionSummaryView": {
+        "type": "object",
+        "required": [
+          "rows",
+          "gross_sales",
+          "refund_total",
+          "net_total",
+          "tax_total",
+          "cash_variance"
+        ],
+        "properties": {
+          "cash_variance": {
+            "type": "string"
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "gross_sales": {
+            "type": "string"
+          },
+          "net_total": {
+            "type": "string"
+          },
+          "refund_total": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionSummaryRow"
+            }
+          },
+          "tax_total": {
+            "type": "string"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "SessionView": {
+        "type": "object",
+        "required": [
+          "id",
+          "register_id",
+          "register_code",
+          "register_name",
+          "cashier_id",
+          "status",
+          "opened_at",
+          "opening_float"
+        ],
+        "properties": {
+          "avg_sale_inputs": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avg_sale_seconds": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Instrumentation, settled at close: mean seconds and inputs per\nsale (over the sales that reported them) and voided orders."
+          },
+          "cashier_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "closed_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "closing_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "gl_source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The revenue entry's outbox source key, once closed."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "move_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The consolidated stock movement, once closed."
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "opening_float": {
+            "type": "string"
+          },
+          "register_code": {
+            "type": "string"
+          },
+          "register_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "register_name": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PosSessionStatus"
+          },
+          "void_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "SetAdminRequest": {
         "type": "object",
         "required": [
@@ -19052,6 +21516,19 @@
         "properties": {
           "is_admin": {
             "type": "boolean"
+          }
+        }
+      },
+      "SetOverridePinRequest": {
+        "type": "object",
+        "description": "A user in the caller's tenant, or 404.",
+        "properties": {
+          "pin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "4–8 digits; `null` clears the PIN."
           }
         }
       },
@@ -19086,6 +21563,26 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "description": "The settings as the API speaks them.",
+        "required": [
+          "blind_count",
+          "denominations"
+        ],
+        "properties": {
+          "blind_count": {
+            "type": "boolean"
+          },
+          "denominations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Largest first."
           }
         }
       },
@@ -19616,6 +22113,49 @@
           }
         }
       },
+      "SyncSaleResult": {
+        "type": "object",
+        "required": [
+          "client_uuid"
+        ],
+        "properties": {
+          "client_uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PosOrderView",
+                "description": "The captured (or already-existing) order; absent on error."
+              }
+            ]
+          }
+        }
+      },
+      "SyncSalesRequest": {
+        "type": "object",
+        "required": [
+          "sales"
+        ],
+        "properties": {
+          "sales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSaleRequest"
+            }
+          }
+        }
+      },
       "TaxDirection": {
         "type": "string",
         "description": "Which side of the ledger a tax code lands on.",
@@ -19663,6 +22203,116 @@
           },
           "tenant": {
             "type": "string"
+          }
+        }
+      },
+      "TenderMixRow": {
+        "type": "object",
+        "description": "One tender's share of a window.",
+        "required": [
+          "tender",
+          "payments",
+          "sales",
+          "refunds",
+          "net"
+        ],
+        "properties": {
+          "net": {
+            "type": "string"
+          },
+          "payments": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Payment lines seen on sales."
+          },
+          "refunds": {
+            "type": "string"
+          },
+          "sales": {
+            "type": "string"
+          },
+          "share_pct": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "This tender's slice of the net takings, in percent; `None` when the\nwindow took no money at all."
+          },
+          "tender": {
+            "type": "string"
+          }
+        }
+      },
+      "TenderMixView": {
+        "type": "object",
+        "required": [
+          "rows",
+          "net_total"
+        ],
+        "properties": {
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "net_total": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenderMixRow"
+            }
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "TenderReportLine": {
+        "type": "object",
+        "required": [
+          "tender",
+          "sales",
+          "refunds",
+          "net",
+          "expected"
+        ],
+        "properties": {
+          "counted": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored at close; absent on an X report."
+          },
+          "expected": {
+            "type": "string",
+            "description": "What the tender should hold: cash includes float and drawer\nmovements, the clearing tenders are net takings."
+          },
+          "net": {
+            "type": "string"
+          },
+          "refunds": {
+            "type": "string"
+          },
+          "sales": {
+            "type": "string"
+          },
+          "tender": {
+            "type": "string"
+          },
+          "variance": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -19881,6 +22531,25 @@
           }
         }
       },
+      "UpdateSettingsRequest": {
+        "type": "object",
+        "required": [
+          "blind_count",
+          "denominations"
+        ],
+        "properties": {
+          "blind_count": {
+            "type": "boolean"
+          },
+          "denominations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Positive amounts; the server sorts them largest-first and drops\nduplicates. Empty = no count-sheet helper."
+          }
+        }
+      },
       "UpdateTaxCodeRequest": {
         "type": "object",
         "properties": {
@@ -19968,6 +22637,28 @@
         }
       },
       "Value": {},
+      "VoidSaleRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "approval": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PinApproval",
+                "description": "Supervisor approval when the cashier lacks the override permission."
+              }
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "WarehouseBody": {
         "type": "object",
         "required": [

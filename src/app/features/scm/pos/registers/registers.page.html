@@ -1,0 +1,106 @@
+<app-page-header
+  title="Registers"
+  subtitle="Each counter, bound to the warehouse it sells from and the prices it charges"
+  [breadcrumbs]="[{ label: 'Point of Sale' }, { label: 'Registers' }]"
+>
+  @if (canManage()) {
+    <button uiBtn actions (click)="openCreate()">
+      <ng-icon name="lucidePlus" size="16" /> Add register
+    </button>
+  }
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource" (action)="onAction($event)" />
+
+<!-- Add / edit dialog -->
+<app-modal
+  [open]="formOpen()"
+  size="md"
+  [title]="editing ? 'Edit register' : 'Add register'"
+  (closed)="formOpen.set(false)"
+>
+  <form (ngSubmit)="save()">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Code</label>
+        <input
+          [(ngModel)]="form.code"
+          name="code"
+          placeholder="TILL-1"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm uppercase"
+        />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Name</label>
+        <input
+          [(ngModel)]="form.name"
+          name="name"
+          placeholder="Front counter"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Sells from warehouse</label>
+    <app-lookup
+      [config]="warehouses"
+      [(value)]="form.warehouse_id"
+      [(display)]="warehouseLabel"
+    />
+
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Price list</label>
+        <app-lookup
+          [config]="priceLists"
+          [(value)]="form.price_list_id"
+          [(display)]="priceListLabel"
+        />
+        <p class="mt-1 text-xs text-muted-foreground">Empty = base retail prices.</p>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Walk-in customer</label>
+        <app-lookup
+          [config]="customers"
+          [(value)]="form.default_customer_id"
+          [(display)]="customerLabel"
+        />
+        <p class="mt-1 text-xs text-muted-foreground">Empty = the seeded walk-in buyer.</p>
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Receipt header</label>
+    <textarea
+      [(ngModel)]="form.receipt_header"
+      name="receipt_header"
+      rows="2"
+      placeholder="Shown above the lines on the printed receipt"
+      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+    ></textarea>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Receipt footer</label>
+    <textarea
+      [(ngModel)]="form.receipt_footer"
+      name="receipt_footer"
+      rows="2"
+      placeholder="Thank you — goods once sold…"
+      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+    ></textarea>
+
+    <label class="mt-4 flex items-center gap-2 text-sm">
+      <input type="checkbox" [(ngModel)]="form.allow_negative_stock_sales" name="allow_negative" />
+      Allow a session to close even when offline sales oversold the shelf
+    </label>
+    <label class="mt-2 flex items-center gap-2 text-sm">
+      <input type="checkbox" [(ngModel)]="form.is_active" name="is_active" />
+      Active
+    </label>
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button uiBtn type="button" variant="ghost" (click)="formOpen.set(false)">Cancel</button>
+      <button uiBtn type="submit" [disabled]="busy()">
+        {{ editing ? 'Save changes' : 'Create register' }}
+      </button>
+    </div>
+  </form>
+</app-modal>

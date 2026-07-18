@@ -1,0 +1,264 @@
+<app-page-header
+  [title]="order()?.number ?? 'Receipt'"
+  [subtitle]="order()?.customer_name ?? ''"
+  [breadcrumbs]="[
+    { label: 'Point of Sale' },
+    { label: 'Receipts', route: '/pos/receipts' },
+    { label: order()?.number ?? '…' },
+  ]"
+>
+  @if (canRefund() && isSale() && isCaptured()) {
+    <button uiBtn actions variant="outline" [disabled]="busy()" (click)="openRefund()">
+      <ng-icon name="lucideUndo2" size="16" /> Refund
+    </button>
+  }
+  @if (canOverride() && isCaptured()) {
+    <button uiBtn actions variant="ghost" [disabled]="busy()" (click)="openVoid()">
+      <ng-icon name="lucideBan" size="16" /> Void
+    </button>
+  }
+</app-page-header>
+
+<a
+  routerLink="/pos/receipts"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to receipts
+</a>
+
+@if (loading()) {
+  <app-page-skeleton />
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (order(); as o) {
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Kind</p>
+        <p class="mt-0.5 font-medium capitalize">{{ o.kind }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p
+          class="mt-0.5 font-medium capitalize"
+          [class.text-destructive]="o.status === 'voided'"
+        >
+          {{ o.status }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Sold at</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(o.sold_at) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Captured</p>
+        <p class="mt-0.5 font-medium">
+          {{ o.captured_offline ? 'offline — synced later' : 'online' }}
+          @if (o.price_drift) {
+            <span class="text-amber-600"> · price drift</span>
+          }
+        </p>
+      </div>
+      @if (o.void_reason) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Void reason</p>
+          <p class="mt-0.5 font-medium text-destructive">{{ o.void_reason }}</p>
+        </div>
+      }
+      @if (o.refund_of_id) {
+        <div class="col-span-2">
+          <p class="text-xs text-muted-foreground">Refund of</p>
+          <a
+            class="mt-0.5 inline-block font-medium text-primary hover:underline"
+            [routerLink]="['/pos/receipts', o.refund_of_id]"
+          >
+            original receipt →
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Lines -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2.5 font-medium">#</th>
+          <th class="px-4 py-2.5 font-medium">Item</th>
+          <th class="px-4 py-2.5 text-right font-medium">Qty</th>
+          <th class="px-4 py-2.5 text-right font-medium">Unit price</th>
+          <th class="px-4 py-2.5 text-right font-medium">VAT</th>
+          <th class="px-4 py-2.5 text-right font-medium">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of o.lines; track l.id) {
+          <tr class="border-b border-border/60 last:border-0">
+            <td class="px-4 py-2.5 text-muted-foreground">{{ l.line_no }}</td>
+            <td class="px-4 py-2.5 font-medium">{{ l.description }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtQty(l.qty) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(l.unit_price) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(l.tax_amount) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(l.net) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr class="border-t border-border text-sm">
+          <td colspan="4" class="px-4 py-2.5 text-right text-muted-foreground">
+            VAT inside: {{ fmtMoney(o.tax_total) }}
+          </td>
+          <td class="px-4 py-2.5 text-right font-medium">Total</td>
+          <td class="px-4 py-2.5 text-right text-base font-semibold tabular-nums">
+            {{ fmtMoney(o.total) }}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- Tenders -->
+  <div class="mt-4 rounded-lg border border-border bg-card p-4">
+    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      Paid with
+    </h2>
+    <div class="space-y-1.5 text-sm">
+      @for (p of o.payments; track $index) {
+        <div class="flex items-center justify-between">
+          <span>
+            {{ tenderLabel(p.tender) }}
+            @if (p.reference) {
+              <span class="text-xs text-muted-foreground"> · {{ p.reference }}</span>
+            }
+          </span>
+          <span class="tabular-nums">
+            {{ fmtMoney(p.amount) }}
+            @if (p.tendered && p.tendered !== p.amount) {
+              <span class="text-xs text-muted-foreground">
+                (tendered {{ fmtMoney(p.tendered) }})
+              </span>
+            }
+          </span>
+        </div>
+      }
+      @if (num(o.change) > 0) {
+        <div class="flex items-center justify-between border-t border-border/60 pt-1.5">
+          <span class="text-muted-foreground">Change given</span>
+          <span class="tabular-nums">{{ fmtMoney(o.change) }}</span>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Void dialog -->
+<app-modal
+  [open]="voidModal()"
+  size="sm"
+  title="Void this receipt?"
+  subtitle="The sale is struck out of the session; nothing reaches the books."
+  (closed)="voidModal.set(false)"
+>
+  <label class="mb-1.5 block text-sm font-medium">Reason</label>
+  <textarea
+    [(ngModel)]="voidReason"
+    rows="2"
+    placeholder="Why the sale is being struck out"
+    class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+  ></textarea>
+  <div modalFooter class="flex justify-end gap-2 border-t border-border px-6 py-4">
+    <button uiBtn variant="ghost" (click)="voidModal.set(false)">Cancel</button>
+    <button uiBtn variant="destructive" [disabled]="busy()" (click)="confirmVoid()">Void</button>
+  </div>
+</app-modal>
+
+<!-- Refund dialog -->
+<app-modal
+  [open]="refundModal()"
+  size="lg"
+  title="Refund"
+  subtitle="Money leaves an open drawer; the goods come back to the shelf at close."
+  (closed)="refundModal.set(false)"
+>
+  @if (order(); as o) {
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="py-2 font-medium">Item</th>
+          <th class="py-2 text-right font-medium">Sold</th>
+          <th class="py-2 text-right font-medium">Unit price</th>
+          <th class="py-2 text-right font-medium">Refund qty</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of o.lines; track l.id) {
+          <tr class="border-b border-border/60 last:border-0">
+            <td class="py-2 font-medium">{{ l.description }}</td>
+            <td class="py-2 text-right tabular-nums">{{ fmtQty(l.qty) }}</td>
+            <td class="py-2 text-right tabular-nums">{{ fmtMoney(l.unit_price) }}</td>
+            <td class="py-2 text-right">
+              <input
+                type="number"
+                min="0"
+                [max]="l.qty"
+                [(ngModel)]="refundQty[l.id]"
+                class="h-8 w-24 rounded-md border border-input bg-background px-2 text-right text-sm"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="mt-4 grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Paid back from session</label>
+        <select
+          [(ngModel)]="refundSession"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          @for (s of openSessions(); track s.id) {
+            <option [value]="s.id">{{ s.number }} — {{ s.register_code }}</option>
+          }
+        </select>
+        @if (!openSessions().length) {
+          <p class="mt-1 text-xs text-destructive">
+            No session is open — a refund needs an open drawer to pay from.
+          </p>
+        }
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">Paid back by</label>
+        <select
+          [(ngModel)]="refundTender"
+          class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          @for (t of tenders; track t) {
+            <option [value]="t">{{ tenderLabel(t) }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <label class="mb-1.5 mt-3 block text-sm font-medium">Reference</label>
+    <input
+      [(ngModel)]="refundReference"
+      placeholder="M-Pesa code, card slip…"
+      class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+    />
+
+    <p class="mt-4 text-right text-sm">
+      Refund total:
+      <span class="text-base font-semibold tabular-nums">{{ fmtMoney(refundTotal()) }}</span>
+    </p>
+  }
+  <div modalFooter class="flex justify-end gap-2 border-t border-border px-6 py-4">
+    <button uiBtn variant="ghost" (click)="refundModal.set(false)">Cancel</button>
+    <button uiBtn [disabled]="busy() || !openSessions().length" (click)="confirmRefund()">
+      Refund {{ fmtMoney(refundTotal()) }}
+    </button>
+  </div>
+</app-modal>

@@ -1,0 +1,185 @@
+<app-page-header
+  [title]="session()?.number ?? 'Session'"
+  [subtitle]="(session()?.register_name ?? '') + (isClosed() ? ' — Z report' : ' — live X report')"
+  [breadcrumbs]="[
+    { label: 'Point of Sale' },
+    { label: 'Sessions', route: '/pos/sessions' },
+    { label: session()?.number ?? '…' },
+  ]"
+>
+  @if (isClosed()) {
+    <app-document-pdf
+      actions
+      report="pos-z"
+      [id]="session()?.id"
+      heading="Z report"
+      [number]="session()?.number ?? ''"
+    />
+  }
+</app-page-header>
+
+<a
+  routerLink="/pos/sessions"
+  class="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+>
+  ← Back to sessions
+</a>
+
+@if (loading()) {
+  <app-page-skeleton />
+} @else if (error()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-destructive">
+    {{ error() }}
+  </div>
+} @else if (report(); as r) {
+  <!-- The session's frame -->
+  <div class="rounded-lg border border-border bg-card p-4">
+    <div class="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+      <div>
+        <p class="text-xs text-muted-foreground">Status</p>
+        <p class="mt-0.5 font-medium capitalize">{{ statusLabel(session()?.status) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Opened</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(session()?.opened_at) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Closed</p>
+        <p class="mt-0.5 font-medium">{{ fmtDateTime(session()?.closed_at) }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-muted-foreground">Opening float</p>
+        <p class="mt-0.5 font-medium">{{ fmtMoney(session()?.opening_float) }}</p>
+      </div>
+      @if (session()?.closing_note) {
+        <div class="col-span-2 md:col-span-4">
+          <p class="text-xs text-muted-foreground">Closing note</p>
+          <p class="mt-0.5 font-medium">{{ session()?.closing_note }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- The money -->
+  <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Gross sales</p>
+      <p class="mt-1 text-xl font-semibold tabular-nums">{{ fmtMoney(r.gross_sales) }}</p>
+      <p class="mt-0.5 text-xs text-muted-foreground">{{ r.orders }} sales</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Refunds</p>
+      <p class="mt-1 text-xl font-semibold tabular-nums">{{ fmtMoney(r.refund_total) }}</p>
+      <p class="mt-0.5 text-xs text-muted-foreground">{{ r.refunds }} refunds</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Net takings</p>
+      <p class="mt-1 text-xl font-semibold tabular-nums">{{ fmtMoney(r.net_total) }}</p>
+      <p class="mt-0.5 text-xs text-muted-foreground">VAT inside: {{ fmtMoney(r.tax_total) }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Till tempo</p>
+      <p class="mt-1 text-xl font-semibold tabular-nums">
+        {{ r.avg_sale_seconds ? fmtMoney(r.avg_sale_seconds) + 's' : '—' }}
+      </p>
+      <p class="mt-0.5 text-xs text-muted-foreground">
+        {{ r.avg_sale_inputs ? fmtMoney(r.avg_sale_inputs) + ' inputs / sale · ' : '' }}{{ r.voids }}
+        voids
+      </p>
+    </div>
+  </div>
+
+  <!-- The tenders -->
+  <div class="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2.5 font-medium">Tender</th>
+          <th class="px-4 py-2.5 text-right font-medium">Sales</th>
+          <th class="px-4 py-2.5 text-right font-medium">Refunds</th>
+          <th class="px-4 py-2.5 text-right font-medium">Net</th>
+          <th class="px-4 py-2.5 text-right font-medium">Expected</th>
+          <th class="px-4 py-2.5 text-right font-medium">Counted</th>
+          <th class="px-4 py-2.5 text-right font-medium">Over / short</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of r.tenders; track t.tender) {
+          <tr class="border-b border-border/60 last:border-0">
+            <td class="px-4 py-2.5 font-medium">{{ tenderLabel(t.tender) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(t.sales) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(t.refunds) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(t.net) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(t.expected) }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums">
+              {{ t.counted != null ? fmtMoney(t.counted) : '—' }}
+            </td>
+            <td
+              class="px-4 py-2.5 text-right font-medium tabular-nums"
+              [class.text-destructive]="variance(t) < 0"
+              [class.text-green-600]="variance(t) > 0"
+            >
+              {{ t.variance != null ? fmtMoney(t.variance) : '—' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Drawer movements and the offline story, one quiet line each -->
+  <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Paid in</p>
+      <p class="mt-1 font-semibold tabular-nums">{{ fmtMoney(r.paid_in) }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Paid out</p>
+      <p class="mt-1 font-semibold tabular-nums">{{ fmtMoney(r.paid_out) }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Captured offline</p>
+      <p class="mt-1 font-semibold tabular-nums">{{ r.offline }}</p>
+    </div>
+    <div class="rounded-lg border border-border bg-card p-4">
+      <p class="text-xs text-muted-foreground">Price drift at sync</p>
+      <p class="mt-1 font-semibold tabular-nums">{{ r.price_drift }}</p>
+    </div>
+  </div>
+
+  <!-- The receipts behind the numbers (needs the Sell permission) -->
+  @if (receipts().length) {
+    <div class="mt-6">
+      <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Receipts
+      </h2>
+      <div class="overflow-x-auto rounded-lg border border-border bg-card">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <th class="px-4 py-2.5 font-medium">Number</th>
+              <th class="px-4 py-2.5 font-medium">Kind</th>
+              <th class="px-4 py-2.5 font-medium">Time</th>
+              <th class="px-4 py-2.5 text-right font-medium">Total</th>
+              <th class="px-4 py-2.5 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of receipts(); track o.id) {
+              <tr
+                class="cursor-pointer border-b border-border/60 last:border-0 hover:bg-accent/40"
+                (click)="openReceipt(o.id)"
+              >
+                <td class="px-4 py-2.5 font-medium">{{ o.number ?? '—' }}</td>
+                <td class="px-4 py-2.5 capitalize">{{ o.kind }}</td>
+                <td class="px-4 py-2.5">{{ fmtDateTime(o.sold_at) }}</td>
+                <td class="px-4 py-2.5 text-right tabular-nums">{{ fmtMoney(o.total) }}</td>
+                <td class="px-4 py-2.5 capitalize">{{ o.status }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}

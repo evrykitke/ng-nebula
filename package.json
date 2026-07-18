@@ -47,7 +47,7 @@
     "nswag": "^14.7.1",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
-    "puppeteer-core": "^23.11.1",
+    "puppeteer-core": "^25.3.0",
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"

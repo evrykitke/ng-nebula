@@ -1,0 +1,240 @@
+<app-page-header
+  title="POS reports"
+  subtitle="Sessions summarized, the tender mix, what sold, and the shape of the day"
+  [breadcrumbs]="[{ label: 'Point of Sale' }, { label: 'Reports' }]"
+>
+  <button uiBtn actions variant="outline" (click)="pdfOpen.set(true)">PDF</button>
+</app-page-header>
+
+<div class="mb-4 flex flex-wrap gap-1 border-b border-border">
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'sessions'" [class.text-foreground]="tab() === 'sessions'"
+    [class.border-transparent]="tab() !== 'sessions'" [class.text-muted-foreground]="tab() !== 'sessions'"
+    (click)="select('sessions')">Sessions</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'tenders'" [class.text-foreground]="tab() === 'tenders'"
+    [class.border-transparent]="tab() !== 'tenders'" [class.text-muted-foreground]="tab() !== 'tenders'"
+    (click)="select('tenders')">Tender mix</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'items'" [class.text-foreground]="tab() === 'items'"
+    [class.border-transparent]="tab() !== 'items'" [class.text-muted-foreground]="tab() !== 'items'"
+    (click)="select('items')">Item sales</button>
+  <button type="button" class="border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+    [class.border-primary]="tab() === 'hourly'" [class.text-foreground]="tab() === 'hourly'"
+    [class.border-transparent]="tab() !== 'hourly'" [class.text-muted-foreground]="tab() !== 'hourly'"
+    (click)="select('hourly')">Hourly</button>
+</div>
+
+<div class="mb-4 flex flex-wrap items-end gap-3">
+  <div>
+    <label class="mb-1.5 block text-xs text-muted-foreground">From</label>
+    <app-datepicker [(date)]="from" placeholder="From" />
+  </div>
+  <div>
+    <label class="mb-1.5 block text-xs text-muted-foreground">To</label>
+    <app-datepicker [(date)]="to" placeholder="To" />
+  </div>
+  <button uiBtn variant="outline" size="sm" (click)="reload()">Run</button>
+</div>
+
+@if (loading()) {
+  <div class="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+    Loading…
+  </div>
+}
+
+<!-- Sessions summary -->
+@if (tab() === 'sessions' && sessions(); as v) {
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Session</th>
+          <th class="px-4 py-2 font-medium">Register</th>
+          <th class="px-4 py-2 font-medium">Opened</th>
+          <th class="px-4 py-2 font-medium">Status</th>
+          <th class="px-4 py-2 text-right font-medium">Sales</th>
+          <th class="px-4 py-2 text-right font-medium">Refunds</th>
+          <th class="px-4 py-2 text-right font-medium">Voids</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+          <th class="px-4 py-2 text-right font-medium">VAT</th>
+          <th class="px-4 py-2 text-right font-medium">Cash +/−</th>
+          <th class="px-4 py-2 text-right font-medium">Sec / sale</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of v.rows; track r.session_id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2">
+              <a class="font-medium text-primary hover:underline"
+                [routerLink]="['/pos/sessions', r.session_id]">{{ r.number ?? '—' }}</a>
+            </td>
+            <td class="px-4 py-2">{{ r.register_code }}</td>
+            <td class="px-4 py-2">{{ fmtDateTime(r.opened_at) }}</td>
+            <td class="px-4 py-2 capitalize">{{ r.status }}</td>
+            <td class="px-4 py-2 text-right">{{ r.orders }}</td>
+            <td class="px-4 py-2 text-right">{{ r.refunds }}</td>
+            <td class="px-4 py-2 text-right">{{ r.voids }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.net_total) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.tax_total) }}</td>
+            <td class="px-4 py-2 text-right"
+              [class.text-destructive]="r.cash_variance && +r.cash_variance < 0">
+              {{ r.cash_variance != null ? fmtMoney(r.cash_variance) : '—' }}
+            </td>
+            <td class="px-4 py-2 text-right">
+              {{ r.avg_sale_seconds != null ? fmtMoney(r.avg_sale_seconds) : '—' }}
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="11" class="px-4 py-6 text-center text-muted-foreground">
+            No sessions in this window.
+          </td></tr>
+        }
+      </tbody>
+      @if (v.rows.length) {
+        <tfoot>
+          <tr class="border-t border-border font-medium">
+            <td colspan="7" class="px-4 py-2 text-right text-muted-foreground">Window totals</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.net_total) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.tax_total) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.cash_variance) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+}
+
+<!-- Tender mix -->
+@if (tab() === 'tenders' && tenders(); as v) {
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Tender</th>
+          <th class="px-4 py-2 text-right font-medium">Payments</th>
+          <th class="px-4 py-2 text-right font-medium">Sales</th>
+          <th class="px-4 py-2 text-right font-medium">Refunds</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+          <th class="px-4 py-2 text-right font-medium">Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of v.rows; track r.tender) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 font-medium">{{ tenderLabel(r.tender) }}</td>
+            <td class="px-4 py-2 text-right">{{ r.payments }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.sales) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.refunds) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.net) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtPct(r.share_pct) }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">
+            No takings in this window.
+          </td></tr>
+        }
+      </tbody>
+      @if (v.rows.length) {
+        <tfoot>
+          <tr class="border-t border-border font-medium">
+            <td colspan="4" class="px-4 py-2 text-right text-muted-foreground">Net takings</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.net_total) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+}
+
+<!-- Item sales -->
+@if (tab() === 'items' && items(); as v) {
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">SKU</th>
+          <th class="px-4 py-2 font-medium">Item</th>
+          <th class="px-4 py-2 text-right font-medium">Sold</th>
+          <th class="px-4 py-2 text-right font-medium">Refunded</th>
+          <th class="px-4 py-2 text-right font-medium">Takings</th>
+          <th class="px-4 py-2 text-right font-medium">VAT</th>
+          <th class="px-4 py-2 text-right font-medium">Ex VAT</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of v.rows; track r.item_id) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 font-medium">{{ r.sku }}</td>
+            <td class="px-4 py-2">{{ r.name }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_sold) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtQty(r.qty_refunded) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.gross) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.tax) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.net) }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="px-4 py-6 text-center text-muted-foreground">
+            Nothing sold in this window.
+          </td></tr>
+        }
+      </tbody>
+      @if (v.rows.length) {
+        <tfoot>
+          <tr class="border-t border-border font-medium">
+            <td colspan="4" class="px-4 py-2 text-right text-muted-foreground">Totals</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.gross) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(v.tax) }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+}
+
+<!-- Hourly -->
+@if (tab() === 'hourly' && hourly(); as v) {
+  <div class="overflow-x-auto rounded-lg border border-border bg-card">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-border text-left text-xs text-muted-foreground">
+          <th class="px-4 py-2 font-medium">Hour</th>
+          <th class="px-4 py-2 text-right font-medium">Sales</th>
+          <th class="px-4 py-2 text-right font-medium">Refunds</th>
+          <th class="px-4 py-2 text-right font-medium">Gross</th>
+          <th class="px-4 py-2 text-right font-medium">Refunded</th>
+          <th class="px-4 py-2 text-right font-medium">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of v.rows; track r.hour) {
+          <tr class="border-b border-border/50 last:border-0">
+            <td class="px-4 py-2 font-medium tabular-nums">{{ hourLabel(r.hour) }}</td>
+            <td class="px-4 py-2 text-right">{{ r.sales }}</td>
+            <td class="px-4 py-2 text-right">{{ r.refunds }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.gross_sales) }}</td>
+            <td class="px-4 py-2 text-right">{{ fmtMoney(r.refund_total) }}</td>
+            <td class="px-4 py-2 text-right font-medium">{{ fmtMoney(r.net_total) }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="px-4 py-6 text-center text-muted-foreground">
+            No sales in this window.
+          </td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-2 text-xs text-muted-foreground">
+    Hours are bucketed in this device's timezone.
+  </p>
+}
+
+<app-report-drawer
+  [report]="pdfReport()"
+  [open]="pdfOpen()"
+  [params]="pdfParams()"
+  (close)="pdfOpen.set(false)"
+/>

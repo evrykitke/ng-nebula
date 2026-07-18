@@ -3419,6 +3419,67 @@ export class AuthServiceProxy {
     }
 
     /**
+     * Set or clear a user's override PIN — the short numeric credential a
+    supervisor keys in at a till to approve gated acts (voids, discounts,
+    price overrides). The PIN itself is never stored or echoed; approval
+    also requires the override permission, so the PIN alone grants nothing.
+     * @param id User id
+     */
+    set_override_pin(id: string, body: SetOverridePinRequest): Observable<Profile> {
+        let url_ = this.baseUrl + "/auth/users/{id}/override-pin";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSet_override_pin(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSet_override_pin(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Profile>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Profile>;
+        }));
+    }
+
+    protected processSet_override_pin(response: HttpResponseBase): Observable<Profile> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Profile;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
      * @param id User id
      */
     user_permissions(id: string): Observable<UserPermissionsResponse> {
@@ -5395,6 +5456,1478 @@ export class InventoryServiceProxy {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as InventoryWarehouse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+@Injectable({
+    providedIn: 'root'
+})
+export class PosServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = luxonDateReviver;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param since (optional) Only items updated after this moment (the previous response's
+    `generated_at`); absent = the full catalog.
+     */
+    get_catalog(register_id: string, since?: DateTime | null | undefined): Observable<CatalogView> {
+        let url_ = this.baseUrl + "/pos/catalog?";
+        if (register_id === undefined || register_id === null)
+            throw new globalThis.Error("The parameter 'register_id' must be defined and cannot be null.");
+        else
+            url_ += "register_id=" + encodeURIComponent("" + register_id) + "&";
+        if (since !== undefined && since !== null)
+            url_ += "since=" + encodeURIComponent(since ? "" + since.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_catalog(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_catalog(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CatalogView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CatalogView>;
+        }));
+    }
+
+    protected processGet_catalog(response: HttpResponseBase): Observable<CatalogView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CatalogView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    list_registers(): Observable<PosRegister[]> {
+        let url_ = this.baseUrl + "/pos/registers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_registers(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_registers(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister[]>;
+        }));
+    }
+
+    protected processList_registers(response: HttpResponseBase): Observable<PosRegister[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    create_register(body: RegisterBody): Observable<PosRegister> {
+        let url_ = this.baseUrl + "/pos/registers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate_register(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate_register(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister>;
+        }));
+    }
+
+    protected processCreate_register(response: HttpResponseBase): Observable<PosRegister> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Register id
+     */
+    get_register(id: string): Observable<PosRegister> {
+        let url_ = this.baseUrl + "/pos/registers/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_register(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_register(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister>;
+        }));
+    }
+
+    protected processGet_register(response: HttpResponseBase): Observable<PosRegister> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Register id
+     */
+    update_register(id: string, body: RegisterBody): Observable<PosRegister> {
+        let url_ = this.baseUrl + "/pos/registers/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdate_register(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdate_register(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister>;
+        }));
+    }
+
+    protected processUpdate_register(response: HttpResponseBase): Observable<PosRegister> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Register id
+     */
+    deactivate_register(id: string): Observable<PosRegister> {
+        let url_ = this.baseUrl + "/pos/registers/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeactivate_register(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeactivate_register(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister>;
+        }));
+    }
+
+    protected processDeactivate_register(response: HttpResponseBase): Observable<PosRegister> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * The tile layout is the cashier's own arrangement — saving it needs
+    only the sell permission, not register management.
+     * @param id Register id
+     */
+    set_register_grid(id: string, body: any): Observable<PosRegister> {
+        let url_ = this.baseUrl + "/pos/registers/{id}/grid";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSet_register_grid(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSet_register_grid(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosRegister>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosRegister>;
+        }));
+    }
+
+    protected processSet_register_grid(response: HttpResponseBase): Observable<PosRegister> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosRegister;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param from (optional) 
+     * @param to (optional) 
+     * @param tz_offset (optional) Minutes east of UTC to bucket hours in (e.g. 180 for Nairobi).
+     */
+    hourly_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined, tz_offset?: number | null | undefined): Observable<HourlyView> {
+        let url_ = this.baseUrl + "/pos/reports/hourly?";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (tz_offset !== undefined && tz_offset !== null)
+            url_ += "tz_offset=" + encodeURIComponent("" + tz_offset) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processHourly_json(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processHourly_json(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<HourlyView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<HourlyView>;
+        }));
+    }
+
+    protected processHourly_json(response: HttpResponseBase): Observable<HourlyView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as HourlyView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    item_sales_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<ItemSalesView> {
+        let url_ = this.baseUrl + "/pos/reports/item-sales?";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processItem_sales_json(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processItem_sales_json(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ItemSalesView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ItemSalesView>;
+        }));
+    }
+
+    protected processItem_sales_json(response: HttpResponseBase): Observable<ItemSalesView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ItemSalesView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    sessions_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined, register_id?: string | null | undefined): Observable<SessionSummaryView> {
+        let url_ = this.baseUrl + "/pos/reports/sessions?";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        if (register_id !== undefined && register_id !== null)
+            url_ += "register_id=" + encodeURIComponent("" + register_id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSessions_json(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSessions_json(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionSummaryView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionSummaryView>;
+        }));
+    }
+
+    protected processSessions_json(response: HttpResponseBase): Observable<SessionSummaryView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionSummaryView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    tender_mix_json(from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<TenderMixView> {
+        let url_ = this.baseUrl + "/pos/reports/tender-mix?";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTender_mix_json(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTender_mix_json(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TenderMixView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TenderMixView>;
+        }));
+    }
+
+    protected processTender_mix_json(response: HttpResponseBase): Observable<TenderMixView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as TenderMixView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    list_sales(session_id?: string | null | undefined, kind?: PosOrderKind | null | undefined): Observable<PosOrderHeader[]> {
+        let url_ = this.baseUrl + "/pos/sales?";
+        if (session_id !== undefined && session_id !== null)
+            url_ += "session_id=" + encodeURIComponent("" + session_id) + "&";
+        if (kind !== undefined && kind !== null)
+            url_ += "kind=" + encodeURIComponent("" + kind) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_sales(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_sales(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosOrderHeader[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosOrderHeader[]>;
+        }));
+    }
+
+    protected processList_sales(response: HttpResponseBase): Observable<PosOrderHeader[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosOrderHeader[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    capture_sale(body: CreateSaleRequest): Observable<PosOrderView> {
+        let url_ = this.baseUrl + "/pos/sales";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCapture_sale(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCapture_sale(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosOrderView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosOrderView>;
+        }));
+    }
+
+    protected processCapture_sale(response: HttpResponseBase): Observable<PosOrderView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosOrderView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Replay the offline queue: each sale captures independently, so one
+    bad ticket never blocks the rest; already-captured entries come back
+    as their existing orders. Override-gated content in an offline sale
+    rides on the syncing cashier's own permission — a PIN cannot be
+    verified after the fact.
+     */
+    sync_sales(body: SyncSalesRequest): Observable<SyncSaleResult[]> {
+        let url_ = this.baseUrl + "/pos/sales/sync";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSync_sales(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSync_sales(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SyncSaleResult[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SyncSaleResult[]>;
+        }));
+    }
+
+    protected processSync_sales(response: HttpResponseBase): Observable<SyncSaleResult[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SyncSaleResult[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Order id
+     */
+    get_sale(id: string): Observable<PosOrderView> {
+        let url_ = this.baseUrl + "/pos/sales/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_sale(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_sale(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosOrderView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosOrderView>;
+        }));
+    }
+
+    protected processGet_sale(response: HttpResponseBase): Observable<PosOrderView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosOrderView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Original order id
+     */
+    refund_sale(id: string, body: RefundSaleRequest): Observable<PosOrderView> {
+        let url_ = this.baseUrl + "/pos/sales/{id}/refund";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRefund_sale(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRefund_sale(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosOrderView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosOrderView>;
+        }));
+    }
+
+    protected processRefund_sale(response: HttpResponseBase): Observable<PosOrderView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosOrderView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Order id
+     */
+    void_sale(id: string, body: VoidSaleRequest): Observable<PosOrderView> {
+        let url_ = this.baseUrl + "/pos/sales/{id}/void";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processVoid_sale(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processVoid_sale(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PosOrderView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PosOrderView>;
+        }));
+    }
+
+    protected processVoid_sale(response: HttpResponseBase): Observable<PosOrderView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PosOrderView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param register_id (optional) 
+     * @param status (optional) 
+     * @param from (optional) Opened-at range, inclusive.
+     * @param to (optional) 
+     */
+    list_sessions(register_id?: string | null | undefined, status?: PosSessionStatus | null | undefined, from?: DateTime | null | undefined, to?: DateTime | null | undefined): Observable<SessionView[]> {
+        let url_ = this.baseUrl + "/pos/sessions?";
+        if (register_id !== undefined && register_id !== null)
+            url_ += "register_id=" + encodeURIComponent("" + register_id) + "&";
+        if (status !== undefined && status !== null)
+            url_ += "status=" + encodeURIComponent("" + status) + "&";
+        if (from !== undefined && from !== null)
+            url_ += "from=" + encodeURIComponent(from ? "" + from.toString() : "") + "&";
+        if (to !== undefined && to !== null)
+            url_ += "to=" + encodeURIComponent(to ? "" + to.toString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processList_sessions(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processList_sessions(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionView[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionView[]>;
+        }));
+    }
+
+    protected processList_sessions(response: HttpResponseBase): Observable<SessionView[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionView[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Resume after a refresh: the register's open session, or nothing.
+     */
+    current_session(register_id: string): Observable<SessionView | null> {
+        let url_ = this.baseUrl + "/pos/sessions/current?";
+        if (register_id === undefined || register_id === null)
+            throw new globalThis.Error("The parameter 'register_id' must be defined and cannot be null.");
+        else
+            url_ += "register_id=" + encodeURIComponent("" + register_id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCurrent_session(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCurrent_session(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionView | null>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionView | null>;
+        }));
+    }
+
+    protected processCurrent_session(response: HttpResponseBase): Observable<SessionView | null> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    open_session(body: OpenSessionRequest): Observable<SessionView> {
+        let url_ = this.baseUrl + "/pos/sessions/open";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processOpen_session(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processOpen_session(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionView>;
+        }));
+    }
+
+    protected processOpen_session(response: HttpResponseBase): Observable<SessionView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Session id
+     */
+    get_session(id: string): Observable<SessionView> {
+        let url_ = this.baseUrl + "/pos/sessions/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_session(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_session(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionView>;
+        }));
+    }
+
+    protected processGet_session(response: HttpResponseBase): Observable<SessionView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Session id
+     */
+    add_cash_movement(id: string, body: CashMovementRequest): Observable<CashMovementView> {
+        let url_ = this.baseUrl + "/pos/sessions/{id}/cash-movements";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAdd_cash_movement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAdd_cash_movement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CashMovementView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CashMovementView>;
+        }));
+    }
+
+    protected processAdd_cash_movement(response: HttpResponseBase): Observable<CashMovementView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CashMovementView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Session id
+     */
+    close_session(id: string, body: CloseSessionRequest): Observable<SessionView> {
+        let url_ = this.baseUrl + "/pos/sessions/{id}/close";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processClose_session(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processClose_session(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionView>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionView>;
+        }));
+    }
+
+    protected processClose_session(response: HttpResponseBase): Observable<SessionView> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionView;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Session id
+     */
+    x_report(id: string): Observable<SessionReport> {
+        let url_ = this.baseUrl + "/pos/sessions/{id}/x-report";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processX_report(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processX_report(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionReport>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionReport>;
+        }));
+    }
+
+    protected processX_report(response: HttpResponseBase): Observable<SessionReport> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionReport;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id Session id
+     */
+    z_report(id: string): Observable<SessionReport> {
+        let url_ = this.baseUrl + "/pos/sessions/{id}/z-report";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processZ_report(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processZ_report(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SessionReport>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SessionReport>;
+        }));
+    }
+
+    protected processZ_report(response: HttpResponseBase): Observable<SessionReport> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SessionReport;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * Read by the till (it needs the count-sheet set and the blind flag) and
+    by whoever manages registers.
+     */
+    get_settings(): Observable<Settings> {
+        let url_ = this.baseUrl + "/pos/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet_settings(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet_settings(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Settings>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Settings>;
+        }));
+    }
+
+    protected processGet_settings(response: HttpResponseBase): Observable<Settings> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Settings;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    put_settings(body: UpdateSettingsRequest): Observable<Settings> {
+        let url_ = this.baseUrl + "/pos/settings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPut_settings(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPut_settings(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Settings>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Settings>;
+        }));
+    }
+
+    protected processPut_settings(response: HttpResponseBase): Observable<Settings> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as Settings;
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -13443,6 +14976,69 @@ export interface CancelSalesOrderRequest {
     [key: string]: any;
 }
 
+export interface CashMovementRequest {
+    amount: string;
+    /** paid_in | paid_out. */
+    kind: string;
+    reason: string;
+
+    [key: string]: any;
+}
+
+export interface CashMovementView {
+    amount: string;
+    created_at: DateTime;
+    id: string;
+    kind: string;
+    reason: string;
+    session_id: string;
+
+    [key: string]: any;
+}
+
+/** A lot with stock in the register's warehouse, expiry-sorted so the till suggests first-expired-first-out. */
+export interface CatalogBatch {
+    batch_no: string;
+    expires_on?: DateTime | undefined;
+    id: string;
+    on_hand: string;
+
+    [key: string]: any;
+}
+
+/** One sellable item as the till caches it: identity, the resolved price for the register's default buyer, the VAT inside it, and the stock dimensions the till needs (batches for FEFO suggestion, on-hand for the tile badge). */
+export interface CatalogItem {
+    barcode?: string | undefined;
+    batches: CatalogBatch[];
+    category_id?: string | undefined;
+    id: string;
+    image_file_id?: string | undefined;
+    name: string;
+    on_hand: string;
+    price: string;
+    price_source?: string | undefined;
+    sku: string;
+    tax_code_id?: string | undefined;
+    tax_rate: string;
+    track_batches: boolean;
+    uom_code: string;
+    /** Whole units only when false. */
+    uom_fractional: boolean;
+    updated_at: DateTime;
+
+    [key: string]: any;
+}
+
+export interface CatalogView {
+    currency: string;
+    /** Pass back as `since` on the next delta fetch. */
+    generated_at: DateTime;
+    /** Full when `since` was absent, else only items updated since. */
+    items: CatalogItem[];
+
+    [key: string]: any;
+}
+
 export interface CategoryBody {
     adjustment_account_role?: string | undefined;
     code?: string | undefined;
@@ -13461,6 +15057,17 @@ export interface CategoryBody {
 export interface ChangePasswordRequest {
     current_password: string;
     new_password: string;
+
+    [key: string]: any;
+}
+
+export interface CloseSessionRequest {
+    counts: SessionCountRequest[];
+    /** Required when any tender's count differs from expected. */
+    note?: string | undefined;
+    /** How many sales the till still holds unsynced; nonzero refuses the
+close. */
+    unsynced?: number;
 
     [key: string]: any;
 }
@@ -13741,6 +15348,28 @@ export interface CreateRoleRequest {
     display_name: string;
     name: string;
     permissions?: string[];
+
+    [key: string]: any;
+}
+
+export interface CreateSaleRequest {
+    approval?: PinApproval | undefined;
+    /** Till-measured seconds from first line to payment (instrumentation). */
+    capture_seconds?: number | undefined;
+    /** True when this sale was captured with the network down and is
+arriving through the queue replay. */
+    captured_offline?: boolean;
+    /** The till-generated idempotency key. */
+    client_uuid: string;
+    /** Attach a real customer; absent = the register's default buyer. */
+    customer_id?: string | undefined;
+    /** Till-measured inputs (taps/keys/scans) the sale cost. */
+    input_count?: number | undefined;
+    lines: SaleLineRequest[];
+    session_id: string;
+    /** The client-captured moment of sale. */
+    sold_at: DateTime;
+    tenders: SaleTenderRequest[];
 
     [key: string]: any;
 }
@@ -14050,6 +15679,14 @@ export interface DeliveryView {
     [key: string]: any;
 }
 
+/** One line of a count sheet: so many pieces of one denomination. */
+export interface DenominationCount {
+    count: number;
+    denom: string;
+
+    [key: string]: any;
+}
+
 export interface DisableTwoFactorRequest {
     password: string;
 
@@ -14186,6 +15823,29 @@ export interface Health {
     status: string;
     /** Framework version. */
     version: string;
+
+    [key: string]: any;
+}
+
+/** One hour of the day across the window. */
+export interface HourlyRow {
+    gross_sales: string;
+    /** The local hour of day, 0–23 (see [`PosQueries::hourly`] on "local"). */
+    hour: number;
+    net_total: string;
+    refund_total: string;
+    refunds: number;
+    sales: number;
+
+    [key: string]: any;
+}
+
+export interface HourlyView {
+    from?: DateTime | undefined;
+    rows: HourlyRow[];
+    to?: DateTime | undefined;
+    /** The minutes east of UTC the hours were bucketed in. */
+    tz_offset_minutes: number;
 
     [key: string]: any;
 }
@@ -14482,6 +16142,32 @@ export interface ItemBody {
     weight?: string | undefined;
     weight_uom_id?: string | undefined;
     width_mm?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** One item's till performance over a window. */
+export interface ItemSalesRow {
+    /** Net takings for the item (sales − refunds), VAT included. */
+    gross: string;
+    item_id: string;
+    name: string;
+    /** Net of the VAT inside `gross`. */
+    net: string;
+    qty_refunded: string;
+    qty_sold: string;
+    sku: string;
+    tax: string;
+
+    [key: string]: any;
+}
+
+export interface ItemSalesView {
+    from?: DateTime | undefined;
+    gross: string;
+    rows: ItemSalesRow[];
+    tax: string;
+    to?: DateTime | undefined;
 
     [key: string]: any;
 }
@@ -14783,6 +16469,13 @@ such movements reverse only through their source. */
     [key: string]: any;
 }
 
+export interface OpenSessionRequest {
+    opening_float: string;
+    register_id: string;
+
+    [key: string]: any;
+}
+
 /** A row of the order register. */
 export interface OrderHeader {
     currency: string;
@@ -14987,6 +16680,117 @@ export interface PermissionDef {
 
     [key: string]: any;
 }
+
+/** A supervisor's approval of a gated act: who, proven by their PIN. */
+export interface PinApproval {
+    authorizer_id: string;
+    pin: string;
+
+    [key: string]: any;
+}
+
+export interface PosOrderHeader {
+    captured_offline: boolean;
+    client_uuid: string;
+    currency: string;
+    id: string;
+    kind: PosOrderKind;
+    number?: string | undefined;
+    price_drift: boolean;
+    session_id: string;
+    sold_at: DateTime;
+    status: PosOrderStatus;
+    total: string;
+
+    [key: string]: any;
+}
+
+/** What a POS order is: a sale, or a refund against one. */
+export type PosOrderKind = "sale" | "refund";
+
+export interface PosOrderLineView {
+    batch_id?: string | undefined;
+    description: string;
+    discount_pct?: string | undefined;
+    id: string;
+    item_id: string;
+    line_no: number;
+    net: string;
+    price_source?: string | undefined;
+    qty: string;
+    refund_of_line_id?: string | undefined;
+    tax_amount: string;
+    unit_price: string;
+
+    [key: string]: any;
+}
+
+export interface PosOrderPaymentView {
+    amount: string;
+    reference?: string | undefined;
+    tender: string;
+    tendered?: string | undefined;
+
+    [key: string]: any;
+}
+
+/** A captured order is immutable; voiding marks, never deletes. */
+export type PosOrderStatus = "captured" | "voided";
+
+export interface PosOrderView {
+    captured_offline: boolean;
+    /** Cash change due, summed over cash tenders. */
+    change: string;
+    client_uuid: string;
+    currency: string;
+    customer_id: string;
+    customer_name: string;
+    discount_total: string;
+    id: string;
+    kind: PosOrderKind;
+    lines: PosOrderLineView[];
+    /** The RCP receipt number (always present once captured server-side). */
+    number?: string | undefined;
+    payments: PosOrderPaymentView[];
+    price_drift: boolean;
+    refund_of_id?: string | undefined;
+    session_id: string;
+    sold_at: DateTime;
+    status: PosOrderStatus;
+    subtotal: string;
+    tax_total: string;
+    total: string;
+    void_reason?: string | undefined;
+
+    [key: string]: any;
+}
+
+export interface PosRegister {
+    /** Offline-overshoot policy at close: whether a session may close
+when its consolidated issue would take stock negative. */
+    allow_negative_stock_sales: boolean;
+    code: string;
+    created_at: DateTime;
+    created_by?: string | undefined;
+    /** `None` = the seeded walk-in customer. */
+    default_customer_id?: string | undefined;
+    /** The client-owned tile layout; the server stores, never interprets. */
+    grid_layout?: any | undefined;
+    id: string;
+    is_active: boolean;
+    name: string;
+    price_list_id?: string | undefined;
+    receipt_footer?: string | undefined;
+    receipt_header?: string | undefined;
+    updated_at: DateTime;
+    updated_by?: string | undefined;
+    warehouse_id: string;
+
+    [key: string]: any;
+}
+
+/** Where a session is in its life. `Closing` is a real resting state: counting succeeded but consolidation has not yet — sales stay blocked and the close is retryable. */
+export type PosSessionStatus = "open" | "closing" | "closed";
 
 export interface PostingInputRequest {
     account_id: string;
@@ -15349,6 +17153,42 @@ export interface RecordQuotesRequest {
 
 export interface RefreshRequest {
     refresh_token: string;
+
+    [key: string]: any;
+}
+
+export interface RefundLineRequest {
+    line_id: string;
+    qty: string;
+
+    [key: string]: any;
+}
+
+export interface RefundSaleRequest {
+    approval?: PinApproval | undefined;
+    /** The till-generated idempotency key of the refund document. */
+    client_uuid: string;
+    lines: RefundLineRequest[];
+    reference?: string | undefined;
+    /** The open session the refund is paid out of. */
+    session_id: string;
+    /** cash | mpesa | card — original tender by default, the till passes
+it explicitly. */
+    tender: string;
+
+    [key: string]: any;
+}
+
+export interface RegisterBody {
+    allow_negative_stock_sales?: boolean;
+    code: string;
+    default_customer_id?: string | undefined;
+    is_active?: boolean;
+    name: string;
+    price_list_id?: string | undefined;
+    receipt_footer?: string | undefined;
+    receipt_header?: string | undefined;
+    warehouse_id: string;
 
     [key: string]: any;
 }
@@ -15734,6 +17574,30 @@ export interface RoleResponse {
     [key: string]: any;
 }
 
+export interface SaleLineRequest {
+    /** Required when the item tracks batches. */
+    batch_id?: string | undefined;
+    discount_pct?: string | undefined;
+    item_id: string;
+    /** The cashier keyed the price by hand (override-gated). */
+    manual_price?: boolean;
+    qty: string;
+    /** The tax-inclusive unit price the till charged. */
+    unit_price: string;
+
+    [key: string]: any;
+}
+
+export interface SaleTenderRequest {
+    amount: string;
+    reference?: string | undefined;
+    /** cash | mpesa | card. */
+    tender: string;
+    tendered?: string | undefined;
+
+    [key: string]: any;
+}
+
 export interface SalesCustomer {
     billing_address_line1?: string | undefined;
     billing_address_line2?: string | undefined;
@@ -16101,8 +17965,121 @@ export type SalesSettlementStatus = "unpaid" | "partially_paid" | "paid";
 /** Where a serialized unit is in its life. */
 export type SerialStatus = "in_stock" | "issued" | "scrapped";
 
+export interface SessionCountRequest {
+    counted: string;
+    /** The count-sheet breakdown behind `counted`, when one was used;
+must sum to `counted`. */
+    denominations?: DenominationCount[] | undefined;
+    /** cash | mpesa | card. */
+    tender: string;
+
+    [key: string]: any;
+}
+
+/** The X (live) or Z (stored) picture of a session. */
+export interface SessionReport {
+    avg_sale_inputs?: string | undefined;
+    /** Live instrumentation: mean seconds / inputs per sale, over the
+sales that reported them. */
+    avg_sale_seconds?: string | undefined;
+    /** True when the cash expectation was withheld (blind count). */
+    blind: boolean;
+    /** Withheld (`None`) on a blind X report: the drawer is counted
+without a number to count to. */
+    expected_cash?: string | undefined;
+    gross_sales: string;
+    /** Net takings (sales − refunds), VAT included. */
+    net_total: string;
+    /** Sales captured with the network down. */
+    offline: number;
+    orders: number;
+    paid_in: string;
+    paid_out: string;
+    /** Offline-synced sales whose price no longer matched at sync. */
+    price_drift: number;
+    refund_total: string;
+    refunds: number;
+    session: SessionView;
+    tax_total: string;
+    tenders: TenderReportLine[];
+    voids: number;
+
+    [key: string]: any;
+}
+
+/** One session's day, summarized. */
+export interface SessionSummaryRow {
+    avg_sale_inputs?: string | undefined;
+    avg_sale_seconds?: string | undefined;
+    /** Counted minus expected cash, from the counts stored at close. */
+    cash_variance?: string | undefined;
+    closed_at?: DateTime | undefined;
+    gross_sales: string;
+    /** Net takings (sales − refunds), VAT included. */
+    net_total: string;
+    number?: string | undefined;
+    opened_at: DateTime;
+    orders: number;
+    refund_total: string;
+    refunds: number;
+    register_code: string;
+    session_id: string;
+    status: PosSessionStatus;
+    tax_total: string;
+    voids: number;
+
+    [key: string]: any;
+}
+
+export interface SessionSummaryView {
+    cash_variance: string;
+    from?: DateTime | undefined;
+    gross_sales: string;
+    net_total: string;
+    refund_total: string;
+    rows: SessionSummaryRow[];
+    tax_total: string;
+    to?: DateTime | undefined;
+
+    [key: string]: any;
+}
+
+export interface SessionView {
+    avg_sale_inputs?: string | undefined;
+    /** Instrumentation, settled at close: mean seconds and inputs per
+sale (over the sales that reported them) and voided orders. */
+    avg_sale_seconds?: string | undefined;
+    cashier_id: string;
+    closed_at?: DateTime | undefined;
+    closed_by?: string | undefined;
+    closing_note?: string | undefined;
+    /** The revenue entry's outbox source key, once closed. */
+    gl_source?: string | undefined;
+    id: string;
+    /** The consolidated stock movement, once closed. */
+    move_id?: string | undefined;
+    number?: string | undefined;
+    opened_at: DateTime;
+    opening_float: string;
+    register_code: string;
+    register_id: string;
+    register_name: string;
+    status: PosSessionStatus;
+    void_count?: number | undefined;
+
+    [key: string]: any;
+}
+
 export interface SetAdminRequest {
     is_admin: boolean;
+
+    [key: string]: any;
+}
+
+/** A user in the caller's tenant, or 404. */
+export interface SetOverridePinRequest {
+    /** 4–8 digits; `null` clears the PIN. */
+    pin?: string | undefined;
 
     [key: string]: any;
 }
@@ -16118,6 +18095,15 @@ export interface SetUserPermissionsRequest {
 
 export interface SetUserRolesRequest {
     role_ids: string[];
+
+    [key: string]: any;
+}
+
+/** The settings as the API speaks them. */
+export interface Settings {
+    blind_count: boolean;
+    /** Largest first. */
+    denominations: string[];
 
     [key: string]: any;
 }
@@ -16275,6 +18261,20 @@ export interface SupplierScorecardView {
     [key: string]: any;
 }
 
+export interface SyncSaleResult {
+    client_uuid: string;
+    error?: string | undefined;
+    order?: PosOrderView | undefined;
+
+    [key: string]: any;
+}
+
+export interface SyncSalesRequest {
+    sales: CreateSaleRequest[];
+
+    [key: string]: any;
+}
+
 /** Which side of the ledger a tax code lands on. */
 export type TaxDirection = "output" | "input";
 
@@ -16295,6 +18295,45 @@ export interface TenantTwoFactorRequest {
 export interface TenantTwoFactorResponse {
     require_two_factor: boolean;
     tenant: string;
+
+    [key: string]: any;
+}
+
+/** One tender's share of a window. */
+export interface TenderMixRow {
+    net: string;
+    /** Payment lines seen on sales. */
+    payments: number;
+    refunds: string;
+    sales: string;
+    /** This tender's slice of the net takings, in percent; `None` when the
+window took no money at all. */
+    share_pct?: string | undefined;
+    tender: string;
+
+    [key: string]: any;
+}
+
+export interface TenderMixView {
+    from?: DateTime | undefined;
+    net_total: string;
+    rows: TenderMixRow[];
+    to?: DateTime | undefined;
+
+    [key: string]: any;
+}
+
+export interface TenderReportLine {
+    /** Stored at close; absent on an X report. */
+    counted?: string | undefined;
+    /** What the tender should hold: cash includes float and drawer
+movements, the clearing tenders are net takings. */
+    expected: string;
+    net: string;
+    refunds: string;
+    sales: string;
+    tender: string;
+    variance?: string | undefined;
 
     [key: string]: any;
 }
@@ -16374,6 +18413,15 @@ export interface UpdateRoleRequest {
     [key: string]: any;
 }
 
+export interface UpdateSettingsRequest {
+    blind_count: boolean;
+    /** Positive amounts; the server sorts them largest-first and drops
+duplicates. Empty = no count-sheet helper. */
+    denominations: string[];
+
+    [key: string]: any;
+}
+
 export interface UpdateTaxCodeRequest {
     /** Present to change the linked account (may be null to clear it). */
     account_id?: string | undefined;
@@ -16403,6 +18451,13 @@ export interface ValuationSummary {
 }
 
 export interface Value {
+
+    [key: string]: any;
+}
+
+export interface VoidSaleRequest {
+    approval?: PinApproval | undefined;
+    reason: string;
 
     [key: string]: any;
 }

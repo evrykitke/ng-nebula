@@ -4,6 +4,7 @@ import { authGuard } from './core/auth/auth-guard';
 import { permissionGuard } from './core/auth/permission-guard';
 import { Permissions } from './core/auth/permissions.constants';
 import { APPS } from './core/layout/apps';
+import { TILL_ROUTES } from './features/scm/pos/pos.app';
 
 /**
  * Top-level routes: login outside the shell, everything else inside it behind
@@ -22,6 +23,9 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () => import('./core/auth/pages/register/register').then((m) => m.RegisterPage),
   },
+  // The till: authenticated but outside the shell — the counter takes the
+  // whole screen, so it mounts here beside login rather than under AppShell.
+  ...TILL_ROUTES,
   {
     path: '',
     component: AppShell,

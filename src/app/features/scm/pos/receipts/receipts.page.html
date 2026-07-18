@@ -1,0 +1,19 @@
+<app-page-header
+  title="Receipts"
+  subtitle="What the tills rang up — every sale and refund, voided ones included"
+  [breadcrumbs]="[{ label: 'Point of Sale' }, { label: 'Receipts' }]"
+>
+  <select
+    actions
+    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+    [ngModel]="kind()"
+    (ngModelChange)="kind.set($event)"
+    aria-label="Kind"
+  >
+    <option value="">Sales & refunds</option>
+    <option value="sale">Sales only</option>
+    <option value="refund">Refunds only</option>
+  </select>
+</app-page-header>
+
+<app-data-table [config]="tableConfig()" [dataSource]="dataSource()" (action)="onAction($event)" />
