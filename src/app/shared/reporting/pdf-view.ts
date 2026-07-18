@@ -59,7 +59,7 @@ export interface LoadedPdf {
       </div>
     }
     <!-- The pages are appended here as canvases, one per page. -->
-    <div #pageHost class="flex flex-col items-center gap-4 p-6"></div>
+    <div #pageHost class="flex flex-col items-center gap-3 p-3 sm:gap-4 sm:p-6"></div>
   `,
 })
 export class PdfView {
@@ -92,6 +92,11 @@ export class PdfView {
   private readonly pageHost = viewChild<ElementRef<HTMLDivElement>>('pageHost');
   private doc: PDFDocumentProxy | null = null;
 
+  /** Redraw when the host's width changes — rotation, sidebar collapse. */
+  private observer: ResizeObserver | null = null;
+  private hostWidth = 0;
+  private repaintTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     // Re-render whenever what is being asked for changes. `id` is read so a
     // document redraws once its record arrives, but is not required: a report
@@ -110,7 +115,30 @@ export class PdfView {
       const zoom = this.zoom();
       if (this.doc) queueMicrotask(() => void this.paint(zoom));
     });
-    inject(DestroyRef).onDestroy(() => this.release());
+    // Width changes redraw too: the pages are fitted to the host, so a phone
+    // rotating (or the layout re-stacking at a breakpoint) needs a repaint.
+    // Height changes are the pages themselves being appended — ignored.
+    effect(() => {
+      const host = this.pageHost()?.nativeElement;
+      this.observer?.disconnect();
+      this.observer = null;
+      if (!host || typeof ResizeObserver === 'undefined') return;
+      this.hostWidth = host.clientWidth;
+      this.observer = new ResizeObserver(() => {
+        const width = host.clientWidth;
+        if (width === this.hostWidth) return;
+        this.hostWidth = width;
+        if (!this.doc) return;
+        if (this.repaintTimer) clearTimeout(this.repaintTimer);
+        this.repaintTimer = setTimeout(() => void this.paint(this.zoom()), 150);
+      });
+      this.observer.observe(host);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.release();
+      this.observer?.disconnect();
+      if (this.repaintTimer) clearTimeout(this.repaintTimer);
+    });
   }
 
   load(): void {
@@ -152,12 +180,27 @@ export class PdfView {
     const doc = this.doc;
     if (!host || !doc) return;
     host.replaceChildren();
+    const fit = await this.fitScale(doc, host);
     for (let n = 1; n <= doc.numPages; n++) {
       const canvas = document.createElement('canvas');
       canvas.className = 'bg-white shadow-lg';
       host.append(canvas);
-      await drawPage(doc, n, canvas, zoom);
+      await drawPage(doc, n, canvas, zoom * fit);
     }
+  }
+
+  /**
+   * How far the pages must shrink for page 1 to fit the host's width — 1 on
+   * any screen wide enough for the paper size, so desktop is untouched. A
+   * phone gets fit-to-width, and the zoom buttons scale relative to that
+   * fitted size rather than the paper's, which they can never reach.
+   */
+  private async fitScale(doc: PDFDocumentProxy, host: HTMLElement): Promise<number> {
+    const natural = (await doc.getPage(1)).getViewport({ scale: 1 }).width;
+    const style = getComputedStyle(host);
+    const avail =
+      host.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return natural > 0 && avail > 0 ? Math.min(1, avail / natural) : 1;
   }
 
   /** Drop the parsed document and the pages drawn from it. */
