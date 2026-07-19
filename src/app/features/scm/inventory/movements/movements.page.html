@@ -4,7 +4,7 @@
   [breadcrumbs]="[{ label: 'Inventory' }, { label: 'Movements' }]"
 >
   @if (canCreate()) {
-    <div actions class="flex gap-2">
+    <div actions class="flex flex-wrap gap-2">
       <button uiBtn variant="outline" (click)="newMove('receipt')">
         <ng-icon name="lucidePackageCheck" size="16" /> Receipt
       </button>

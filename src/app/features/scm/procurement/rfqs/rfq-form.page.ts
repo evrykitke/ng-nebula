@@ -9,6 +9,7 @@ import { Lookup } from '../../../../shared/lookup/lookup';
 import { PageHeader } from '../../../../core/layout/page-header/page-header';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { asDate } from '../../../../shared/forms/dates';
 import { asDateString } from '../../shared/scm-format';
 import { itemLookup, supplierLookup } from '../../shared/scm-lookups';
 import {
@@ -91,7 +92,7 @@ export class RfqFormPage {
           void this.router.navigate(['/procurement/rfqs', id]);
           return;
         }
-        this.form = { title: r.title, due_date: r.due_date, memo: r.memo ?? '' };
+        this.form = { title: r.title, due_date: asDate(r.due_date), memo: r.memo ?? '' };
         this.lines.set(
           r.lines.map((l) => ({
             item_id: l.item_id,

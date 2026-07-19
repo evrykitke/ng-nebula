@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { asDate } from '../../../../shared/forms/dates';
 import { optDec } from '../../../../shared/forms/numeric';
 import { asDateString, fmtMoney, num } from '../../shared/scm-format';
 import { customerLookup, itemLookup, taxCodeLookup } from '../../shared/scm-lookups';
@@ -113,7 +114,7 @@ export class QuotationFormPage {
           customer_label: q.customer_name,
           customer_contact: q.customer_contact ?? '',
           currency: q.currency,
-          quote_date: q.quote_date,
+          quote_date: asDate(q.quote_date),
           valid_until: q.valid_until,
           reference: q.reference ?? '',
           discount_pct: q.discount_pct ?? '',

@@ -14,6 +14,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Permissions } from '../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../shared/api/api-error';
+import { asDate } from '../../../shared/forms/dates';
 import {
   AccountingAccount,
   AccountingServiceProxy,
@@ -143,7 +144,7 @@ export class JournalEntryNewPage {
           return;
         }
         this.form = {
-          entry_date: e.entry_date,
+          entry_date: asDate(e.entry_date),
           memo: e.memo,
           reference: e.reference ?? '',
           currency: e.currency,

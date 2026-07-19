@@ -40,6 +40,20 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Line-item tables: a cell holding an editable control keeps a usable width
+     when the viewport narrows — the wrapping .overflow-x-auto scrolls instead
+     of the inputs collapsing to slivers. Checkboxes/radios keep their natural
+     compact cells. */
+  td:has(> input:not([type='checkbox']):not([type='radio'])),
+  td:has(> select),
+  td:has(> textarea),
+  td:has(> app-datepicker) {
+    min-width: 7rem;
+  }
+  td:has(> app-lookup) {
+    min-width: 14rem;
+  }
+
   /* Themed scrollbars: subtle, tinted from the palette, present in every
      personality + light/dark instead of the browser default grey. */
   * {

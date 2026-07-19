@@ -3,7 +3,7 @@
   subtitle="Each account's ending balance in its natural debit or credit column"
   [breadcrumbs]="[{ label: 'Accounting' }, { label: 'Trial Balance' }]"
 >
-  <div actions class="flex items-end gap-2">
+  <div actions class="flex flex-wrap items-end gap-2">
     <div>
       <label class="mb-1 block text-xs font-medium text-muted-foreground">As of</label>
       <app-datepicker [(date)]="asOf" (dateChange)="load()" placeholder="All time" />

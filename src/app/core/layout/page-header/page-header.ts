@@ -11,7 +11,7 @@ import { Breadcrumbs, Crumb } from '../breadcrumbs/breadcrumbs';
   imports: [Breadcrumbs],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mb-5 flex items-start justify-between gap-4">
+    <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div class="min-w-0">
         @if (breadcrumbs().length) {
           <app-breadcrumbs [items]="breadcrumbs()" />
@@ -21,9 +21,9 @@ import { Breadcrumbs, Crumb } from '../breadcrumbs/breadcrumbs';
           <p class="mt-1 text-sm text-muted-foreground">{{ subtitle() }}</p>
         }
       </div>
-      <div class="flex shrink-0 items-center gap-2">
-        <ng-content select="[actions]" />
-      </div>
+      <!-- On phones the actions drop below the full-width title block; empty:hidden
+           keeps a header without actions from paying the flex-col gap. -->
+      <div class="flex flex-wrap items-center gap-2 empty:hidden sm:shrink-0"><ng-content select="[actions]" /></div>
     </div>
   `,
 })

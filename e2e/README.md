@@ -19,7 +19,8 @@ E2E_EMAIL=you@example.com E2E_PASSWORD=... npm run e2e
 | --- | --- |
 | `npm run e2e:pages` | Visits every sales page; asserts each renders with no console or runtime errors. Read-only. |
 | `npm run e2e:o2c` | Drives the full order-to-cash chain through the UI. **Writes records.** |
-| `npm run e2e` | Both. |
+| `npm run e2e:moves` | Receipt draft → edit → post, plus the mobile header/lines layout. Registers its own throwaway tenant (`E2E_TENANT` or a generated name; `E2E_EMAIL`/`E2E_PASSWORD` become its admin). **Writes records.** |
+| `npm run e2e` | All of them. |
 
 ## Environment
 

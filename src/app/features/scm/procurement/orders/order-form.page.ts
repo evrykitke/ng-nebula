@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { asDate } from '../../../../shared/forms/dates';
 import { fieldText, optDec, optInt } from '../../../../shared/forms/numeric';
 import { asDateString, fmtMoney, num } from '../../shared/scm-format';
 import { itemLookup, supplierLookup, taxCodeLookup, warehouseLookup } from '../../shared/scm-lookups';
@@ -124,8 +125,8 @@ export class OrderFormPage {
           warehouse_id: o.deliver_to_warehouse_id,
           warehouse_label: o.warehouse_code,
           currency: o.currency,
-          order_date: o.order_date,
-          expected_date: o.expected_date,
+          order_date: asDate(o.order_date),
+          expected_date: asDate(o.expected_date),
           payment_terms_days: String(o.payment_terms_days),
           reference: o.reference ?? '',
           incoterms: o.incoterms ?? '',

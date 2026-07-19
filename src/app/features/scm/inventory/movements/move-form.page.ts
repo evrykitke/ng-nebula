@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { Permissions } from '../../../../core/auth/permissions.constants';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { apiErrorInfo } from '../../../../shared/api/api-error';
+import { asDate } from '../../../../shared/forms/dates';
 import { fieldText } from '../../../../shared/forms/numeric';
 import { asDateString } from '../../shared/scm-format';
 import { itemLookup, warehouseLookup } from '../../shared/scm-lookups';
@@ -127,7 +128,7 @@ export class MoveFormPage {
         }
         this.moveType.set(m.move_type);
         this.form = {
-          entry_date: m.entry_date,
+          entry_date: asDate(m.entry_date),
           from_warehouse_id: m.from_warehouse?.id ?? '',
           from_warehouse_label: m.from_warehouse
             ? `${m.from_warehouse.code} — ${m.from_warehouse.name}`
@@ -252,6 +253,10 @@ export class MoveFormPage {
       this.form.from_warehouse_id === this.form.to_warehouse_id
     ) {
       this.formError.set('Transfers need different source and destination warehouses.');
+      return null;
+    }
+    if (!this.form.memo.trim()) {
+      this.formError.set('A memo describing the movement is required.');
       return null;
     }
 
