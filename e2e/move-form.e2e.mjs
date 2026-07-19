@@ -98,6 +98,24 @@ const posted = await waitUrlRe(page, new RegExp(`/inventory/movements/${UUID}$`)
 await sleep(500);
 R.step('posted from edit (no form error)', posted && !(await formError(page)), (await formError(page)) || page.url());
 
+// -- Adjustment counting a fresh item up from zero: the backend demands a
+// unit cost here (no average to inherit), so the form must offer the column
+// on adjustments and send the value.
+const item2 = await api(page, '/inventory/items', 'POST', { sku: 'GADGET', name: 'Gadget', uom_id: uomId });
+R.step('second item created', item2.status === 200, JSON.stringify(item2.body).slice(0, 120));
+await page.goto(`${BASE}/inventory/movements/new/adjustment`, { waitUntil: 'networkidle2' });
+await page.waitForSelector('app-datepicker button', { timeout: 15000 });
+R.step('pick warehouse', await pickLookup(page, 'form .grid app-lookup button', 'MAIN'));
+R.step('pick gadget', await pickLookup(page, 'table tbody app-lookup button', 'GADGET'));
+R.step('adjustment shows a cost column', !!(await page.$(COST)));
+await page.type(QTY, '3');
+await page.type(COST, '50');
+await page.type('input[name=memo]', 'E2E count-in of gadgets');
+await clickText(page, 'Save & post', 'form');
+const adjPosted = await waitUrlRe(page, new RegExp(`/inventory/movements/${UUID}$`), 15000);
+await sleep(500);
+R.step('zero-stock adjustment posts with a cost', adjPosted && !(await formError(page)), (await formError(page)) || page.url());
+
 // -- Mobile layout: header stacking and line-item input widths.
 await page.setViewport({ width: 390, height: 844 });
 await page.goto(`${BASE}/inventory/movements`, { waitUntil: 'networkidle2' });

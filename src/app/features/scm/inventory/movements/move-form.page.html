@@ -75,7 +75,10 @@
     <div class="mb-3 flex items-center justify-between">
       <h2 class="text-sm font-semibold">Lines</h2>
       @if (moveType() === 'adjustment') {
-        <p class="text-xs text-muted-foreground">Enter the counted quantity per line.</p>
+        <p class="text-xs text-muted-foreground">
+          Enter the counted quantity per line. Gains are valued at the running average —
+          a unit cost is only needed when counting an item up from empty stock.
+        </p>
       }
     </div>
 
@@ -87,7 +90,7 @@
             <th class="px-2 py-2 text-right font-medium" style="width: 110px">
               {{ moveType() === 'adjustment' ? 'Counted' : 'Qty' }}
             </th>
-            @if (needsCost()) {
+            @if (showCost()) {
               <th class="px-2 py-2 text-right font-medium" style="width: 120px">Unit cost</th>
             }
             <th class="px-2 py-2 font-medium" style="width: 140px">Batch</th>
@@ -117,7 +120,7 @@
                   class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
                 />
               </td>
-              @if (needsCost()) {
+              @if (showCost()) {
                 <td class="px-2 py-2">
                   <input
                     type="number"
@@ -125,6 +128,7 @@
                     step="0.0001"
                     [(ngModel)]="l.unit_cost"
                     [name]="'cost_' + $index"
+                    [placeholder]="needsCost() ? '' : 'Average'"
                     class="h-9 w-full rounded-md border border-input bg-background px-2 text-right text-sm"
                   />
                 </td>
